@@ -112,6 +112,12 @@ namespace FactionColonies.Specialists
         {
             if (pawn == null) return;
 
+            if (role != SpecialistRole.Resident && SpecialistCount >= MaxSpecialists)
+            {
+                LogUtil.Warning("Cannot assign " + pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
+                return;
+            }
+
             if (role == SpecialistRole.Governor && Governor != null)
             {
                 LogUtil.Warning("Settlement already has a governor. Demoting existing governor to Specialist.");

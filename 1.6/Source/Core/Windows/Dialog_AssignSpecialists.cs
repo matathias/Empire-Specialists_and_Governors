@@ -71,6 +71,8 @@ namespace FactionColonies.Specialists
 
             float curY = 0f;
             bool hasGovernor = comp.Governor != null;
+            int pendingNonResident = entries.Count(e => e.selected && e.role != SpecialistRole.Resident);
+            bool capReached = (comp.SpecialistCount + pendingNonResident) >= comp.MaxSpecialists;
 
             for (int i = 0; i < entries.Count; i++)
             {
@@ -113,6 +115,11 @@ namespace FactionColonies.Specialists
                         if (role == SpecialistRole.Governor && hasGovernor && !IsAnyEntryGovernor())
                         {
                             label += " (occupied)";
+                            disabled = true;
+                        }
+                        else if (role != SpecialistRole.Resident && role != entry.role && capReached)
+                        {
+                            label += " (cap reached)";
                             disabled = true;
                         }
 
