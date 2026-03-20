@@ -17,9 +17,12 @@ namespace FactionColonies.Specialists
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
             if (comp == null || comp.TotalCount == 0) return;
 
+            // Skip if specialists were deployed to a manual battle — deaths handled by RecoverFromBattle
+            if (comp.PawnsDeployedToBattle) return;
+
             int defenseCount = comp.DefenseSpecialists.Count();
-            FCPolicyDef garrisonDef = DefDatabase<FCPolicyDef>.GetNamedSilentFail("garrisonDoctrine");
-            FCPolicyDef profArmyDef = DefDatabase<FCPolicyDef>.GetNamedSilentFail("professionalArmy");
+            FCPolicyDef garrisonDef = SpecialistsCache.TraitDef("garrisonDoctrine");
+            FCPolicyDef profArmyDef = SpecialistsCache.TraitDef("professionalArmy");
             bool garrison = garrisonDef != null && FactionCache.FactionComp.HasTrait(garrisonDef);
             bool profArmy = profArmyDef != null && FactionCache.FactionComp.HasTrait(profArmyDef);
             List<SpecialistFC> toKill = new List<SpecialistFC>();
@@ -66,7 +69,8 @@ namespace FactionColonies.Specialists
                 case SpecialistRole.Defense:
                     float defChance = FCSSettings.defenseDeathChance;
                     if (garrison) defChance *= 0.5f;
-                    return Math.Max(0f, defChance);
+                    float defReduction = Math.Max(0, defenseCount - 1) * reductionPerDefender;
+                    return Math.Max(0f, defChance - defReduction);
                 case SpecialistRole.Resident:
                     return Math.Max(0f, FCSSettings.residentDeathChance - reduction);
                 default:

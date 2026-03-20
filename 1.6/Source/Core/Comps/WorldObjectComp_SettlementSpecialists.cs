@@ -54,7 +54,7 @@ namespace FactionColonies.Specialists
 
         private bool HasTrait(string defName)
         {
-            FCPolicyDef def = DefDatabase<FCPolicyDef>.GetNamedSilentFail(defName);
+            FCPolicyDef def = SpecialistsCache.TraitDef(defName);
             return def != null && FactionCache.FactionComp.HasTrait(def);
         }
 
@@ -157,6 +157,7 @@ namespace FactionColonies.Specialists
         // --- Manual Battle Integration ---
 
         private bool pawnsDeployedToBattle = false;
+        public bool PawnsDeployedToBattle => pawnsDeployedToBattle;
         private List<Pawn> deployedPawns = new List<Pawn>();
 
         public void DeployToBattle(Map map, List<Pawn> defenders, Lord defenseLord)
@@ -230,7 +231,7 @@ namespace FactionColonies.Specialists
             {
                 SpecialistRole role = s.role;
                 Pawn pawn = s.pawn;
-                RemoveSpecialist(s);
+                allPawns.Remove(s);
 
                 LetterDef letterDef = role == SpecialistRole.Governor
                     ? LetterDefOf.Death : LetterDefOf.NegativeEvent;
@@ -266,6 +267,12 @@ namespace FactionColonies.Specialists
             if (allPawns == null)
             {
                 allPawns = new List<SpecialistFC>();
+            }
+            Scribe_Values.Look(ref pawnsDeployedToBattle, "pawnsDeployedToBattle", false);
+            Scribe_Collections.Look(ref deployedPawns, "deployedPawns", LookMode.Reference);
+            if (deployedPawns == null)
+            {
+                deployedPawns = new List<Pawn>();
             }
         }
 
@@ -382,7 +389,8 @@ namespace FactionColonies.Specialists
             float curY = boundingBox.y;
 
             // --- Governor section (fixed, not scrolled) ---
-            curY = DrawGovernorSection(x, curY, w);
+            SpecialistFC toRecall = null;
+            curY = DrawGovernorSection(x, curY, w, ref toRecall);
             curY += 4f;
 
             // Separator line
@@ -420,7 +428,6 @@ namespace FactionColonies.Specialists
             sy += SectionHeaderHeight;
 
             // --- Specialist and Defense rows ---
-            SpecialistFC toRecall = null;
             int rowIdx = 0;
             foreach (SpecialistFC s in allPawns)
             {
@@ -517,7 +524,7 @@ namespace FactionColonies.Specialists
             }
         }
 
-        private float DrawGovernorSection(float x, float startY, float w)
+        private float DrawGovernorSection(float x, float startY, float w, ref SpecialistFC toRecall)
         {
             float y = startY;
             float btnX;
@@ -602,7 +609,7 @@ namespace FactionColonies.Specialists
             btnX += RoleBtnWidth + BtnGap;
             if (Widgets.ButtonText(new Rect(btnX, y + 2f, RecallBtnWidth, RowHeight - 4f), "Recall"))
             {
-                RecallPawn(gov);
+                toRecall = gov;
             }
 
             Text.Anchor = TextAnchor.UpperLeft;
@@ -882,7 +889,8 @@ namespace FactionColonies.Specialists
                     if (s.role == SpecialistRole.Resident && s.pawn != null && !s.pawn.Dead)
                         residentCount++;
                 }
-                int bonus = (int)Math.Floor(residentCount / (double)FCSSettings.residentsPerWorker);
+                int perWorker = HasTrait("communalLiving") ? 3 : FCSSettings.residentsPerWorker;
+                int bonus = (int)Math.Floor(residentCount / (double)perWorker);
                 if (bonus > 0)
                 {
                     sb.Append("+" + bonus + " workers (" + residentCount + " residents)");

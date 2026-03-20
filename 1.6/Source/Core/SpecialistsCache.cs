@@ -8,6 +8,7 @@ namespace FactionColonies.Specialists
     {
         private static Dictionary<SkillDef, SpecialistSkillWeightDef> _skillWeights;
         private static Dictionary<FCStatDef, List<SpecialistStatEffectDef>> _statEffectsByStat;
+        private static Dictionary<string, FCPolicyDef> _traitDefs;
 
         public static SpecialistSkillWeightDef SkillWeight(SkillDef skill)
         {
@@ -49,10 +50,26 @@ namespace FactionColonies.Specialists
             return result;
         }
 
+        public static FCPolicyDef TraitDef(string defName)
+        {
+            if (_traitDefs == null)
+            {
+                _traitDefs = new Dictionary<string, FCPolicyDef>();
+            }
+            FCPolicyDef result;
+            if (!_traitDefs.TryGetValue(defName, out result))
+            {
+                result = DefDatabase<FCPolicyDef>.GetNamedSilentFail(defName);
+                _traitDefs[defName] = result;
+            }
+            return result;
+        }
+
         public static void InvalidateCache()
         {
             _skillWeights = null;
             _statEffectsByStat = null;
+            _traitDefs = null;
         }
     }
 }
