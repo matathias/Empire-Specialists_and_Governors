@@ -139,6 +139,71 @@ namespace FactionColonies.Specialists
             }
         }
 
+        // --- XP Ticking ---
+
+        public override void CompTick()
+        {
+            base.CompTick();
+            if (Find.TickManager.TicksGame % GenDate.TicksPerDay != 0) return;
+
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (s.role == SpecialistRole.Resident) continue;
+                if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
+
+                float xp = FCSSettings.xpPerDay;
+                foreach (SkillDef skill in GetRelevantSkills(s))
+                {
+                    SkillRecord rec = s.pawn.skills.GetSkill(skill);
+                    if (rec != null && !rec.TotallyDisabled)
+                    {
+                        rec.Learn(xp, true);
+                    }
+                }
+            }
+        }
+
+        private IEnumerable<SkillDef> GetRelevantSkills(SpecialistFC s)
+        {
+            if (s.role == SpecialistRole.Defense)
+            {
+                yield return SkillDefOf.Melee;
+                yield return SkillDefOf.Shooting;
+                yield break;
+            }
+
+            HashSet<SkillDef> seen = new HashSet<SkillDef>();
+            foreach (ResourceFC resource in Settlement.Resources)
+            {
+                if (resource.def.associatedSkills == null) continue;
+                foreach (SkillDef skill in resource.def.associatedSkills)
+                {
+                    if (SpecialistsCache.SkillWeight(skill) != null && seen.Add(skill))
+                    {
+                        yield return skill;
+                    }
+                }
+            }
+
+            if (s.role == SpecialistRole.Governor && seen.Add(SkillDefOf.Social))
+            {
+                yield return SkillDefOf.Social;
+            }
+        }
+
+        // --- Roster helpers ---
+
+        public List<SpecialistFC> AllPawnsSnapshot()
+        {
+            return new List<SpecialistFC>(allPawns);
+        }
+
+        public void RemoveSpecialist(SpecialistFC s)
+        {
+            allPawns.Remove(s);
+            Settlement.InvalidateStatCache();
+        }
+
         // --- Caravan gizmos ---
 
         public override IEnumerable<Gizmo> GetCaravanGizmos(Caravan caravan)
