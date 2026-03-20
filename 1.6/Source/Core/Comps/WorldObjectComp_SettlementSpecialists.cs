@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -214,33 +216,236 @@ namespace FactionColonies.Specialists
             return "Specialists";
         }
 
-        // --- IStatModifierProvider (stub for Phase 2) ---
+        // --- Upkeep ---
+
+        public double CalculateTotalUpkeep()
+        {
+            double total = 0;
+            foreach (SpecialistFC s in allPawns)
+            {
+                total += CalculatePawnUpkeep(s);
+            }
+            return total;
+        }
+
+        public double CalculatePawnUpkeep(SpecialistFC s)
+        {
+            if (s.pawn == null || s.role == SpecialistRole.Resident) return 0;
+            double skillSum = 0;
+            foreach (SkillRecord sk in s.pawn.skills.skills)
+            {
+                skillSum += sk.Level;
+            }
+            double upkeep = FCSSettings.specialistBaseCost + (skillSum / FCSSettings.skillDivisor) * FCSSettings.scalingFactor;
+            if (s.role == SpecialistRole.Governor) upkeep *= 2.0;
+            return upkeep;
+        }
+
+        // --- IStatModifierProvider ---
 
         public double GetStatModifier(FCStatDef stat)
         {
-            return 0;
+            double value = 0;
+
+            // Residents contribute bonus workers
+            if (stat == FCStatDefOf.workerBaseMax)
+            {
+                int residentCount = 0;
+                foreach (SpecialistFC s in allPawns)
+                {
+                    if (s.role == SpecialistRole.Resident && s.pawn != null && !s.pawn.Dead)
+                        residentCount++;
+                }
+                value += Math.Floor(residentCount / (double)FCSSettings.residentsPerWorker);
+            }
+
+            // SpecialistStatEffectDefs: skill -> stat contributions
+            foreach (SpecialistStatEffectDef def in DefDatabase<SpecialistStatEffectDef>.AllDefs)
+            {
+                if (def.stat != stat) continue;
+                foreach (SpecialistFC s in allPawns)
+                {
+                    if (s.pawn == null || s.pawn.Dead) continue;
+                    if (s.role != def.roleFilter) continue;
+                    if (s.pawn.skills == null) continue;
+                    SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
+                    if (skill != null)
+                    {
+                        value += skill.Level * def.specialistValuePerLevel;
+                    }
+                }
+            }
+
+            return value;
         }
 
         public string GetStatModifierDesc(FCStatDef stat)
         {
-            return null;
+            StringBuilder sb = new StringBuilder();
+
+            // Worker bonus from residents
+            if (stat == FCStatDefOf.workerBaseMax)
+            {
+                int residentCount = 0;
+                foreach (SpecialistFC s in allPawns)
+                {
+                    if (s.role == SpecialistRole.Resident && s.pawn != null && !s.pawn.Dead)
+                        residentCount++;
+                }
+                int bonus = (int)Math.Floor(residentCount / (double)FCSSettings.residentsPerWorker);
+                if (bonus > 0)
+                {
+                    sb.Append("+" + bonus + " workers (" + residentCount + " residents)");
+                }
+            }
+
+            // Stat effect contributions
+            foreach (SpecialistStatEffectDef def in DefDatabase<SpecialistStatEffectDef>.AllDefs)
+            {
+                if (def.stat != stat) continue;
+                double total = 0;
+                List<string> parts = new List<string>();
+                foreach (SpecialistFC s in allPawns)
+                {
+                    if (s.pawn == null || s.pawn.Dead) continue;
+                    if (s.role != def.roleFilter) continue;
+                    if (s.pawn.skills == null) continue;
+                    SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
+                    if (skill != null && skill.Level > 0)
+                    {
+                        double contribution = skill.Level * def.specialistValuePerLevel;
+                        total += contribution;
+                        parts.Add(s.pawn.LabelShort + " " + skill.Level);
+                    }
+                }
+                if (total > 0)
+                {
+                    if (sb.Length > 0) sb.Append("\n");
+                    sb.Append("+" + total.ToString("F1") + " (" + def.skill.skillLabel + ": " + string.Join(", ", parts) + ")");
+                }
+            }
+
+            return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        // --- IResourceProductionModifier (stub for Phase 2) ---
+        // --- IResourceProductionModifier ---
 
         public double GetResourceAdditiveModifier(ResourceFC resource)
         {
-            return 0;
+            if (resource.def.associatedSkills == null) return 0;
+
+            double bonus = 0;
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (s.role != SpecialistRole.Specialist) continue;
+                if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
+
+                foreach (SkillDef skillDef in resource.def.associatedSkills)
+                {
+                    SpecialistSkillWeightDef weight = SpecialistSkillWeightDef.ForSkill(skillDef);
+                    if (weight == null) continue;
+                    SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
+                    if (skill != null)
+                    {
+                        bonus += skill.Level * weight.specialistAdditivePerLevel;
+                    }
+                }
+            }
+
+            return bonus;
         }
 
         public double GetResourceMultiplierModifier(ResourceFC resource)
         {
-            return 1.0;
+            SpecialistFC gov = Governor;
+            if (gov == null || gov.pawn == null || gov.pawn.Dead || gov.pawn.skills == null)
+                return 1.0;
+
+            if (resource.def.associatedSkills == null)
+                return 1.0;
+
+            SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
+            double socialFactor = 0.5 + ((social != null ? social.Level : 0) / 20.0);
+
+            double raw = 0;
+            foreach (SkillDef skillDef in resource.def.associatedSkills)
+            {
+                SpecialistSkillWeightDef weight = SpecialistSkillWeightDef.ForSkill(skillDef);
+                if (weight == null) continue;
+                SkillRecord skill = gov.pawn.skills.GetSkill(skillDef);
+                if (skill != null)
+                {
+                    raw += skill.Level * weight.governorMultiplierPerLevel;
+                }
+            }
+
+            bool isFocused = gov.governorFocusDefName == resource.def.defName;
+            double focusBonus = isFocused ? 1.5 : 1.0;
+
+            return 1.0 + (raw * socialFactor * focusBonus);
         }
 
         public string GetResourceModifierDesc(ResourceFC resource)
         {
-            return null;
+            StringBuilder sb = new StringBuilder();
+
+            // Specialist additive contributions
+            double addTotal = 0;
+            List<string> addParts = new List<string>();
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (s.role != SpecialistRole.Specialist) continue;
+                if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
+                if (resource.def.associatedSkills == null) continue;
+
+                double pawnBonus = 0;
+                string bestSkillName = null;
+                int bestSkillLevel = 0;
+                foreach (SkillDef skillDef in resource.def.associatedSkills)
+                {
+                    SpecialistSkillWeightDef weight = SpecialistSkillWeightDef.ForSkill(skillDef);
+                    if (weight == null) continue;
+                    SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
+                    if (skill != null)
+                    {
+                        pawnBonus += skill.Level * weight.specialistAdditivePerLevel;
+                        if (skill.Level > bestSkillLevel)
+                        {
+                            bestSkillLevel = skill.Level;
+                            bestSkillName = skillDef.skillLabel;
+                        }
+                    }
+                }
+                if (pawnBonus > 0)
+                {
+                    addTotal += pawnBonus;
+                    addParts.Add(s.pawn.LabelShort + " " + bestSkillName + " " + bestSkillLevel);
+                }
+            }
+            if (addTotal > 0)
+            {
+                sb.Append("Specialists: +" + addTotal.ToString("F2") + " (" + string.Join(", ", addParts) + ")");
+            }
+
+            // Governor multiplier contribution
+            SpecialistFC gov = Governor;
+            if (gov != null && gov.pawn != null && !gov.pawn.Dead && gov.pawn.skills != null
+                && resource.def.associatedSkills != null)
+            {
+                double mult = GetResourceMultiplierModifier(resource);
+                if (Math.Abs(mult - 1.0) > 0.001)
+                {
+                    if (sb.Length > 0) sb.Append("\n");
+                    bool isFocused = gov.governorFocusDefName == resource.def.defName;
+                    string focusTag = isFocused ? ", Focus" : "";
+                    SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
+                    int socialLevel = social != null ? social.Level : 0;
+                    sb.Append("Governor: x" + mult.ToString("F2") + " (" + gov.pawn.LabelShort
+                        + " Social " + socialLevel + focusTag + ")");
+                }
+            }
+
+            return sb.Length > 0 ? sb.ToString() : null;
         }
     }
 }
