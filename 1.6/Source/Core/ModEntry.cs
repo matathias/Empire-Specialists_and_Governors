@@ -1,3 +1,5 @@
+using System.Reflection;
+using HarmonyLib;
 using UnityEngine;
 using Verse;
 
@@ -89,6 +91,7 @@ namespace FactionColonies.Specialists
     {
         static SpecialistsStartup()
         {
+            new Harmony("Matathias.Empire.Specialists").PatchAll(Assembly.GetExecutingAssembly());
             LifecycleRegistry.Register(new SpecialistLifecycleHandler());
         }
     }

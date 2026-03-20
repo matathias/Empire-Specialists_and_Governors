@@ -6,6 +6,7 @@ using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
 using Verse;
+using Verse.AI.Group;
 
 namespace FactionColonies.Specialists
 {
@@ -125,6 +126,105 @@ namespace FactionColonies.Specialists
             {
                 Settlement.InvalidateStatCache();
             }
+        }
+
+        // --- Manual Battle Integration ---
+
+        private bool pawnsDeployedToBattle = false;
+        private List<Pawn> deployedPawns = new List<Pawn>();
+
+        public void DeployToBattle(Map map, List<Pawn> defenders, Lord defenseLord)
+        {
+            if (pawnsDeployedToBattle) return;
+            deployedPawns.Clear();
+
+            foreach (SpecialistFC s in allPawns)
+            {
+                Pawn pawn = s.pawn;
+                if (pawn == null || pawn.Dead) continue;
+
+                if (pawn.IsWorldPawn())
+                {
+                    Find.WorldPawns.RemovePawn(pawn);
+                }
+
+                if (pawn.Faction != FactionCache.PlayerColonyFaction)
+                {
+                    pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                }
+
+                IntVec3 loc = CellFinder.RandomClosewalkCellNear(map.Center, map, 15);
+                GenSpawn.Spawn(pawn, loc, map);
+                if (pawn.drafter == null)
+                {
+                    pawn.drafter = new Pawn_DraftController(pawn);
+                }
+                map.mapPawns.RegisterPawn(pawn);
+
+                defenders.Add(pawn);
+                defenseLord.AddPawn(pawn);
+                deployedPawns.Add(pawn);
+            }
+
+            pawnsDeployedToBattle = true;
+            LogUtil.Message("Deployed " + deployedPawns.Count + " specialists to defend " + Settlement.Name);
+        }
+
+        public void RecoverFromBattle()
+        {
+            if (!pawnsDeployedToBattle) return;
+
+            List<SpecialistFC> dead = new List<SpecialistFC>();
+
+            foreach (SpecialistFC s in allPawns)
+            {
+                Pawn pawn = s.pawn;
+                if (pawn == null) continue;
+
+                if (pawn.Dead)
+                {
+                    dead.Add(s);
+                    continue;
+                }
+
+                if (pawn.Spawned)
+                {
+                    pawn.DeSpawn();
+                }
+
+                pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+            }
+
+            foreach (SpecialistFC s in dead)
+            {
+                SpecialistRole role = s.role;
+                Pawn pawn = s.pawn;
+                RemoveSpecialist(s);
+
+                LetterDef letterDef = role == SpecialistRole.Governor
+                    ? LetterDefOf.Death : LetterDefOf.NegativeEvent;
+                string label = role == SpecialistRole.Governor
+                    ? "Governor killed" : "Specialist killed";
+                Find.LetterStack.ReceiveLetter(label,
+                    pawn.LabelShort + " (" + role + ") died defending " + Settlement.Name + ".",
+                    letterDef);
+            }
+
+            WorldObjectComp_SettlementMilitary milComp =
+                Settlement.GetComponent<WorldObjectComp_SettlementMilitary>();
+            if (milComp != null)
+            {
+                foreach (Pawn p in deployedPawns)
+                {
+                    milComp.defenders.Remove(p);
+                }
+            }
+
+            deployedPawns.Clear();
+            pawnsDeployedToBattle = false;
+            Settlement.InvalidateStatCache();
+            LogUtil.Message("Recovered specialists from battle at " + Settlement.Name);
         }
 
         // --- Serialization ---
