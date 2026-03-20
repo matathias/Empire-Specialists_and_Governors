@@ -10,27 +10,6 @@ namespace FactionColonies.Specialists
         public float specialistAdditivePerLevel = 0.05f;
         public float governorMultiplierPerLevel = 0.008f;
 
-        private static Dictionary<SkillDef, SpecialistSkillWeightDef> cache;
-
-        public static SpecialistSkillWeightDef ForSkill(SkillDef skill)
-        {
-            if (cache == null)
-            {
-                cache = new Dictionary<SkillDef, SpecialistSkillWeightDef>();
-                foreach (SpecialistSkillWeightDef def in DefDatabase<SpecialistSkillWeightDef>.AllDefs)
-                {
-                    if (def.skill != null)
-                    {
-                        cache[def.skill] = def;
-                    }
-                }
-            }
-
-            SpecialistSkillWeightDef result;
-            cache.TryGetValue(skill, out result);
-            return result;
-        }
-
         public override IEnumerable<string> ConfigErrors()
         {
             foreach (string err in base.ConfigErrors())

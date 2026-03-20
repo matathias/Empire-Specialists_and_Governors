@@ -260,18 +260,21 @@ namespace FactionColonies.Specialists
             }
 
             // SpecialistStatEffectDefs: skill -> stat contributions
-            foreach (SpecialistStatEffectDef def in DefDatabase<SpecialistStatEffectDef>.AllDefs)
+            List<SpecialistStatEffectDef> effects = SpecialistsCache.StatEffectsForStat(stat);
+            if (effects != null)
             {
-                if (def.stat != stat) continue;
-                foreach (SpecialistFC s in allPawns)
+                foreach (SpecialistStatEffectDef def in effects)
                 {
-                    if (s.pawn == null || s.pawn.Dead) continue;
-                    if (s.role != def.roleFilter) continue;
-                    if (s.pawn.skills == null) continue;
-                    SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
-                    if (skill != null)
+                    foreach (SpecialistFC s in allPawns)
                     {
-                        value += skill.Level * def.specialistValuePerLevel;
+                        if (s.pawn == null || s.pawn.Dead) continue;
+                        if (s.role != def.roleFilter) continue;
+                        if (s.pawn.skills == null) continue;
+                        SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
+                        if (skill != null)
+                        {
+                            value += skill.Level * def.specialistValuePerLevel;
+                        }
                     }
                 }
             }
@@ -300,28 +303,31 @@ namespace FactionColonies.Specialists
             }
 
             // Stat effect contributions
-            foreach (SpecialistStatEffectDef def in DefDatabase<SpecialistStatEffectDef>.AllDefs)
+            List<SpecialistStatEffectDef> effects = SpecialistsCache.StatEffectsForStat(stat);
+            if (effects != null)
             {
-                if (def.stat != stat) continue;
-                double total = 0;
-                List<string> parts = new List<string>();
-                foreach (SpecialistFC s in allPawns)
+                foreach (SpecialistStatEffectDef def in effects)
                 {
-                    if (s.pawn == null || s.pawn.Dead) continue;
-                    if (s.role != def.roleFilter) continue;
-                    if (s.pawn.skills == null) continue;
-                    SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
-                    if (skill != null && skill.Level > 0)
+                    double total = 0;
+                    List<string> parts = new List<string>();
+                    foreach (SpecialistFC s in allPawns)
                     {
-                        double contribution = skill.Level * def.specialistValuePerLevel;
-                        total += contribution;
-                        parts.Add(s.pawn.LabelShort + " " + skill.Level);
+                        if (s.pawn == null || s.pawn.Dead) continue;
+                        if (s.role != def.roleFilter) continue;
+                        if (s.pawn.skills == null) continue;
+                        SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
+                        if (skill != null && skill.Level > 0)
+                        {
+                            double contribution = skill.Level * def.specialistValuePerLevel;
+                            total += contribution;
+                            parts.Add(s.pawn.LabelShort + " " + skill.Level);
+                        }
                     }
-                }
-                if (total > 0)
-                {
-                    if (sb.Length > 0) sb.Append("\n");
-                    sb.Append("+" + total.ToString("F1") + " (" + def.skill.skillLabel + ": " + string.Join(", ", parts) + ")");
+                    if (total > 0)
+                    {
+                        if (sb.Length > 0) sb.Append("\n");
+                        sb.Append("+" + total.ToString("F1") + " (" + def.skill.skillLabel + ": " + string.Join(", ", parts) + ")");
+                    }
                 }
             }
 
@@ -342,7 +348,7 @@ namespace FactionColonies.Specialists
 
                 foreach (SkillDef skillDef in resource.def.associatedSkills)
                 {
-                    SpecialistSkillWeightDef weight = SpecialistSkillWeightDef.ForSkill(skillDef);
+                    SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
                     if (weight == null) continue;
                     SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
                     if (skill != null)
@@ -370,7 +376,7 @@ namespace FactionColonies.Specialists
             double raw = 0;
             foreach (SkillDef skillDef in resource.def.associatedSkills)
             {
-                SpecialistSkillWeightDef weight = SpecialistSkillWeightDef.ForSkill(skillDef);
+                SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
                 if (weight == null) continue;
                 SkillRecord skill = gov.pawn.skills.GetSkill(skillDef);
                 if (skill != null)
@@ -403,7 +409,7 @@ namespace FactionColonies.Specialists
                 int bestSkillLevel = 0;
                 foreach (SkillDef skillDef in resource.def.associatedSkills)
                 {
-                    SpecialistSkillWeightDef weight = SpecialistSkillWeightDef.ForSkill(skillDef);
+                    SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
                     if (weight == null) continue;
                     SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
                     if (skill != null)
