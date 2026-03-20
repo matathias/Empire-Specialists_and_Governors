@@ -155,60 +155,385 @@ namespace FactionColonies.Specialists
             };
         }
 
-        // --- ISettlementWindowOverview (stub for Phase 1) ---
+        // --- ISettlementWindowOverview ---
+
+        private WorldSettlementFC uiSettlement;
+        private Vector2 scrollPos;
+
+        private const float RowHeight = 28f;
+        private const float SectionHeaderHeight = 26f;
+        private const float RoleBtnWidth = 55f;
+        private const float RecallBtnWidth = 50f;
+        private const float BtnGap = 4f;
 
         public void PreOpenWindow(WorldSettlementFC settlement)
         {
+            uiSettlement = settlement;
+            scrollPos = Vector2.zero;
         }
 
         public void OnTabSwitch()
         {
+            scrollPos = Vector2.zero;
         }
 
         public void DrawOverviewTab(Rect boundingBox)
         {
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(boundingBox.x, boundingBox.y, boundingBox.width, 30f),
-                "Specialists");
-            Text.Font = GameFont.Small;
+            float x = boundingBox.x;
+            float w = boundingBox.width;
+            float curY = boundingBox.y;
 
-            float y = boundingBox.y + 40f;
+            // --- Governor section (fixed, not scrolled) ---
+            curY = DrawGovernorSection(x, curY, w);
+            curY += 4f;
 
-            SpecialistFC gov = Governor;
-            if (gov != null && gov.pawn != null)
-            {
-                Widgets.Label(new Rect(boundingBox.x, y, boundingBox.width, 24f),
-                    "Governor: " + gov.pawn.LabelShort);
-                y += 28f;
-            }
+            // Separator line
+            Widgets.DrawLineHorizontal(x, curY, w);
+            curY += 4f;
 
+            // --- Scrollable list for specialists + residents ---
+            float scrollAreaHeight = boundingBox.yMax - curY;
+            Rect scrollOuterRect = new Rect(x, curY, w, scrollAreaHeight);
+
+            // Calculate total inner height
             int specCount = CivilianSpecialists.Count();
             int defCount = DefenseSpecialists.Count();
             int resCount = Residents.Count();
+            int nonResidentCount = specCount + defCount;
+            float innerHeight = SectionHeaderHeight + (nonResidentCount * RowHeight)
+                + 8f + SectionHeaderHeight + (resCount * RowHeight) + 8f;
 
-            Widgets.Label(new Rect(boundingBox.x, y, boundingBox.width, 24f),
-                "Specialists: " + specCount + "  |  Defense: " + defCount + "  |  Residents: " + resCount);
-            y += 28f;
+            float scrollBarWidth = innerHeight > scrollAreaHeight ? 16f : 0f;
+            Rect scrollInnerRect = new Rect(0f, 0f, w - scrollBarWidth, innerHeight);
 
-            // List all assigned pawns
+            Widgets.BeginScrollView(scrollOuterRect, ref scrollPos, scrollInnerRect);
+            float sy = 0f;
+
+            // --- Specialist / Defense section header ---
+            Text.Font = GameFont.Small;
+            string specHeader = "Specialists (" + specCount + ")  |  Defense (" + defCount + ")";
+            Widgets.Label(new Rect(0f, sy, scrollInnerRect.width * 0.6f, SectionHeaderHeight), specHeader);
+
+            double totalUpkeep = CalculateTotalUpkeep();
+            Text.Anchor = TextAnchor.UpperRight;
+            Widgets.Label(new Rect(0f, sy, scrollInnerRect.width, SectionHeaderHeight),
+                "Upkeep: " + totalUpkeep.ToString("F1") + "s/day");
+            Text.Anchor = TextAnchor.UpperLeft;
+            sy += SectionHeaderHeight;
+
+            // --- Specialist and Defense rows ---
+            SpecialistFC toRecall = null;
+            int rowIdx = 0;
             foreach (SpecialistFC s in allPawns)
             {
+                if (s.role != SpecialistRole.Specialist && s.role != SpecialistRole.Defense) continue;
                 if (s.pawn == null) continue;
-                Rect row = new Rect(boundingBox.x, y, boundingBox.width - 80f, 24f);
-                Widgets.Label(row, s.pawn.LabelShort + " (" + s.role + ")");
 
-                Rect recallBtn = new Rect(boundingBox.x + boundingBox.width - 75f, y, 70f, 24f);
-                if (Widgets.ButtonText(recallBtn, "Recall"))
+                Rect rowRect = new Rect(0f, sy, scrollInnerRect.width, RowHeight);
+                if (rowIdx % 2 == 1) Widgets.DrawLightHighlight(rowRect);
+
+                float rx = 0f;
+
+                // Name
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(new Rect(rx, sy, 130f, RowHeight), s.pawn.LabelShort);
+                rx += 134f;
+
+                // Top skill
+                GUI.color = Color.gray;
+                string topSkill = GetTopSkillLabel(s);
+                Widgets.Label(new Rect(rx, sy, 100f, RowHeight), topSkill);
+                rx += 104f;
+                GUI.color = Color.white;
+
+                // Contribution
+                string contrib = GetContributionSummary(s);
+                Widgets.Label(new Rect(rx, sy, 110f, RowHeight), contrib);
+                rx = scrollInnerRect.width - RoleBtnWidth - BtnGap - RecallBtnWidth;
+
+                // Role button
+                Text.Anchor = TextAnchor.UpperLeft;
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "Role"))
                 {
-                    RecallPawn(s);
-                    break;
+                    ShowRoleChangeMenu(s);
                 }
-                y += 28f;
+                rx += RoleBtnWidth + BtnGap;
+
+                // Recall button
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "Recall"))
+                {
+                    toRecall = s;
+                }
+
+                Text.Anchor = TextAnchor.UpperLeft;
+                sy += RowHeight;
+                rowIdx++;
             }
+
+            sy += 8f;
+
+            // --- Resident section header ---
+            int workerBonus = (int)Math.Floor(resCount / (double)FCSSettings.residentsPerWorker);
+            string resHeader = "Residents (" + resCount + ")";
+            if (workerBonus > 0) resHeader += "  ->  +" + workerBonus + " workers";
+            Widgets.Label(new Rect(0f, sy, scrollInnerRect.width, SectionHeaderHeight), resHeader);
+            sy += SectionHeaderHeight;
+
+            // --- Resident rows ---
+            rowIdx = 0;
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (s.role != SpecialistRole.Resident) continue;
+                if (s.pawn == null) continue;
+
+                Rect rowRect = new Rect(0f, sy, scrollInnerRect.width, RowHeight);
+                if (rowIdx % 2 == 1) Widgets.DrawLightHighlight(rowRect);
+
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(new Rect(0f, sy, scrollInnerRect.width - RoleBtnWidth - BtnGap - RecallBtnWidth - 8f, RowHeight),
+                    s.pawn.LabelShort);
+
+                float rx = scrollInnerRect.width - RoleBtnWidth - BtnGap - RecallBtnWidth;
+                Text.Anchor = TextAnchor.UpperLeft;
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "Role"))
+                {
+                    ShowRoleChangeMenu(s);
+                }
+                rx += RoleBtnWidth + BtnGap;
+
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "Recall"))
+                {
+                    toRecall = s;
+                }
+
+                sy += RowHeight;
+                rowIdx++;
+            }
+
+            Widgets.EndScrollView();
+
+            // Process recall outside the iteration
+            if (toRecall != null)
+            {
+                RecallPawn(toRecall);
+            }
+        }
+
+        private float DrawGovernorSection(float x, float startY, float w)
+        {
+            float y = startY;
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), "Governor");
+            Text.Font = GameFont.Small;
+            y += SectionHeaderHeight;
+
+            SpecialistFC gov = Governor;
+            if (gov == null || gov.pawn == null)
+            {
+                GUI.color = Color.gray;
+                Widgets.Label(new Rect(x, y, w, RowHeight), "No governor assigned");
+                GUI.color = Color.white;
+                y += RowHeight;
+                return y;
+            }
+
+            // Row 1: Name + skills + focus button
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(x, y, 140f, RowHeight), gov.pawn.LabelShort);
+
+            GUI.color = Color.gray;
+            string skills = GetTopSkillLabel(gov);
+            Widgets.Label(new Rect(x + 144f, y, 120f, RowHeight), skills);
+            GUI.color = Color.white;
+
+            // Focus button
+            string focusLabel = "No focus";
+            if (gov.governorFocusDefName != null)
+            {
+                ResourceTypeDef focusDef = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocusDefName);
+                if (focusDef != null) focusLabel = focusDef.LabelCap;
+            }
+
+            float focusBtnX = x + 268f;
+            float focusBtnW = w - 268f;
+            Text.Anchor = TextAnchor.UpperLeft;
+            if (Widgets.ButtonText(new Rect(focusBtnX, y + 2f, Math.Min(focusBtnW, 150f), RowHeight - 4f),
+                "Focus: " + focusLabel))
+            {
+                ShowGovernorFocusMenu(gov);
+            }
+            y += RowHeight;
+
+            // Row 2: Upkeep + role/recall buttons
+            double upkeep = CalculatePawnUpkeep(gov);
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(x, y, 200f, RowHeight), "Upkeep: " + upkeep.ToString("F1") + "s/day");
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            float btnX = x + w - RoleBtnWidth - BtnGap - RecallBtnWidth;
+            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RoleBtnWidth, RowHeight - 4f), "Role"))
+            {
+                ShowRoleChangeMenu(gov);
+            }
+            btnX += RoleBtnWidth + BtnGap;
+            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RecallBtnWidth, RowHeight - 4f), "Recall"))
+            {
+                RecallPawn(gov);
+            }
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            y += RowHeight;
+            return y;
+        }
+
+        private void ShowGovernorFocusMenu(SpecialistFC gov)
+        {
+            if (gov == null || gov.pawn == null) return;
+
+            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            foreach (ResourceFC resource in Settlement.Resources)
+            {
+                if (resource.def.associatedSkills == null || resource.def.associatedSkills.Count == 0) continue;
+                ResourceTypeDef resDef = resource.def;
+                string label = resDef.LabelCap;
+
+                // Show pawn's best relevant skill level
+                int bestLevel = 0;
+                string bestSkillLabel = "";
+                foreach (SkillDef sk in resDef.associatedSkills)
+                {
+                    SkillRecord rec = gov.pawn.skills.GetSkill(sk);
+                    if (rec != null && rec.Level > bestLevel)
+                    {
+                        bestLevel = rec.Level;
+                        bestSkillLabel = sk.skillLabel;
+                    }
+                }
+                if (bestLevel > 0)
+                {
+                    label += " (" + bestSkillLabel + " " + bestLevel + ")";
+                }
+
+                bool isCurrent = gov.governorFocusDefName == resDef.defName;
+                if (isCurrent) label += " *";
+
+                string defName = resDef.defName;
+                options.Add(new FloatMenuOption(label, delegate
+                {
+                    SetGovernorFocus(gov, defName);
+                }));
+            }
+
+            if (options.Count > 0)
+            {
+                Find.WindowStack.Add(new FloatMenu(options));
+            }
+        }
+
+        private void ShowRoleChangeMenu(SpecialistFC specialist)
+        {
+            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            foreach (SpecialistRole role in Enum.GetValues(typeof(SpecialistRole)))
+            {
+                if (role == specialist.role) continue;
+                SpecialistRole localRole = role;
+                string label = role.ToString();
+                if (role == SpecialistRole.Governor && Governor != null && Governor != specialist)
+                {
+                    label += " (replaces " + Governor.pawn.LabelShort + ")";
+                }
+                options.Add(new FloatMenuOption(label, delegate
+                {
+                    ChangeRole(specialist, localRole);
+                }));
+            }
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        public void SetGovernorFocus(SpecialistFC gov, string focusDefName)
+        {
+            if (gov == null || gov.role != SpecialistRole.Governor) return;
+            gov.governorFocusDefName = focusDefName;
+            Settlement.InvalidateStatCache();
+        }
+
+        private string GetTopSkillLabel(SpecialistFC s)
+        {
+            if (s.pawn == null || s.pawn.skills == null) return "";
+            SkillRecord best = null;
+            SkillRecord second = null;
+            foreach (SkillRecord sk in s.pawn.skills.skills)
+            {
+                if (sk.TotallyDisabled) continue;
+                if (best == null || sk.Level > best.Level)
+                {
+                    second = best;
+                    best = sk;
+                }
+                else if (second == null || sk.Level > second.Level)
+                {
+                    second = sk;
+                }
+            }
+            if (best == null) return "";
+            string result = best.def.skillLabel.CapitalizeFirst() + " " + best.Level;
+            if (second != null)
+            {
+                result += ", " + second.def.skillLabel.CapitalizeFirst() + " " + second.Level;
+            }
+            return result;
+        }
+
+        private string GetContributionSummary(SpecialistFC s)
+        {
+            if (s.pawn == null || s.pawn.skills == null) return "";
+
+            if (s.role == SpecialistRole.Defense)
+            {
+                SkillRecord melee = s.pawn.skills.GetSkill(SkillDefOf.Melee);
+                SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
+                int meleeLevel = melee != null ? melee.Level : 0;
+                int shootingLevel = shooting != null ? shooting.Level : 0;
+                double bonus = Math.Max(meleeLevel, shootingLevel) * 0.05;
+                return "+" + bonus.ToString("F2") + " Mil.Lvl";
+            }
+
+            if (s.role == SpecialistRole.Specialist && uiSettlement != null)
+            {
+                double bestBonus = 0;
+                string bestLabel = "";
+                foreach (ResourceFC resource in uiSettlement.Resources)
+                {
+                    if (resource.def.associatedSkills == null) continue;
+                    double resBonus = 0;
+                    foreach (SkillDef skillDef in resource.def.associatedSkills)
+                    {
+                        SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
+                        if (weight == null) continue;
+                        SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
+                        if (skill != null)
+                        {
+                            resBonus += skill.Level * weight.specialistAdditivePerLevel;
+                        }
+                    }
+                    if (resBonus > bestBonus)
+                    {
+                        bestBonus = resBonus;
+                        bestLabel = resource.def.LabelCap;
+                    }
+                }
+                if (bestBonus > 0)
+                {
+                    return "+" + bestBonus.ToString("F2") + " " + bestLabel;
+                }
+            }
+
+            return "";
         }
 
         public void PostCloseWindow()
         {
+            uiSettlement = null;
         }
 
         public string OverviewTabName()
