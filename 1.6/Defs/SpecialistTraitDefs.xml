@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<!-- ==================== TRAITS (picked at faction founding) ==================== -->
+
+	<FactionColonies.FCPolicyDef>
+		<defName>specialistCorps</defName>
+		<label>Specialist Corps</label>
+		<desc>A formal specialist program that invests in training and capacity. Settlements can host more specialists, they learn faster, and their contributions are more impactful.</desc>
+		<category>Core</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- +2 max specialists per settlement</li>
+			<li>- +20% specialist additive production bonus</li>
+			<li>- Specialists gain XP twice as fast</li>
+		</positiveEffects>
+		<negativeEffects>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>meritocratic</defName>
+		<label>Meritocratic</label>
+		<desc>A society that rewards competence. Skilled governors are far more effective, but their higher status demands greater compensation.</desc>
+		<category>Core</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- Governor Social skill scaling widened (x0.75-2.0 instead of x0.5-1.5)</li>
+			<li>- Governor focus bonus increased to x2.0 (from x1.5)</li>
+			<li>- Specialists gain 50% more XP</li>
+		</positiveEffects>
+		<negativeEffects>
+			<li>- Governor upkeep increased to x3 (from x2)</li>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<!-- ==================== POLICIES (unlocked at faction level-up) ==================== -->
+
+	<FactionColonies.FCPolicyDef>
+		<defName>communalLiving</defName>
+		<label>Communal Living</label>
+		<desc>Residents share resources and labor more efficiently, requiring fewer people to fill a worker role.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- Only 3 residents needed per bonus worker (instead of 5)</li>
+		</positiveEffects>
+		<negativeEffects>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>professionalArmy</defName>
+		<label>Professional Army</label>
+		<desc>Defense specialists are trained career soldiers. Their military contributions are doubled and they provide greater protection to civilians, but they cannot be reassigned to other roles.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- Defense specialists contribute 2x military level</li>
+			<li>- Death reduction per defender doubled (4% instead of 2%)</li>
+		</positiveEffects>
+		<negativeEffects>
+			<li>- Defense specialists cannot be reassigned to other roles</li>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>patrician</defName>
+		<label>Patrician</label>
+		<desc>Governors are trained to manage diverse economic portfolios. They can focus on two resources simultaneously at full effectiveness.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- Governors can set 2 focus resources (both at full x1.5 bonus)</li>
+		</positiveEffects>
+		<negativeEffects>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>ivoryTower</defName>
+		<label>Ivory Tower</label>
+		<desc>Specialists are scholars, not soldiers. They learn at an extraordinary rate but are kept away from the battlefield.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- Specialists gain XP 3x faster</li>
+		</positiveEffects>
+		<negativeEffects>
+			<li>- Civilian specialists do not deploy to manual defense battles</li>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>garrisonDoctrine</defName>
+		<label>Garrison Doctrine</label>
+		<desc>A standing garrison doctrine that keeps defense specialists safe and boosts settlement morale through visible security.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<incompatiblePolicies>
+			<li>pacifist</li>
+		</incompatiblePolicies>
+		<positiveEffects>
+			<li>- Defense specialist death chance halved (5% instead of 10%)</li>
+			<li>- Defense specialists boost settlement happiness</li>
+		</positiveEffects>
+		<negativeEffects>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+</Defs>

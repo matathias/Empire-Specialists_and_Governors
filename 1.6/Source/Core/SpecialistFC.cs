@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Verse;
 
 namespace FactionColonies.Specialists
@@ -6,7 +7,7 @@ namespace FactionColonies.Specialists
     {
         public Pawn pawn;
         public SpecialistRole role;
-        public string governorFocusDefName;
+        public List<string> governorFocuses = new List<string>();
         public int assignedTick;
 
         public SpecialistFC()
@@ -20,12 +21,21 @@ namespace FactionColonies.Specialists
             this.assignedTick = Find.TickManager.TicksGame;
         }
 
+        public bool HasFocus(string resourceDefName)
+        {
+            return governorFocuses != null && governorFocuses.Contains(resourceDefName);
+        }
+
         public void ExposeData()
         {
             Scribe_References.Look(ref pawn, "pawn");
             Scribe_Values.Look(ref role, "role", SpecialistRole.Resident);
-            Scribe_Values.Look(ref governorFocusDefName, "governorFocusDefName");
+            Scribe_Collections.Look(ref governorFocuses, "governorFocuses", LookMode.Value);
             Scribe_Values.Look(ref assignedTick, "assignedTick");
+            if (governorFocuses == null)
+            {
+                governorFocuses = new List<string>();
+            }
         }
     }
 }

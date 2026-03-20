@@ -50,6 +50,24 @@ namespace FactionColonies.Specialists
             get { return (WorldSettlementFC)parent; }
         }
 
+        // --- Trait/Policy helpers ---
+
+        private bool HasTrait(string defName)
+        {
+            FCPolicyDef def = DefDatabase<FCPolicyDef>.GetNamedSilentFail(defName);
+            return def != null && FactionCache.FactionComp.HasTrait(def);
+        }
+
+        public int MaxSpecialists
+        {
+            get
+            {
+                int baseMax = 5 + (int)Math.Floor(Settlement.settlementLevel / 3.0);
+                if (HasTrait("specialistCorps")) baseMax += 2;
+                return baseMax;
+            }
+        }
+
         // --- Core roster operations ---
 
         public void AssignPawn(Pawn pawn, SpecialistRole role)
@@ -104,6 +122,14 @@ namespace FactionColonies.Specialists
         {
             if (specialist == null) return;
 
+            // Professional Army: defense specialists cannot be reassigned
+            if (specialist.role == SpecialistRole.Defense && newRole != SpecialistRole.Defense
+                && HasTrait("professionalArmy"))
+            {
+                LogUtil.Warning("Professional Army: defense specialists cannot be reassigned.");
+                return;
+            }
+
             if (newRole == SpecialistRole.Governor && Governor != null && Governor != specialist)
             {
                 LogUtil.Warning("Settlement already has a governor. Demoting existing governor to Specialist.");
@@ -112,7 +138,7 @@ namespace FactionColonies.Specialists
 
             if (specialist.role == SpecialistRole.Governor && newRole != SpecialistRole.Governor)
             {
-                specialist.governorFocusDefName = null;
+                specialist.governorFocuses.Clear();
             }
 
             specialist.role = newRole;
@@ -137,11 +163,15 @@ namespace FactionColonies.Specialists
         {
             if (pawnsDeployedToBattle) return;
             deployedPawns.Clear();
+            bool ivoryTower = HasTrait("ivoryTower");
 
             foreach (SpecialistFC s in allPawns)
             {
                 Pawn pawn = s.pawn;
                 if (pawn == null || pawn.Dead) continue;
+
+                // Ivory Tower: civilian specialists don't deploy
+                if (ivoryTower && s.role == SpecialistRole.Specialist) continue;
 
                 if (pawn.IsWorldPawn())
                 {
@@ -252,6 +282,9 @@ namespace FactionColonies.Specialists
                 if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
 
                 float xp = FCSSettings.xpPerDay;
+                if (HasTrait("specialistCorps")) xp *= 2f;
+                else if (HasTrait("meritocratic")) xp *= 1.5f;
+                if (s.role == SpecialistRole.Specialist && HasTrait("ivoryTower")) xp *= 3f;
                 foreach (SkillDef skill in GetRelevantSkills(s))
                 {
                     SkillRecord rec = s.pawn.skills.GetSkill(skill);
@@ -487,6 +520,7 @@ namespace FactionColonies.Specialists
         private float DrawGovernorSection(float x, float startY, float w)
         {
             float y = startY;
+            float btnX;
             Text.Font = GameFont.Medium;
             Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), "Governor");
             Text.Font = GameFont.Small;
@@ -511,21 +545,46 @@ namespace FactionColonies.Specialists
             Widgets.Label(new Rect(x + 144f, y, 120f, RowHeight), skills);
             GUI.color = Color.white;
 
-            // Focus button
-            string focusLabel = "No focus";
-            if (gov.governorFocusDefName != null)
-            {
-                ResourceTypeDef focusDef = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocusDefName);
-                if (focusDef != null) focusLabel = focusDef.LabelCap;
-            }
-
+            // Focus button(s)
+            bool isPatrician = HasTrait("patrician");
+            int maxFocuses = isPatrician ? 2 : 1;
             float focusBtnX = x + 268f;
             float focusBtnW = w - 268f;
             Text.Anchor = TextAnchor.UpperLeft;
-            if (Widgets.ButtonText(new Rect(focusBtnX, y + 2f, Math.Min(focusBtnW, 150f), RowHeight - 4f),
-                "Focus: " + focusLabel))
+
+            if (maxFocuses > 1)
             {
-                ShowGovernorFocusMenu(gov);
+                float perBtn = Math.Min((focusBtnW - (maxFocuses - 1) * 4f) / maxFocuses, 90f);
+                for (int fi = 0; fi < maxFocuses; fi++)
+                {
+                    string fLabel = "None";
+                    if (fi < gov.governorFocuses.Count && gov.governorFocuses[fi] != null)
+                    {
+                        ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[fi]);
+                        if (fd != null) fLabel = fd.LabelCap;
+                    }
+                    btnX = focusBtnX + fi * (perBtn + 4f);
+                    int localSlot = fi;
+                    if (Widgets.ButtonText(new Rect(btnX, y + 2f, perBtn, RowHeight - 4f),
+                        "F" + (fi + 1) + ": " + fLabel))
+                    {
+                        ShowGovernorFocusMenu(gov, localSlot);
+                    }
+                }
+            }
+            else
+            {
+                string focusLabel = "No focus";
+                if (gov.governorFocuses.Count > 0 && gov.governorFocuses[0] != null)
+                {
+                    ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[0]);
+                    if (fd != null) focusLabel = fd.LabelCap;
+                }
+                if (Widgets.ButtonText(new Rect(focusBtnX, y + 2f, Math.Min(focusBtnW, 150f), RowHeight - 4f),
+                    "Focus: " + focusLabel))
+                {
+                    ShowGovernorFocusMenu(gov, 0);
+                }
             }
             y += RowHeight;
 
@@ -535,7 +594,7 @@ namespace FactionColonies.Specialists
             Widgets.Label(new Rect(x, y, 200f, RowHeight), "Upkeep: " + upkeep.ToString("F1") + "s/day");
 
             Text.Anchor = TextAnchor.UpperLeft;
-            float btnX = x + w - RoleBtnWidth - BtnGap - RecallBtnWidth;
+            btnX = x + w - RoleBtnWidth - BtnGap - RecallBtnWidth;
             if (Widgets.ButtonText(new Rect(btnX, y + 2f, RoleBtnWidth, RowHeight - 4f), "Role"))
             {
                 ShowRoleChangeMenu(gov);
@@ -551,7 +610,7 @@ namespace FactionColonies.Specialists
             return y;
         }
 
-        private void ShowGovernorFocusMenu(SpecialistFC gov)
+        private void ShowGovernorFocusMenu(SpecialistFC gov, int slot = 0)
         {
             if (gov == null || gov.pawn == null) return;
 
@@ -562,7 +621,6 @@ namespace FactionColonies.Specialists
                 ResourceTypeDef resDef = resource.def;
                 string label = resDef.LabelCap;
 
-                // Show pawn's best relevant skill level
                 int bestLevel = 0;
                 string bestSkillLabel = "";
                 foreach (SkillDef sk in resDef.associatedSkills)
@@ -579,13 +637,19 @@ namespace FactionColonies.Specialists
                     label += " (" + bestSkillLabel + " " + bestLevel + ")";
                 }
 
-                bool isCurrent = gov.governorFocusDefName == resDef.defName;
-                if (isCurrent) label += " *";
+                string currentFocus = slot < gov.governorFocuses.Count ? gov.governorFocuses[slot] : null;
+                if (currentFocus == resDef.defName) label += " *";
 
                 string defName = resDef.defName;
+                int localSlot = slot;
                 options.Add(new FloatMenuOption(label, delegate
                 {
-                    SetGovernorFocus(gov, defName);
+                    while (gov.governorFocuses.Count <= localSlot)
+                    {
+                        gov.governorFocuses.Add(null);
+                    }
+                    gov.governorFocuses[localSlot] = defName;
+                    Settlement.InvalidateStatCache();
                 }));
             }
 
@@ -615,10 +679,14 @@ namespace FactionColonies.Specialists
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
-        public void SetGovernorFocus(SpecialistFC gov, string focusDefName)
+        public void SetGovernorFocus(SpecialistFC gov, string focusDefName, int slot = 0)
         {
             if (gov == null || gov.role != SpecialistRole.Governor) return;
-            gov.governorFocusDefName = focusDefName;
+            while (gov.governorFocuses.Count <= slot)
+            {
+                gov.governorFocuses.Add(null);
+            }
+            gov.governorFocuses[slot] = focusDefName;
             Settlement.InvalidateStatCache();
         }
 
@@ -727,7 +795,10 @@ namespace FactionColonies.Specialists
                 skillSum += sk.Level;
             }
             double upkeep = FCSSettings.specialistBaseCost + (skillSum / FCSSettings.skillDivisor) * FCSSettings.scalingFactor;
-            if (s.role == SpecialistRole.Governor) upkeep *= 2.0;
+            if (s.role == SpecialistRole.Governor)
+            {
+                upkeep *= HasTrait("meritocratic") ? 3.0 : 2.0;
+            }
             return upkeep;
         }
 
@@ -746,10 +817,13 @@ namespace FactionColonies.Specialists
                     if (s.role == SpecialistRole.Resident && s.pawn != null && !s.pawn.Dead)
                         residentCount++;
                 }
-                value += Math.Floor(residentCount / (double)FCSSettings.residentsPerWorker);
+                int perWorker = HasTrait("communalLiving") ? 3 : FCSSettings.residentsPerWorker;
+                value += Math.Floor(residentCount / (double)perWorker);
             }
 
             // SpecialistStatEffectDefs: skill -> stat contributions
+            bool profArmy = HasTrait("professionalArmy");
+            bool garrison = HasTrait("garrisonDoctrine");
             List<SpecialistStatEffectDef> effects = SpecialistsCache.StatEffectsForStat(stat);
             if (effects != null)
             {
@@ -763,9 +837,32 @@ namespace FactionColonies.Specialists
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
                         if (skill != null)
                         {
-                            value += skill.Level * def.specialistValuePerLevel;
+                            double contribution = skill.Level * def.specialistValuePerLevel;
+                            // Professional Army: defense specialists contribute 2x military level
+                            if (profArmy && s.role == SpecialistRole.Defense
+                                && stat == FCStatDefOf.militaryBaseLevel)
+                            {
+                                contribution *= 2.0;
+                            }
+                            value += contribution;
                         }
                     }
+                }
+            }
+
+            // Garrison Doctrine: defense specialists contribute to happiness
+            if (garrison && stat == FCStatDefOf.happinessGainedBase)
+            {
+                foreach (SpecialistFC s in allPawns)
+                {
+                    if (s.role != SpecialistRole.Defense) continue;
+                    if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
+                    SkillRecord melee = s.pawn.skills.GetSkill(SkillDefOf.Melee);
+                    SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
+                    int best = Math.Max(
+                        melee != null ? melee.Level : 0,
+                        shooting != null ? shooting.Level : 0);
+                    value += best * 0.05;
                 }
             }
 
@@ -848,6 +945,11 @@ namespace FactionColonies.Specialists
                 }
             }
 
+            if (bonus > 0 && HasTrait("specialistCorps"))
+            {
+                bonus *= 1.2;
+            }
+
             return bonus;
         }
 
@@ -861,7 +963,11 @@ namespace FactionColonies.Specialists
                 return 1.0;
 
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            double socialFactor = 0.5 + ((social != null ? social.Level : 0) / 20.0);
+            int socialLevel = social != null ? social.Level : 0;
+            bool meritocratic = HasTrait("meritocratic");
+            double socialFactor = meritocratic
+                ? 0.75 + (socialLevel / 16.0)
+                : 0.5 + (socialLevel / 20.0);
 
             double raw = 0;
             foreach (SkillDef skillDef in resource.def.associatedSkills)
@@ -875,8 +981,10 @@ namespace FactionColonies.Specialists
                 }
             }
 
-            bool isFocused = gov.governorFocusDefName == resource.def.defName;
-            double focusBonus = isFocused ? 1.5 : 1.0;
+            string resDefName = resource.def.defName;
+            bool isFocused = gov.HasFocus(resDefName);
+            double baseFocusBonus = meritocratic ? 2.0 : 1.5;
+            double focusBonus = isFocused ? baseFocusBonus : 1.0;
 
             return 1.0 + (raw * socialFactor * focusBonus);
         }
@@ -932,7 +1040,7 @@ namespace FactionColonies.Specialists
                 if (Math.Abs(mult - 1.0) > 0.001)
                 {
                     if (sb.Length > 0) sb.Append("\n");
-                    bool isFocused = gov.governorFocusDefName == resource.def.defName;
+                    bool isFocused = gov.HasFocus(resource.def.defName);
                     string focusTag = isFocused ? ", Focus" : "";
                     SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
                     int socialLevel = social != null ? social.Level : 0;
