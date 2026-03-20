@@ -15,6 +15,24 @@ namespace FactionColonies.Specialists
     {
         private List<SpecialistFC> allPawns = new List<SpecialistFC>();
 
+        // Supply chain integration: satisfaction from resource needs.
+        // Defaults to 1.0 (full satisfaction) when supply chain submod is not loaded.
+        // Written by the compat bridge comp (WorldObjectComp_SpecialistNeeds).
+        private float foodSatisfaction = 1f;
+        private float medicineSatisfaction = 1f;
+
+        public float FoodSatisfaction
+        {
+            get { return foodSatisfaction; }
+            set { foodSatisfaction = value; }
+        }
+
+        public float MedicineSatisfaction
+        {
+            get { return medicineSatisfaction; }
+            set { medicineSatisfaction = value; }
+        }
+
         public IEnumerable<SpecialistFC> Residents
         {
             get { return allPawns.Where(s => s.role == SpecialistRole.Resident); }
@@ -38,6 +56,26 @@ namespace FactionColonies.Specialists
         public int SpecialistCount
         {
             get { return allPawns.Count(s => s.role != SpecialistRole.Resident); }
+        }
+
+        public int CivilianSpecialistCount
+        {
+            get { return allPawns.Count(s => s.role == SpecialistRole.Specialist); }
+        }
+
+        public int DefenseSpecialistCount
+        {
+            get { return allPawns.Count(s => s.role == SpecialistRole.Defense); }
+        }
+
+        public int ResidentCount
+        {
+            get { return allPawns.Count(s => s.role == SpecialistRole.Resident); }
+        }
+
+        public bool HasGovernor
+        {
+            get { return allPawns.Any(s => s.role == SpecialistRole.Governor); }
         }
 
         public int TotalCount
@@ -958,7 +996,7 @@ namespace FactionColonies.Specialists
                 bonus *= 1.2;
             }
 
-            return bonus;
+            return bonus * foodSatisfaction;
         }
 
         public double GetResourceMultiplierModifier(ResourceFC resource)
@@ -994,7 +1032,8 @@ namespace FactionColonies.Specialists
             double baseFocusBonus = meritocratic ? 2.0 : 1.5;
             double focusBonus = isFocused ? baseFocusBonus : 1.0;
 
-            return 1.0 + (raw * socialFactor * focusBonus);
+            double multiplier = raw * socialFactor * focusBonus;
+            return 1.0 + (multiplier * foodSatisfaction);
         }
 
         public string GetResourceModifierDesc(ResourceFC resource)

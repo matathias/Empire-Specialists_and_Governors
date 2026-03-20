@@ -21,6 +21,13 @@ namespace FactionColonies.Specialists
         // XP
         public static float xpPerDay = 500f;
 
+        // Supply chain integration: resource needs per tax period
+        public static float foodPerSpecialist = 0.3f;
+        public static float foodPerResident = 0.15f;
+        public static float medicinePerSpecialist = 0.1f;
+        public static float foodPenaltyPerUnit = 0.8f;
+        public static float medicinePenaltyPerUnit = 0.3f;
+
         // Death chances on battle loss
         public static float civilianDeathChance = 0.15f;
         public static float governorDeathChance = 0.30f;
@@ -37,6 +44,11 @@ namespace FactionColonies.Specialists
             Scribe_Values.Look(ref skillDivisor, "skillDivisor", 20f);
             Scribe_Values.Look(ref scalingFactor, "scalingFactor", 1f);
             Scribe_Values.Look(ref xpPerDay, "xpPerDay", 500f);
+            Scribe_Values.Look(ref foodPerSpecialist, "foodPerSpecialist", 0.3f);
+            Scribe_Values.Look(ref foodPerResident, "foodPerResident", 0.15f);
+            Scribe_Values.Look(ref medicinePerSpecialist, "medicinePerSpecialist", 0.1f);
+            Scribe_Values.Look(ref foodPenaltyPerUnit, "foodPenaltyPerUnit", 0.8f);
+            Scribe_Values.Look(ref medicinePenaltyPerUnit, "medicinePenaltyPerUnit", 0.3f);
             Scribe_Values.Look(ref civilianDeathChance, "civilianDeathChance", 0.15f);
             Scribe_Values.Look(ref governorDeathChance, "governorDeathChance", 0.30f);
             Scribe_Values.Look(ref defenseDeathChance, "defenseDeathChance", 0.10f);
@@ -68,6 +80,19 @@ namespace FactionColonies.Specialists
             ls.Gap(8f);
             ls.Label("XP per day per skill: " + xpPerDay.ToString("F0"));
             xpPerDay = (float)System.Math.Round(ls.Slider(xpPerDay, 0f, 2000f), 0);
+
+            // Supply chain needs (only show if Supply Chain submod is active)
+            if (ModsConfig.IsActive("Matathias.Empire.SupplyChain"))
+            {
+                ls.Gap(8f);
+                ls.Label("-- Supply Chain Integration --");
+                ls.Label("Food per specialist/governor: " + foodPerSpecialist.ToString("F2"));
+                foodPerSpecialist = (float)System.Math.Round(ls.Slider(foodPerSpecialist, 0f, 2f), 2);
+                ls.Label("Food per resident: " + foodPerResident.ToString("F2"));
+                foodPerResident = (float)System.Math.Round(ls.Slider(foodPerResident, 0f, 1f), 2);
+                ls.Label("Medicine per specialist/governor: " + medicinePerSpecialist.ToString("F2"));
+                medicinePerSpecialist = (float)System.Math.Round(ls.Slider(medicinePerSpecialist, 0f, 1f), 2);
+            }
 
             // Death chances
             ls.Gap(8f);

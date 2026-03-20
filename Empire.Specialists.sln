@@ -5,6 +5,8 @@ VisualStudioVersion = 17.3.32922.545
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Empire.Specialists", "1.6\Source\Core\Empire.Specialists.csproj", "{C1D2E3F4-A5B6-7890-CDEF-123456789012}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Empire.Specialists.SC", "1.6\Source\Patch-SC\Empire.Specialists.SC.csproj", "{A1B2C3D4-E5F6-7890-ABCD-987654321012}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,24 @@ Global
 		{C1D2E3F4-A5B6-7890-CDEF-123456789012}.Testing|x64.Build.0 = Testing|Any CPU
 		{C1D2E3F4-A5B6-7890-CDEF-123456789012}.Testing|x86.ActiveCfg = Testing|Any CPU
 		{C1D2E3F4-A5B6-7890-CDEF-123456789012}.Testing|x86.Build.0 = Testing|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Debug|x64.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Debug|x86.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Release|x64.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Release|x64.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Release|x86.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Release|x86.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Testing|Any CPU.ActiveCfg = Testing|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Testing|Any CPU.Build.0 = Testing|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Testing|x64.ActiveCfg = Testing|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Testing|x64.Build.0 = Testing|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Testing|x86.ActiveCfg = Testing|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-987654321012}.Testing|x86.Build.0 = Testing|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
