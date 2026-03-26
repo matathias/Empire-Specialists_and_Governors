@@ -118,6 +118,10 @@ namespace FactionColonies.Specialists
         {
             new Harmony("Matathias.Empire.Specialists").PatchAll(Assembly.GetExecutingAssembly());
             LifecycleRegistry.Register(new SpecialistLifecycleHandler());
+            EmpireCacheUtil.RegisterCacheInvalidator("Specialists", () =>
+            {
+                SpecialistsCache.InvalidateCache();
+            });
         }
     }
 
