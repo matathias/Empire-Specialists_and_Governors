@@ -114,13 +114,17 @@ namespace FactionColonies.Specialists
     [StaticConstructorOnStartup]
     public static class SpecialistsStartup
     {
+        private static readonly SpecialistLifecycleHandler _lifecycleHandler = new SpecialistLifecycleHandler();
+
         static SpecialistsStartup()
         {
             new Harmony("Matathias.Empire.Specialists").PatchAll(Assembly.GetExecutingAssembly());
-            LifecycleRegistry.Register(new SpecialistLifecycleHandler());
+            LifecycleRegistry.Register(_lifecycleHandler);
             EmpireCacheUtil.RegisterCacheInvalidator("Specialists", () =>
             {
                 SpecialistsCache.InvalidateCache();
+                // Re-register after InvalidateAll clears all registries
+                LifecycleRegistry.Register(_lifecycleHandler);
             });
         }
     }
@@ -134,7 +138,7 @@ namespace FactionColonies.Specialists
             settings = GetSettings<FCSSettings>();
         }
 
-        public override string SettingsCategory() => "Empire - Specialists";
+        public override string SettingsCategory() => "Empire Refactored: Specialists & Governors";
 
         public override void DoSettingsWindowContents(Rect inRect) => settings.DoWindowContents(inRect);
     }
