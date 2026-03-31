@@ -280,9 +280,9 @@ namespace FactionColonies.Specialists
                 LetterDef letterDef = role == SpecialistRole.Governor
                     ? LetterDefOf.Death : LetterDefOf.NegativeEvent;
                 string label = role == SpecialistRole.Governor
-                    ? "Governor killed" : "Specialist killed";
+                    ? "FCS_LetterGovernorKilled".Translate() : "FCS_LetterSpecialistKilled".Translate();
                 Find.LetterStack.ReceiveLetter(label,
-                    pawn.LabelShort + " (" + role + ") died defending " + Settlement.Name + ".",
+                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, role.Translate(), Settlement.Name),
                     letterDef);
             }
 
@@ -394,8 +394,8 @@ namespace FactionColonies.Specialists
         {
             yield return new Command_Action
             {
-                defaultLabel = "Assign to Settlement",
-                defaultDesc = "Assign pawns from this caravan to work at " + Settlement.Name + ".",
+                defaultLabel = "FCS_GizmoAssignLabel".Translate(),
+                defaultDesc = "FCS_GizmoAssignDesc".Translate(Settlement.Name),
                 icon = TexCommand.Install,
                 action = delegate
                 {
@@ -461,13 +461,13 @@ namespace FactionColonies.Specialists
 
             // --- Specialist / Defense section header ---
             Text.Font = GameFont.Small;
-            string specHeader = "Specialists (" + specCount + ")  |  Defense (" + defCount + ")";
+            string specHeader = "FCS_SpecDefHeader".Translate(specCount, defCount);
             Widgets.Label(new Rect(0f, sy, scrollInnerRect.width * 0.6f, SectionHeaderHeight), specHeader);
 
             double totalUpkeep = CalculateTotalUpkeep();
             Text.Anchor = TextAnchor.UpperRight;
             Widgets.Label(new Rect(0f, sy, scrollInnerRect.width, SectionHeaderHeight),
-                "Upkeep: " + totalUpkeep.ToString("F1") + "s/day");
+                "FCS_UpkeepDisplay".Translate(totalUpkeep.ToString("F1")));
             Text.Anchor = TextAnchor.UpperLeft;
             sy += SectionHeaderHeight;
 
@@ -502,14 +502,14 @@ namespace FactionColonies.Specialists
 
                 // Role button
                 Text.Anchor = TextAnchor.UpperLeft;
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "Role"))
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "FCS_BtnRole".Translate()))
                 {
                     ShowRoleChangeMenu(s);
                 }
                 rx += RoleBtnWidth + BtnGap;
 
                 // Recall button
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "Recall"))
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "FCS_BtnRecall".Translate()))
                 {
                     toRecall = s;
                 }
@@ -523,8 +523,8 @@ namespace FactionColonies.Specialists
 
             // --- Resident section header ---
             int workerBonus = (int)Math.Floor(resCount / (double)FCSSettings.residentsPerWorker);
-            string resHeader = "Residents (" + resCount + ")";
-            if (workerBonus > 0) resHeader += "  ->  +" + workerBonus + " workers";
+            string resHeader = "FCS_ResidentHeader".Translate(resCount);
+            if (workerBonus > 0) resHeader += "FCS_WorkerBonusSuffix".Translate(workerBonus);
             Widgets.Label(new Rect(0f, sy, scrollInnerRect.width, SectionHeaderHeight), resHeader);
             sy += SectionHeaderHeight;
 
@@ -544,13 +544,13 @@ namespace FactionColonies.Specialists
 
                 float rx = scrollInnerRect.width - RoleBtnWidth - BtnGap - RecallBtnWidth;
                 Text.Anchor = TextAnchor.UpperLeft;
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "Role"))
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "FCS_BtnRole".Translate()))
                 {
                     ShowRoleChangeMenu(s);
                 }
                 rx += RoleBtnWidth + BtnGap;
 
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "Recall"))
+                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "FCS_BtnRecall".Translate()))
                 {
                     toRecall = s;
                 }
@@ -573,7 +573,7 @@ namespace FactionColonies.Specialists
             float y = startY;
             float btnX;
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), "Governor");
+            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), "FCS_GovernorHeader".Translate());
             Text.Font = GameFont.Small;
             y += SectionHeaderHeight;
 
@@ -581,7 +581,7 @@ namespace FactionColonies.Specialists
             if (gov == null || gov.pawn == null)
             {
                 GUI.color = Color.gray;
-                Widgets.Label(new Rect(x, y, w, RowHeight), "No governor assigned");
+                Widgets.Label(new Rect(x, y, w, RowHeight), "FCS_NoGovernor".Translate());
                 GUI.color = Color.white;
                 y += RowHeight;
                 return y;
@@ -608,7 +608,7 @@ namespace FactionColonies.Specialists
                 float perBtn = Math.Min((focusBtnW - (maxFocuses - 1) * 4f) / maxFocuses, 90f);
                 for (int fi = 0; fi < maxFocuses; fi++)
                 {
-                    string fLabel = "None";
+                    string fLabel = "FCS_FocusNone".Translate();
                     if (fi < gov.governorFocuses.Count && gov.governorFocuses[fi] != null)
                     {
                         ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[fi]);
@@ -617,7 +617,7 @@ namespace FactionColonies.Specialists
                     btnX = focusBtnX + fi * (perBtn + 4f);
                     int localSlot = fi;
                     if (Widgets.ButtonText(new Rect(btnX, y + 2f, perBtn, RowHeight - 4f),
-                        "F" + (fi + 1) + ": " + fLabel))
+                        "FCS_FocusSlotLabel".Translate(fi + 1, fLabel)))
                     {
                         ShowGovernorFocusMenu(gov, localSlot);
                     }
@@ -625,14 +625,14 @@ namespace FactionColonies.Specialists
             }
             else
             {
-                string focusLabel = "No focus";
+                string focusLabel = "FCS_FocusNoFocus".Translate();
                 if (gov.governorFocuses.Count > 0 && gov.governorFocuses[0] != null)
                 {
                     ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[0]);
                     if (fd != null) focusLabel = fd.LabelCap;
                 }
                 if (Widgets.ButtonText(new Rect(focusBtnX, y + 2f, Math.Min(focusBtnW, 150f), RowHeight - 4f),
-                    "Focus: " + focusLabel))
+                    "FCS_FocusSingleLabel".Translate(focusLabel)))
                 {
                     ShowGovernorFocusMenu(gov, 0);
                 }
@@ -642,16 +642,16 @@ namespace FactionColonies.Specialists
             // Row 2: Upkeep + role/recall buttons
             double upkeep = CalculatePawnUpkeep(gov);
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(x, y, 200f, RowHeight), "Upkeep: " + upkeep.ToString("F1") + "s/day");
+            Widgets.Label(new Rect(x, y, 200f, RowHeight), "FCS_UpkeepDisplay".Translate(upkeep.ToString("F1")));
 
             Text.Anchor = TextAnchor.UpperLeft;
             btnX = x + w - RoleBtnWidth - BtnGap - RecallBtnWidth;
-            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RoleBtnWidth, RowHeight - 4f), "Role"))
+            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RoleBtnWidth, RowHeight - 4f), "FCS_BtnRole".Translate()))
             {
                 ShowRoleChangeMenu(gov);
             }
             btnX += RoleBtnWidth + BtnGap;
-            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RecallBtnWidth, RowHeight - 4f), "Recall"))
+            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RecallBtnWidth, RowHeight - 4f), "FCS_BtnRecall".Translate()))
             {
                 toRecall = gov;
             }
@@ -685,7 +685,7 @@ namespace FactionColonies.Specialists
                 }
                 if (bestLevel > 0)
                 {
-                    label += " (" + bestSkillLabel + " " + bestLevel + ")";
+                    label = "FCS_FocusSkillLevel".Translate(label, bestSkillLabel, bestLevel);
                 }
 
                 string currentFocus = slot < gov.governorFocuses.Count ? gov.governorFocuses[slot] : null;
@@ -717,10 +717,10 @@ namespace FactionColonies.Specialists
             {
                 if (role == specialist.role) continue;
                 SpecialistRole localRole = role;
-                string label = role.ToString();
+                string label = role.Translate();
                 if (role == SpecialistRole.Governor && Governor != null && Governor != specialist)
                 {
-                    label += " (replaces " + Governor.pawn.LabelShort + ")";
+                    label = "FCS_RoleReplaces".Translate(label, Governor.pawn.LabelShort);
                 }
                 options.Add(new FloatMenuOption(label, delegate
                 {
@@ -776,10 +776,10 @@ namespace FactionColonies.Specialists
             {
                 SkillRecord melee = s.pawn.skills.GetSkill(SkillDefOf.Melee);
                 SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
-                int meleeLevel = melee != null ? melee.Level : 0;
-                int shootingLevel = shooting != null ? shooting.Level : 0;
+                int meleeLevel = melee?.Level ?? 0;
+                int shootingLevel = shooting?.Level ?? 0;
                 double bonus = Math.Max(meleeLevel, shootingLevel) * 0.05;
-                return "+" + bonus.ToString("F2") + " Mil.Lvl";
+                return "FCS_ContribMilLevel".Translate(bonus.ToString("F2"));
             }
 
             if (s.role == SpecialistRole.Specialist && uiSettlement != null)
@@ -808,7 +808,7 @@ namespace FactionColonies.Specialists
                 }
                 if (bestBonus > 0)
                 {
-                    return "+" + bestBonus.ToString("F2") + " " + bestLabel;
+                    return "FCS_ContribProduction".Translate(bestBonus.ToString("F2"), bestLabel);
                 }
             }
 
@@ -822,7 +822,7 @@ namespace FactionColonies.Specialists
 
         public string OverviewTabName()
         {
-            return "Specialists";
+            return "FCS_TabName".Translate();
         }
 
         // --- Upkeep ---
@@ -910,9 +910,7 @@ namespace FactionColonies.Specialists
                     if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
                     SkillRecord melee = s.pawn.skills.GetSkill(SkillDefOf.Melee);
                     SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
-                    int best = Math.Max(
-                        melee != null ? melee.Level : 0,
-                        shooting != null ? shooting.Level : 0);
+                    int best = Math.Max(melee?.Level ?? 0, shooting?.Level ?? 0);
                     value += best * 0.05;
                 }
             }
@@ -937,7 +935,7 @@ namespace FactionColonies.Specialists
                 int bonus = (int)Math.Floor(residentCount / (double)perWorker);
                 if (bonus > 0)
                 {
-                    sb.Append("+" + bonus + " workers (" + residentCount + " residents)");
+                    sb.Append("FCS_StatWorkerBonus".Translate(bonus, residentCount));
                 }
             }
 
@@ -965,7 +963,7 @@ namespace FactionColonies.Specialists
                     if (total > 0)
                     {
                         if (sb.Length > 0) sb.Append("\n");
-                        sb.Append("+" + total.ToString("F1") + " (" + def.skill.skillLabel + ": " + string.Join(", ", parts) + ")");
+                        sb.Append("FCS_StatEffectLine".Translate(total.ToString("F1"), def.skill.skillLabel, string.Join(", ", parts)));
                     }
                 }
             }
@@ -1015,7 +1013,7 @@ namespace FactionColonies.Specialists
                 return 1.0;
 
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            int socialLevel = social != null ? social.Level : 0;
+            int socialLevel = social?.Level ?? 0;
             bool meritocratic = HasTrait("meritocratic");
             double socialFactor = meritocratic
                 ? 0.75 + (socialLevel / 16.0)
@@ -1081,7 +1079,7 @@ namespace FactionColonies.Specialists
             }
             if (addTotal > 0)
             {
-                sb.Append("Specialists: +" + addTotal.ToString("F2") + " (" + string.Join(", ", addParts) + ")");
+                sb.Append("FCS_ResSpecialists".Translate(addTotal.ToString("F2"), string.Join(", ", addParts)));
             }
 
             // Governor multiplier contribution
@@ -1094,11 +1092,10 @@ namespace FactionColonies.Specialists
                 {
                     if (sb.Length > 0) sb.Append("\n");
                     bool isFocused = gov.HasFocus(resource.def.defName);
-                    string focusTag = isFocused ? ", Focus" : "";
+                    string focusTag = isFocused ? "FCS_ResFocusTag".Translate().ToString() : "";
                     SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-                    int socialLevel = social != null ? social.Level : 0;
-                    sb.Append("Governor: x" + mult.ToString("F2") + " (" + gov.pawn.LabelShort
-                        + " Social " + socialLevel + focusTag + ")");
+                    int socialLevel = social?.Level ?? 0;
+                    sb.Append("FCS_ResGovernor".Translate(mult.ToString("F2"), gov.pawn.LabelShort, socialLevel, focusTag));
                 }
             }
 

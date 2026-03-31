@@ -60,51 +60,51 @@ namespace FactionColonies.Specialists
         {
             Listing_Standard ls = new Listing_Standard();
             ls.Begin(inRect);
-            ls.CheckboxLabeled("Enable debug logging", ref printDebug);
+            ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
 
             // Workers
             ls.Gap(12f);
-            ls.Label("Residents per bonus worker: " + residentsPerWorker);
+            ls.Label("FCS_SettingResidentsPerWorker".Translate() + residentsPerWorker);
             residentsPerWorker = (int)ls.Slider(residentsPerWorker, 1, 20);
 
             // Upkeep
             ls.Gap(8f);
-            ls.Label("Specialist base upkeep (silver/day): " + specialistBaseCost.ToString("F1"));
+            ls.Label("FCS_SettingBaseUpkeep".Translate() + specialistBaseCost.ToString("F1"));
             specialistBaseCost = (float)System.Math.Round(ls.Slider(specialistBaseCost, 0f, 20f), 1);
-            ls.Label("Upkeep skill divisor: " + skillDivisor.ToString("F0"));
+            ls.Label("FCS_SettingSkillDivisor".Translate() + skillDivisor.ToString("F0"));
             skillDivisor = (float)System.Math.Round(ls.Slider(skillDivisor, 1f, 50f), 0);
-            ls.Label("Upkeep scaling factor: " + scalingFactor.ToString("F1"));
+            ls.Label("FCS_SettingScalingFactor".Translate() + scalingFactor.ToString("F1"));
             scalingFactor = (float)System.Math.Round(ls.Slider(scalingFactor, 0f, 5f), 1);
 
             // XP
             ls.Gap(8f);
-            ls.Label("XP per day per skill: " + xpPerDay.ToString("F0"));
+            ls.Label("FCS_SettingXpPerDay".Translate() + xpPerDay.ToString("F0"));
             xpPerDay = (float)System.Math.Round(ls.Slider(xpPerDay, 0f, 2000f), 0);
 
             // Supply chain needs (only show if Supply Chain submod is active)
             if (ModsConfig.IsActive("Matathias.Empire.SupplyChain"))
             {
                 ls.Gap(8f);
-                ls.Label("-- Supply Chain Integration --");
-                ls.Label("Food per specialist/governor: " + foodPerSpecialist.ToString("F2"));
+                ls.Label("FCS_SettingSCHeader".Translate());
+                ls.Label("FCS_SettingFoodPerSpec".Translate() + foodPerSpecialist.ToString("F2"));
                 foodPerSpecialist = (float)System.Math.Round(ls.Slider(foodPerSpecialist, 0f, 2f), 2);
-                ls.Label("Food per resident: " + foodPerResident.ToString("F2"));
+                ls.Label("FCS_SettingFoodPerResident".Translate() + foodPerResident.ToString("F2"));
                 foodPerResident = (float)System.Math.Round(ls.Slider(foodPerResident, 0f, 1f), 2);
-                ls.Label("Medicine per specialist/governor: " + medicinePerSpecialist.ToString("F2"));
+                ls.Label("FCS_SettingMedPerSpec".Translate() + medicinePerSpecialist.ToString("F2"));
                 medicinePerSpecialist = (float)System.Math.Round(ls.Slider(medicinePerSpecialist, 0f, 1f), 2);
             }
 
             // Death chances
             ls.Gap(8f);
-            ls.Label("Civilian specialist death chance: " + (civilianDeathChance * 100f).ToString("F0") + "%");
+            ls.Label("FCS_SettingCivilianDeathChance".Translate() + (civilianDeathChance * 100f).ToString("F0") + "%");
             civilianDeathChance = (float)System.Math.Round(ls.Slider(civilianDeathChance, 0f, 1f), 2);
-            ls.Label("Governor death chance: " + (governorDeathChance * 100f).ToString("F0") + "%");
+            ls.Label("FCS_SettingGovernorDeathChance".Translate() + (governorDeathChance * 100f).ToString("F0") + "%");
             governorDeathChance = (float)System.Math.Round(ls.Slider(governorDeathChance, 0f, 1f), 2);
-            ls.Label("Defense specialist death chance: " + (defenseDeathChance * 100f).ToString("F0") + "%");
+            ls.Label("FCS_SettingDefenseDeathChance".Translate() + (defenseDeathChance * 100f).ToString("F0") + "%");
             defenseDeathChance = (float)System.Math.Round(ls.Slider(defenseDeathChance, 0f, 1f), 2);
-            ls.Label("Resident death chance: " + (residentDeathChance * 100f).ToString("F0") + "%");
+            ls.Label("FCS_SettingResidentDeathChance".Translate() + (residentDeathChance * 100f).ToString("F0") + "%");
             residentDeathChance = (float)System.Math.Round(ls.Slider(residentDeathChance, 0f, 1f), 2);
-            ls.Label("Death reduction per defender: " + (deathReductionPerDefender * 100f).ToString("F0") + "%");
+            ls.Label("FCS_SettingDeathReduction".Translate() + (deathReductionPerDefender * 100f).ToString("F0") + "%");
             deathReductionPerDefender = (float)System.Math.Round(ls.Slider(deathReductionPerDefender, 0f, 0.1f), 2);
 
             ls.End();
@@ -138,7 +138,7 @@ namespace FactionColonies.Specialists
             settings = GetSettings<FCSSettings>();
         }
 
-        public override string SettingsCategory() => "Empire Refactored: Specialists & Governors";
+        public override string SettingsCategory() => "FCS_SettingsCategory".Translate();
 
         public override void DoSettingsWindowContents(Rect inRect) => settings.DoWindowContents(inRect);
     }

@@ -47,9 +47,8 @@ namespace FactionColonies.Specialists
                 LetterDef letterDef = role == SpecialistRole.Governor
                     ? LetterDefOf.Death : LetterDefOf.NegativeEvent;
                 string label = role == SpecialistRole.Governor
-                    ? "Governor killed" : "Specialist killed";
-                string text = pawn.LabelShort + " (" + role + ") was killed in the attack on "
-                    + settlement.Name + ".";
+                    ? "FCS_LetterGovernorKilled".Translate() : "FCS_LetterSpecialistKilled".Translate();
+                string text = "FCS_LetterDeathAttack".Translate(pawn.LabelShort, role.Translate(), settlement.Name);
                 Find.LetterStack.ReceiveLetter(label, text, letterDef);
             }
         }

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+	<!-- Settings -->
+	<FCS_SettingsCategory>Empire Refactored: Specialists &amp; Governors</FCS_SettingsCategory>
+	<FCS_SettingDebugLog>Enable debug logging</FCS_SettingDebugLog>
+	<FCS_SettingResidentsPerWorker>Residents per bonus worker: </FCS_SettingResidentsPerWorker>
+	<FCS_SettingBaseUpkeep>Specialist base upkeep (silver/day): </FCS_SettingBaseUpkeep>
+	<FCS_SettingSkillDivisor>Upkeep skill divisor: </FCS_SettingSkillDivisor>
+	<FCS_SettingScalingFactor>Upkeep scaling factor: </FCS_SettingScalingFactor>
+	<FCS_SettingXpPerDay>XP per day per skill: </FCS_SettingXpPerDay>
+	<FCS_SettingSCHeader>-- Supply Chain Integration --</FCS_SettingSCHeader>
+	<FCS_SettingFoodPerSpec>Food per specialist/governor: </FCS_SettingFoodPerSpec>
+	<FCS_SettingFoodPerResident>Food per resident: </FCS_SettingFoodPerResident>
+	<FCS_SettingMedPerSpec>Medicine per specialist/governor: </FCS_SettingMedPerSpec>
+	<FCS_SettingCivilianDeathChance>Civilian specialist death chance: </FCS_SettingCivilianDeathChance>
+	<FCS_SettingGovernorDeathChance>Governor death chance: </FCS_SettingGovernorDeathChance>
+	<FCS_SettingDefenseDeathChance>Defense specialist death chance: </FCS_SettingDefenseDeathChance>
+	<FCS_SettingResidentDeathChance>Resident death chance: </FCS_SettingResidentDeathChance>
+	<FCS_SettingDeathReduction>Death reduction per defender: </FCS_SettingDeathReduction>
+
+	<!-- Role Names -->
+	<FCS_RoleResident>Resident</FCS_RoleResident>
+	<FCS_RoleSpecialist>Specialist</FCS_RoleSpecialist>
+	<FCS_RoleDefense>Defense</FCS_RoleDefense>
+	<FCS_RoleGovernor>Governor</FCS_RoleGovernor>
+
+	<!-- Assignment Dialog -->
+	<FCS_AssignTitle>Assign Pawns to {0}</FCS_AssignTitle>
+	<FCS_RoleOccupied>{0} (occupied)</FCS_RoleOccupied>
+	<FCS_RoleCapReached>{0} (cap reached)</FCS_RoleCapReached>
+	<FCS_ConfirmCount>Confirm ({0})</FCS_ConfirmCount>
+
+	<!-- Gizmo -->
+	<FCS_GizmoAssignLabel>Assign to Settlement</FCS_GizmoAssignLabel>
+	<FCS_GizmoAssignDesc>Assign pawns from this caravan to work at {0}.</FCS_GizmoAssignDesc>
+
+	<!-- Tab -->
+	<FCS_TabName>Specialists</FCS_TabName>
+
+	<!-- Governor Section -->
+	<FCS_GovernorHeader>Governor</FCS_GovernorHeader>
+	<FCS_NoGovernor>No governor assigned</FCS_NoGovernor>
+	<FCS_FocusNone>None</FCS_FocusNone>
+	<FCS_FocusSlotLabel>F{0}: {1}</FCS_FocusSlotLabel>
+	<FCS_FocusNoFocus>No focus</FCS_FocusNoFocus>
+	<FCS_FocusSingleLabel>Focus: {0}</FCS_FocusSingleLabel>
+	<FCS_UpkeepDisplay>Upkeep: {0}s/day</FCS_UpkeepDisplay>
+
+	<!-- Specialist Section -->
+	<FCS_SpecDefHeader>Specialists ({0})  |  Defense ({1})</FCS_SpecDefHeader>
+
+	<!-- Buttons -->
+	<FCS_BtnRole>Role</FCS_BtnRole>
+	<FCS_BtnRecall>Recall</FCS_BtnRecall>
+
+	<!-- Resident Section -->
+	<FCS_ResidentHeader>Residents ({0})</FCS_ResidentHeader>
+	<FCS_WorkerBonusSuffix>  ->  +{0} workers</FCS_WorkerBonusSuffix>
+
+	<!-- Role Change Menu -->
+	<FCS_RoleReplaces>{0} (replaces {1})</FCS_RoleReplaces>
+
+	<!-- Contribution Summary -->
+	<FCS_ContribMilLevel>+{0} Mil.Lvl</FCS_ContribMilLevel>
+	<FCS_ContribProduction>+{0} {1}</FCS_ContribProduction>
+
+	<!-- Stat Modifier Descriptions -->
+	<FCS_StatWorkerBonus>+{0} workers ({1} residents)</FCS_StatWorkerBonus>
+	<FCS_StatEffectLine>+{0} ({1}: {2})</FCS_StatEffectLine>
+
+	<!-- Resource Modifier Descriptions -->
+	<FCS_ResSpecialists>Specialists: +{0} ({1})</FCS_ResSpecialists>
+	<FCS_ResGovernor>Governor: x{0} ({1} Social {2}{3})</FCS_ResGovernor>
+	<FCS_ResFocusTag>, Focus</FCS_ResFocusTag>
+
+	<!-- Death Letters -->
+	<FCS_LetterGovernorKilled>Governor killed</FCS_LetterGovernorKilled>
+	<FCS_LetterSpecialistKilled>Specialist killed</FCS_LetterSpecialistKilled>
+	<FCS_LetterDeathAttack>{0} ({1}) was killed in the attack on {2}.</FCS_LetterDeathAttack>
+	<FCS_LetterDeathDefending>{0} ({1}) died defending {2}.</FCS_LetterDeathDefending>
+
+</LanguageData>

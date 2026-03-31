@@ -56,7 +56,7 @@ namespace FactionColonies.Specialists
         {
             Text.Font = GameFont.Medium;
             Rect titleRect = new Rect(inRect.x, inRect.y, inRect.width, 35f);
-            Widgets.Label(titleRect, "Assign Pawns to " + comp.Settlement.Name);
+            Widgets.Label(titleRect, "FCS_AssignTitle".Translate(comp.Settlement.Name));
             Text.Font = GameFont.Small;
 
             float headerY = inRect.y + 45f;
@@ -102,7 +102,7 @@ namespace FactionColonies.Specialists
 
                 // Role selector
                 Rect roleRect = new Rect(skillRect.xMax + 4f, rowRect.y + 4f, 120f, RowHeight - 8f);
-                string roleLabel = entry.role.ToString();
+                string roleLabel = entry.role.Translate();
                 if (Widgets.ButtonText(roleRect, roleLabel))
                 {
                     List<FloatMenuOption> options = new List<FloatMenuOption>();
@@ -110,16 +110,16 @@ namespace FactionColonies.Specialists
                     {
                         SpecialistRole localRole = role;
                         bool disabled = false;
-                        string label = role.ToString();
+                        string label = role.Translate();
 
                         if (role == SpecialistRole.Governor && hasGovernor && !IsAnyEntryGovernor())
                         {
-                            label += " (occupied)";
+                            label = "FCS_RoleOccupied".Translate(label);
                             disabled = true;
                         }
                         else if (role != SpecialistRole.Resident && role != entry.role && capReached)
                         {
-                            label += " (cap reached)";
+                            label = "FCS_RoleCapReached".Translate(label);
                             disabled = true;
                         }
 
@@ -164,7 +164,7 @@ namespace FactionColonies.Specialists
                 GUI.color = Color.gray;
             }
 
-            if (Widgets.ButtonText(confirmRect, "Confirm (" + selectedCount + ")") && selectedCount > 0)
+            if (Widgets.ButtonText(confirmRect, "FCS_ConfirmCount".Translate(selectedCount)) && selectedCount > 0)
             {
                 AssignSelected();
                 Close();
