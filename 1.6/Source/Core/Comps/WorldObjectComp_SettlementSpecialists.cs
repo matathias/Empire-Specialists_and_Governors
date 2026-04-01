@@ -852,7 +852,7 @@ namespace FactionColonies.Specialists
 
         // --- Helper methods for UI ---
 
-        private string BuildIdentityLine(Pawn pawn)
+        internal static string BuildIdentityLine(Pawn pawn)
         {
             List<string> parts = new List<string>();
             string title = pawn.story != null ? pawn.story.TitleShortCap : null;
@@ -861,8 +861,7 @@ namespace FactionColonies.Specialists
                 parts.Add(title);
             }
             parts.Add((string)"FCS_IdentityAge".Translate(pawn.ageTracker.AgeBiologicalYears));
-            if (ModsConfig.BiotechActive && pawn.genes != null
-                && pawn.genes.Xenotype != null && pawn.genes.Xenotype != XenotypeDefOf.Baseliner)
+            if (ModsConfig.BiotechActive && pawn.genes?.Xenotype != null)
             {
                 parts.Add(pawn.genes.XenotypeLabelCap);
             }
@@ -1389,18 +1388,16 @@ namespace FactionColonies.Specialists
             return 1.0 + (multiplier * foodSatisfaction);
         }
 
-        public string GetResourceModifierDesc(ResourceFC resource)
+        public string GetResourceAdditiveDesc(ResourceFC resource)
         {
-            StringBuilder sb = new StringBuilder();
+            if (resource.def.associatedSkills == null) return null;
 
-            // Specialist additive contributions
             double addTotal = 0;
             List<string> addParts = new List<string>();
             foreach (SpecialistFC s in allPawns)
             {
                 if (s.role != SpecialistRole.Specialist) continue;
                 if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
-                if (resource.def.associatedSkills == null) continue;
 
                 double pawnBonus = 0;
                 string bestSkillName = null;
@@ -1428,27 +1425,30 @@ namespace FactionColonies.Specialists
             }
             if (addTotal > 0)
             {
-                sb.Append("FCS_ResSpecialists".Translate(addTotal.ToString("F2"), string.Join(", ", addParts)));
+                return TextUtil.ColorizeAdditiveBonus(addTotal) + " - "
+                    + "FCS_ResSpecialists".Translate(string.Join(", ", addParts));
             }
+            return null;
+        }
 
-            // Governor multiplier contribution
+        public string GetResourceMultiplierDesc(ResourceFC resource)
+        {
+            if (resource.def.associatedSkills == null) return null;
+
             SpecialistFC gov = Governor;
-            if (gov != null && gov.pawn != null && !gov.pawn.Dead && gov.pawn.skills != null
-                && resource.def.associatedSkills != null)
-            {
-                double mult = GetResourceMultiplierModifier(resource);
-                if (Math.Abs(mult - 1.0) > 0.001)
-                {
-                    if (sb.Length > 0) sb.Append("\n");
-                    bool isFocused = gov.HasFocus(resource.def.defName);
-                    string focusTag = isFocused ? "FCS_ResFocusTag".Translate().ToString() : "";
-                    SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-                    int socialLevel = social?.Level ?? 0;
-                    sb.Append("FCS_ResGovernor".Translate(mult.ToString("F2"), gov.pawn.LabelShort, socialLevel, focusTag));
-                }
-            }
+            if (gov == null || gov.pawn == null || gov.pawn.Dead || gov.pawn.skills == null)
+                return null;
 
-            return sb.Length > 0 ? sb.ToString() : null;
+            double mult = GetResourceMultiplierModifier(resource);
+            if (Math.Abs(mult - 1.0) <= 0.001)
+                return null;
+
+            bool isFocused = gov.HasFocus(resource.def.defName);
+            string focusTag = isFocused ? "FCS_ResFocusTag".Translate().ToString() : "";
+            SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
+            int socialLevel = social != null ? social.Level : 0;
+            return TextUtil.ColorizeMultiplierBonus(mult) + " - "
+                + "FCS_ResGovernor".Translate(gov.pawn.LabelShort, socialLevel, focusTag);
         }
     }
 }

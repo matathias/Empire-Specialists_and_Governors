@@ -71,8 +71,8 @@
 	<FCS_StatEffectLine>+{0} ({1}: {2})</FCS_StatEffectLine>
 
 	<!-- Resource Modifier Descriptions -->
-	<FCS_ResSpecialists>Specialists: +{0} ({1})</FCS_ResSpecialists>
-	<FCS_ResGovernor>Governor: x{0} ({1} Social {2}{3})</FCS_ResGovernor>
+	<FCS_ResSpecialists>Specialists ({0})</FCS_ResSpecialists>
+	<FCS_ResGovernor>Governor ({0} Social {1}{2})</FCS_ResGovernor>
 	<FCS_ResFocusTag>, Focus</FCS_ResFocusTag>
 
 	<!-- Sub-tabs -->
@@ -101,6 +101,10 @@
 	<FCS_TooltipDefenseBonus>Military level bonus:\n  max(Melee {0}, Shooting {1}) × 0.05 = +{2}</FCS_TooltipDefenseBonus>
 	<FCS_TooltipUpkeep>Base: {0}s + (Skills: {1} / {2}) × {3}\n= {4}s/day{5}</FCS_TooltipUpkeep>
 	<FCS_TooltipUpkeepGovMult>\n× {0} (Governor)</FCS_TooltipUpkeepGovMult>
+
+	<!-- Assignment Dialog -->
+	<FCS_PreviewNoBonus>No production bonus</FCS_PreviewNoBonus>
+	<FCS_PreviewGovMult>×{0} {1}</FCS_PreviewGovMult>
 
 	<!-- Death Letters -->
 	<FCS_LetterGovernorKilled>Governor killed</FCS_LetterGovernorKilled>
