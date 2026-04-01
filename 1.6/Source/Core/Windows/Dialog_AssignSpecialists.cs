@@ -173,9 +173,9 @@ namespace FactionColonies.Specialists
             Widgets.Label(bonusRect, bonusText);
             GUI.color = Color.white;
 
-            // Checkbox (bottom-right of text area)
+            // Checkbox (vertically centered to match role button)
             float checkX = textX + textW - CheckboxSize - 4f;
-            float checkY = rowRect.y + 50f;
+            float checkY = rowRect.y + (CardRowHeight - CheckboxSize) / 2f;
             Widgets.Checkbox(new Vector2(checkX, checkY), ref entry.selected);
 
             Text.WordWrap = true;
@@ -250,10 +250,10 @@ namespace FactionColonies.Specialists
             {
                 SkillRecord melee = pawn.skills.GetSkill(SkillDefOf.Melee);
                 SkillRecord shooting = pawn.skills.GetSkill(SkillDefOf.Shooting);
-                int meleeLevel = melee != null ? melee.Level : 0;
-                int shootingLevel = shooting != null ? shooting.Level : 0;
+                int meleeLevel = melee?.Level ?? 0;
+                int shootingLevel = shooting?.Level ?? 0;
                 double bonus = Math.Max(meleeLevel, shootingLevel) * 0.05;
-                text = (string)"FCS_ContribMilLevel".Translate(bonus.ToString("F2"));
+                text = "FCS_ContribMilLevel".Translate(bonus.ToString("F2"));
                 color = DefenseColor;
                 return;
             }
@@ -294,7 +294,7 @@ namespace FactionColonies.Specialists
                 }
                 if (bestBonus > 0)
                 {
-                    text = (string)"FCS_ContribProduction".Translate(bestBonus.ToString("F2"), bestLabel);
+                    text = "FCS_ContribProduction".Translate(bestBonus.ToString("F2"), bestLabel);
                     color = bestColor;
                     return;
                 }

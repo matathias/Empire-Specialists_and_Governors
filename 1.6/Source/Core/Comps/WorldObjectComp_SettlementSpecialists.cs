@@ -413,11 +413,9 @@ namespace FactionColonies.Specialists
 
         // --- UI constants ---
         private const float SubTabHeight = 24f;
-        private const float CardHeight = 72f;
-        private const float GovCardHeight = 90f;
+        private const float CardHeight = 90f;
         private const float CardPadding = 4f;
-        private const float PortraitSize = 62f;
-        private const float GovPortraitSize = 80f;
+        private const float PortraitSize = 80f;
         private const float RoleBtnWidth = 55f;
         private const float RecallBtnWidth = 50f;
         private const float BtnHeight = 24f;
@@ -426,8 +424,25 @@ namespace FactionColonies.Specialists
         private const float SectionHeaderHeight = 26f;
         private const float InfoCardBtnSize = 24f;
         private const float AccentBarWidth = 3f;
-        private static readonly Color GovCardTint = new Color(0.25f, 0.22f, 0.15f);
         private static readonly Color DefenseContribColor = new Color(0.9f, 0.4f, 0.4f);
+
+        // Governor dashboard layout constants
+        private const float GovPanelPad = 6f;
+        private const float GovPanelGap = 6f;
+        private const float GovTopRowHeight = 145f;
+        private const float GovPortraitW = 80f;
+        private const float GovPortraitH = 100f;
+        private const float GovResCardW = 90f;
+        private const float GovResCardH = 95f;
+        private const float GovResCardGap = 4f;
+        private const float GovResBarH = 10f;
+        private const float GovResIconSize = 24f;
+        private const float GovGridHeaderH = 22f;
+        private static readonly Color GovFocusTint = new Color(0.4f, 0.35f, 0.15f, 0.3f);
+        private static readonly Color GovBarBg = new Color(0.15f, 0.15f, 0.15f);
+        private static readonly Color GovEmptyOverlay = new Color(0f, 0f, 0f, 0.45f);
+        private static readonly Color GovGreyedOut = new Color(1f, 1f, 1f, 0.35f);
+        private static readonly Color GovGreyedOutText = new Color(0.5f, 0.5f, 0.5f, 0.35f);
 
         public void PreOpenWindow(WorldSettlementFC settlement)
         {
@@ -448,7 +463,6 @@ namespace FactionColonies.Specialists
         {
             GameFont prevFont = Text.Font;
             TextAnchor prevAnchor = Text.Anchor;
-            bool prevWrap = Text.WordWrap;
             Color prevColor = GUI.color;
 
             // --- Sub-tab bar ---
@@ -492,157 +506,393 @@ namespace FactionColonies.Specialists
 
             Text.Font = prevFont;
             Text.Anchor = prevAnchor;
-            Text.WordWrap = prevWrap;
             GUI.color = prevColor;
         }
 
-        // --- Governor sub-tab ---
+        // --- Governor sub-tab (dashboard layout) ---
 
         private void DrawGovernorTab(Rect contentRect, ref SpecialistFC toRecall)
         {
             float x = contentRect.x;
             float w = contentRect.width;
-            float y = contentRect.y + 8f;
+            float y = contentRect.y + GovPanelPad;
 
             SpecialistFC gov = Governor;
-            if (gov == null || gov.pawn == null)
+            bool hasGov = gov != null && gov.pawn != null && !gov.pawn.Dead;
+
+            if (!hasGov)
             {
-                Text.Font = GameFont.Small;
+                // Draw greyed-out dashboard template
+                GUI.color = GovGreyedOut;
+            }
+
+            // ===== TOP ROW: Identity Card + Focus Card =====
+            float panelW = (w - GovPanelGap) / 2f;
+
+            DrawGovIdentityCard(new Rect(x, y, panelW, GovTopRowHeight), gov, hasGov, ref toRecall);
+            DrawGovFocusCard(new Rect(x + panelW + GovPanelGap, y, panelW, GovTopRowHeight), gov, hasGov);
+
+            y += GovTopRowHeight + GovPanelGap;
+
+            // ===== BOTTOM: Resource Contributions Grid =====
+            float gridH = contentRect.yMax - y;
+            DrawGovResourceGrid(new Rect(x, y, w, gridH), gov, hasGov);
+
+            // Empty state overlay
+            if (!hasGov)
+            {
+                GUI.color = Color.white;
+                Widgets.DrawBoxSolid(contentRect, GovEmptyOverlay);
+
+                Text.Font = GameFont.Medium;
                 Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(new Rect(contentRect.x, contentRect.center.y - 20f, contentRect.width, 30f),
+                    "FCS_NoGovernor".Translate());
+
+                Text.Font = GameFont.Small;
                 GUI.color = Color.gray;
-                Widgets.Label(contentRect, "FCS_NoGovernor".Translate());
+                Widgets.Label(new Rect(contentRect.x, contentRect.center.y + 10f, contentRect.width, 22f),
+                    "FCS_NoGovernorHint".Translate());
                 GUI.color = Color.white;
                 Text.Anchor = TextAnchor.UpperLeft;
-                return;
+            }
+        }
+
+        private void DrawGovIdentityCard(Rect rect, SpecialistFC gov, bool hasGov, ref SpecialistFC toRecall)
+        {
+            Widgets.DrawMenuSection(rect);
+
+            float px = rect.x + GovPanelPad;
+            float py = rect.y + (rect.height - GovPortraitH) / 2f;
+            Rect portraitRect = new Rect(px, py, GovPortraitW, GovPortraitH);
+
+            if (hasGov)
+            {
+                UIUtil.DrawPawnPortrait(portraitRect, gov.pawn, cameraZoom: 1.1f);
+            }
+            else
+            {
+                Widgets.DrawBoxSolid(portraitRect, new Color(0.12f, 0.12f, 0.12f));
             }
 
-            // --- Governor card with tinted background ---
-            Rect cardRect = new Rect(x, y, w, GovCardHeight);
-            Widgets.DrawBoxSolid(cardRect, GovCardTint);
-
-            // Portrait
-            float portraitY = y + (GovCardHeight - GovPortraitSize) / 2f;
-            Rect portraitRect = new Rect(x + CardPadding, portraitY, GovPortraitSize, GovPortraitSize);
-            UIUtil.DrawPawnPortrait(portraitRect, gov.pawn, cameraZoom: 1.1f);
-
-            // Text area to the right of portrait
             float textX = portraitRect.xMax + 8f;
-            float btnAreaW = RoleBtnWidth + BtnGap + RecallBtnWidth + CardPadding;
-            float textW = w - (textX - x) - btnAreaW - InfoCardBtnSize - 4f;
+            float textW = rect.xMax - textX - GovPanelPad;
+            float lineY = rect.y + GovPanelPad;
 
-            // Line 1: Name (medium font)
+            // Name
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(textX, y + 2f, textW, 24f), gov.pawn.LabelShort);
+            string name = hasGov ? gov.pawn.LabelShort : "\u2014";
+            Widgets.Label(new Rect(textX, lineY, textW - InfoCardBtnSize - 4f, 24f), name);
 
-            // Line 2: Identity (title, age, xenotype)
+            if (hasGov)
+            {
+                Widgets.InfoCardButton(rect.xMax - GovPanelPad - InfoCardBtnSize, lineY, gov.pawn);
+            }
+            lineY += 28f;
+
+            // Identity line (title, age, xenotype)
             Text.Font = GameFont.Small;
-            Text.WordWrap = false;
-            GUI.color = Color.gray;
-            string identity = BuildIdentityLine(gov.pawn);
-            Widgets.Label(new Rect(textX, y + 26f, textW, 20f), identity);
+            GUI.color = hasGov ? Color.gray : GovGreyedOutText;
+            string identity = hasGov ? BuildIdentityLine(gov.pawn) : "\u2014";
+            Widgets.Label(new Rect(textX, lineY, textW, 22f), identity);
+            lineY += 24f;
 
-            // Line 3: Skills
-            string skills = GetTopSkillLabel(gov);
-            Rect skillRect = new Rect(textX, y + 46f, textW, 20f);
-            Widgets.Label(skillRect, skills);
-            GUI.color = Color.white;
-            Text.WordWrap = true;
-            TooltipHandler.TipRegion(skillRect, (string)"FCS_TooltipSkills".Translate());
-
-            // Line 4: Upkeep + Social level
-            Text.Font = GameFont.Small;
-            double upkeep = CalculatePawnUpkeep(gov);
-            SkillRecord social = gov.pawn.skills != null ? gov.pawn.skills.GetSkill(SkillDefOf.Social) : null;
+            // Social skill
+            SkillRecord social = hasGov ? gov.pawn.skills?.GetSkill(SkillDefOf.Social) : null;
             int socialLevel = social != null ? social.Level : 0;
-            string upkeepText = "FCS_UpkeepDisplay".Translate(upkeep.ToString("F1"));
-            string socialText = (string)"FCS_GovSocial".Translate(socialLevel.ToString());
-            Rect upkeepRect = new Rect(textX, y + 66f, textW, 20f);
-            Widgets.Label(upkeepRect, upkeepText + "  |  " + socialText);
-            Text.Anchor = TextAnchor.UpperLeft;
-
-            // Upkeep tooltip
-            string upkeepTip = BuildUpkeepTooltip(gov);
-            if (upkeepTip != null)
-            {
-                TooltipHandler.TipRegion(upkeepRect, upkeepTip);
-            }
-
-            // Info card button
-            float infoX = textX + textW + 2f;
-            Widgets.InfoCardButton(infoX, y + 2f, gov.pawn);
-
-            // Role + Recall buttons (vertically centered in card)
-            float btnX = x + w - btnAreaW;
-            float btnY = y + (GovCardHeight - BtnHeight * 2 - BtnGap) / 2f;
-
-            if (Widgets.ButtonText(new Rect(btnX, btnY, RoleBtnWidth, BtnHeight), "FCS_BtnRole".Translate()))
-            {
-                ShowRoleChangeMenu(gov);
-            }
-            if (Widgets.ButtonText(new Rect(btnX + RoleBtnWidth + BtnGap, btnY, RecallBtnWidth, BtnHeight), "FCS_BtnRecall".Translate()))
-            {
-                toRecall = gov;
-            }
-
-            y += GovCardHeight + 12f;
-
-            // --- Focus controls ---
+            GUI.color = hasGov ? Color.white : GovGreyedOut;
             Text.Font = GameFont.Small;
-            bool isPatrician = HasTrait("patrician");
-            int maxFocuses = isPatrician ? 2 : 1;
-            double focusMult = HasTrait("meritocratic") ? 2.0 : 1.5;
-            string focusTip = (string)"FCS_TooltipFocus".Translate(focusMult.ToString("F1"));
+            string socialLabel = "FCS_GovSocial".Translate(hasGov ? socialLevel.ToString() : "\u2014");
+            Widgets.Label(new Rect(textX, lineY, textW, 22f), socialLabel);
+            lineY += 24f;
 
-            if (maxFocuses > 1)
+            // Upkeep
+            double upkeep = hasGov ? CalculatePawnUpkeep(gov) : 0;
+            string upkeepText = "FCS_UpkeepDisplay".Translate(hasGov ? upkeep.ToString("F1") : "\u2014");
+            Rect upkeepRect = new Rect(textX, lineY, textW, 22f);
+            Widgets.Label(upkeepRect, upkeepText);
+            if (hasGov)
             {
-                float perBtn = Math.Min((w - BtnGap) / 2f, 250f);
-                for (int fi = 0; fi < maxFocuses; fi++)
+                string upkeepTip = BuildUpkeepTooltip(gov);
+                if (upkeepTip != null) TooltipHandler.TipRegion(upkeepRect, upkeepTip);
+            }
+            lineY += 24f;
+
+            // XP rate (mirrors CompTick logic)
+            Text.Font = GameFont.Tiny;
+            GUI.color = hasGov ? new Color(0.7f, 0.7f, 0.7f) : GovGreyedOutText;
+            float xpPerDay = FCSSettings.xpPerDay;
+            if (HasTrait("specialistCorps")) xpPerDay *= 2f;
+            else if (HasTrait("meritocratic")) xpPerDay *= 1.5f;
+            string xpText = hasGov
+                ? (string)"FCS_GovXpRate".Translate(((int)xpPerDay).ToString())
+                : "\u2014";
+            Widgets.Label(new Rect(textX, lineY, textW, 16f), xpText);
+
+            GUI.color = hasGov ? Color.white : GovGreyedOut;
+
+            // Recall button at bottom-right of card
+            if (hasGov)
+            {
+                float recallX = rect.xMax - GovPanelPad - RecallBtnWidth;
+                float recallY = rect.yMax - GovPanelPad - BtnHeight;
+                if (Widgets.ButtonText(new Rect(recallX, recallY, RecallBtnWidth, BtnHeight), "FCS_BtnRecall".Translate()))
                 {
-                    string fLabel = "FCS_FocusNone".Translate();
-                    if (fi < gov.governorFocuses.Count && gov.governorFocuses[fi] != null)
+                    toRecall = gov;
+                }
+            }
+
+            // Tooltip on portrait: full bio
+            if (hasGov)
+            {
+                string topSkills = GetTopSkillLabel(gov);
+                TooltipHandler.TipRegion(portraitRect, gov.pawn.LabelShort + "\n" + topSkills + "\n\n" + (string)"FCS_TooltipSkills".Translate());
+            }
+
+            Text.Anchor = TextAnchor.UpperLeft;
+        }
+
+        private void DrawGovFocusCard(Rect rect, SpecialistFC gov, bool hasGov)
+        {
+            Widgets.DrawMenuSection(rect);
+
+            float ix = rect.x + GovPanelPad;
+            float iy = rect.y + GovPanelPad;
+            float iw = rect.width - GovPanelPad * 2f;
+
+            // Header
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            GUI.color = hasGov ? new Color(0.85f, 0.75f, 0.5f) : GovGreyedOutText;
+            Widgets.Label(new Rect(ix, iy, iw, 22f), "FCS_GovFocusHeader".Translate());
+            iy += 24f;
+
+            GUI.color = hasGov ? Color.white : GovGreyedOut;
+
+            bool isPatrician = HasTrait("patrician");
+            bool isMeritocratic = HasTrait("meritocratic");
+            int maxFocuses = isPatrician ? 2 : 1;
+            double focusMult = isMeritocratic ? 2.0 : 1.5;
+
+            // Focus selector button(s)
+            if (hasGov)
+            {
+                string focusTip = (string)"FCS_TooltipFocus".Translate(focusMult.ToString("F1"));
+                if (maxFocuses > 1)
+                {
+                    float perBtn = (iw - BtnGap) / 2f;
+                    for (int fi = 0; fi < maxFocuses; fi++)
                     {
-                        ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[fi]);
-                        if (fd != null) fLabel = fd.LabelCap;
+                        string fLabel = "FCS_FocusNone".Translate();
+                        if (fi < gov.governorFocuses.Count && gov.governorFocuses[fi] != null)
+                        {
+                            ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[fi]);
+                            if (fd != null) fLabel = fd.LabelCap;
+                        }
+                        int localSlot = fi;
+                        Rect focusBtnRect = new Rect(ix + fi * (perBtn + BtnGap), iy, perBtn, BtnHeight);
+                        if (Widgets.ButtonText(focusBtnRect, "FCS_FocusSlotLabel".Translate(fi + 1, fLabel)))
+                        {
+                            ShowGovernorFocusMenu(gov, localSlot);
+                        }
+                        TooltipHandler.TipRegion(focusBtnRect, focusTip);
                     }
-                    float fbX = x + fi * (perBtn + BtnGap);
-                    int localSlot = fi;
-                    Rect focusBtnRect = new Rect(fbX, y, perBtn, BtnHeight);
-                    if (Widgets.ButtonText(focusBtnRect,
-                        "FCS_FocusSlotLabel".Translate(fi + 1, fLabel)))
+                }
+                else
+                {
+                    string focusLabel = "FCS_FocusNoFocus".Translate();
+                    if (gov.governorFocuses.Count > 0 && gov.governorFocuses[0] != null)
                     {
-                        ShowGovernorFocusMenu(gov, localSlot);
+                        ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[0]);
+                        if (fd != null) focusLabel = fd.LabelCap;
+                    }
+                    Rect focusBtnRect = new Rect(ix, iy, Math.Min(iw, 250f), BtnHeight);
+                    if (Widgets.ButtonText(focusBtnRect, "FCS_FocusSingleLabel".Translate(focusLabel)))
+                    {
+                        ShowGovernorFocusMenu(gov, 0);
                     }
                     TooltipHandler.TipRegion(focusBtnRect, focusTip);
                 }
             }
             else
             {
-                string focusLabel = "FCS_FocusNoFocus".Translate();
-                if (gov.governorFocuses.Count > 0 && gov.governorFocuses[0] != null)
-                {
-                    ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[0]);
-                    if (fd != null) focusLabel = fd.LabelCap;
-                }
-                Rect focusBtnRect = new Rect(x, y, Math.Min(w, 250f), BtnHeight);
-                if (Widgets.ButtonText(focusBtnRect,
-                    "FCS_FocusSingleLabel".Translate(focusLabel)))
-                {
-                    ShowGovernorFocusMenu(gov, 0);
-                }
-                TooltipHandler.TipRegion(focusBtnRect, focusTip);
+                GUI.color = GovGreyedOutText;
+                Widgets.Label(new Rect(ix, iy, iw, BtnHeight), "\u2014");
+                GUI.color = GovGreyedOut;
             }
+            iy += BtnHeight + 8f;
 
-            y += BtnHeight + 8f;
+            // Multiplier info
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            string multLabel = "FCS_GovFocusMult".Translate(focusMult.ToString("F1"));
+            if (isMeritocratic)
+                multLabel += " " + "FCS_GovMeritocraticTag".Translate();
+            Widgets.Label(new Rect(ix, iy, iw, 22f), multLabel);
+            iy += 24f;
 
-            // --- Governor multiplier summary ---
-            string multSummary = BuildGovMultiplierSummary();
-            if (multSummary != null)
+            // Social factor
+            SkillRecord social = hasGov ? gov.pawn.skills?.GetSkill(SkillDefOf.Social) : null;
+            int socialLevel = social != null ? social.Level : 0;
+            double socialFactor = isMeritocratic
+                ? 0.75 + (socialLevel / 16.0)
+                : 0.5 + (socialLevel / 20.0);
+            string socialFactorText = hasGov
+                ? "FCS_GovSocialFactor".Translate(socialFactor.ToString("F3"))
+                : "FCS_GovSocialFactor".Translate("\u2014");
+            Rect socialFactorRect = new Rect(ix, iy, iw, 22f);
+            Widgets.Label(socialFactorRect, socialFactorText);
+            if (hasGov)
             {
-                Text.Font = GameFont.Small;
-                GUI.color = new Color(0.85f, 0.75f, 0.5f);
-                Widgets.Label(new Rect(x, y, w, 22f), multSummary);
-                GUI.color = Color.white;
+                string formula = isMeritocratic
+                    ? "0.75 + (" + socialLevel + " / 16)"
+                    : "0.5 + (" + socialLevel + " / 20)";
+                TooltipHandler.TipRegion(socialFactorRect,
+                    (string)"FCS_TooltipSocialFactor".Translate(formula, socialLevel.ToString(), socialFactor.ToString("F3")));
+            }
+            iy += 24f;
+
+            // Food satisfaction
+            Color satColor;
+            if (!hasGov)
+                satColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
+            else if (foodSatisfaction >= 0.9f)
+                satColor = AccentUtil.StatGood;
+            else if (foodSatisfaction >= 0.5f)
+                satColor = AccentUtil.StatMedBad;
+            else
+                satColor = AccentUtil.StatBad;
+
+            GUI.color = satColor;
+            string satText = hasGov
+                ? "FCS_GovFoodSat".Translate(((int)(foodSatisfaction * 100)).ToString())
+                : "FCS_GovFoodSat".Translate("\u2014");
+            Widgets.Label(new Rect(ix, iy, iw, 22f), satText);
+            GUI.color = hasGov ? Color.white : GovGreyedOut;
+
+            Text.Anchor = TextAnchor.UpperLeft;
+        }
+
+        private void DrawGovResourceGrid(Rect rect, SpecialistFC gov, bool hasGov)
+        {
+            float x = rect.x;
+            float w = rect.width;
+            float y = rect.y;
+
+            // Section header
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            GUI.color = hasGov ? Color.white : GovGreyedOut;
+            Widgets.Label(new Rect(x, y, w * 0.6f, GovGridHeaderH), "FCS_GovResHeader".Translate());
+
+            // Total multiplier (right-aligned)
+            if (hasGov)
+            {
+                string multSummary = BuildGovMultiplierSummary();
+                if (multSummary != null)
+                {
+                    Text.Anchor = TextAnchor.MiddleRight;
+                    GUI.color = new Color(0.85f, 0.75f, 0.5f);
+                    Widgets.Label(new Rect(x, y, w, GovGridHeaderH), multSummary);
+                    GUI.color = Color.white;
+                }
+            }
+            Text.Anchor = TextAnchor.UpperLeft;
+            y += GovGridHeaderH + 2f;
+
+            // Gather resource data and cache multipliers (avoid redundant LINQ lookups)
+            if (uiSettlement == null) return;
+
+            List<ResourceFC> resources = uiSettlement.Resources.ToList();
+            double[] multipliers = new double[resources.Count];
+            double maxBonus = 0;
+            for (int i = 0; i < resources.Count; i++)
+            {
+                multipliers[i] = hasGov ? GetResourceMultiplierModifier(resources[i]) : 1.0;
+                double bonus = Math.Abs(multipliers[i] - 1.0);
+                if (bonus > maxBonus) maxBonus = bonus;
+            }
+            if (maxBonus < 0.001) maxBonus = 1.0; // avoid division by zero
+
+            // Calculate grid layout
+            int cardsPerRow = Math.Max(1, (int)((w + GovResCardGap) / (GovResCardW + GovResCardGap)));
+            float totalCardW = cardsPerRow * GovResCardW + (cardsPerRow - 1) * GovResCardGap;
+            float gridOffsetX = x + (w - totalCardW) / 2f; // center the grid
+
+            for (int i = 0; i < resources.Count; i++)
+            {
+                ResourceFC res = resources[i];
+                int col = i % cardsPerRow;
+                int row = i / cardsPerRow;
+                float cx = gridOffsetX + col * (GovResCardW + GovResCardGap);
+                float cy = y + row * (GovResCardH + GovResCardGap);
+
+                Rect cardRect = new Rect(cx, cy, GovResCardW, GovResCardH);
+
+                // Card background, with focus tint overlay
+                bool isFocused = hasGov && gov.HasFocus(res.def.defName);
+                Widgets.DrawMenuSection(cardRect);
+                if (isFocused)
+                {
+                    Widgets.DrawBoxSolid(cardRect, GovFocusTint);
+                }
+
+                float innerX = cx + GovPanelPad;
+                float innerW = GovResCardW - GovPanelPad * 2f;
+                float innerY = cy + GovPanelPad;
+
+                // Resource icon (centered)
+                float iconX = cx + (GovResCardW - GovResIconSize) / 2f;
+                GUI.color = hasGov ? Color.white : GovGreyedOut;
+                GUI.DrawTexture(new Rect(iconX, innerY, GovResIconSize, GovResIconSize), res.def.Icon);
+                innerY += GovResIconSize + 2f;
+
+                // Resource name (centered)
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(new Rect(cx, innerY, GovResCardW, 16f), res.def.LabelCap);
+                innerY += 18f;
+
+                // Progress bar (using cached multiplier)
+                double bonus = multipliers[i] - 1.0;
+                float barProgress = (float)(Math.Abs(bonus) / maxBonus);
+                barProgress = Mathf.Clamp01(barProgress);
+
+                Rect barRect = new Rect(innerX, innerY, innerW, GovResBarH);
+                Color barColor = isFocused
+                    ? new Color(0.85f, 0.75f, 0.3f)
+                    : AccentUtil.Income;
+                if (!hasGov) barColor = new Color(0.3f, 0.3f, 0.3f, GovGreyedOut.a);
+                UIUtil.DrawProgressBarColors(barRect, barProgress, GovBarBg, barColor);
+                innerY += GovResBarH + 2f;
+
+                // Bonus percentage (centered)
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleCenter;
+                string bonusText = hasGov
+                    ? (bonus >= 0 ? "+" : "") + (bonus * 100).ToString("F1") + "%"
+                    : "+0.0%";
+                GUI.color = hasGov ? (isFocused ? new Color(0.85f, 0.75f, 0.3f) : AccentUtil.Income) : GovGreyedOutText;
+                Widgets.Label(new Rect(cx, innerY, GovResCardW, 16f), bonusText);
+                GUI.color = hasGov ? Color.white : GovGreyedOut;
+
+                // Tooltip with formula breakdown (or explanation for zero-bonus)
+                if (hasGov)
+                {
+                    if (Math.Abs(bonus) > 0.001)
+                    {
+                        string tip = BuildGovResourceTooltip(res, gov);
+                        if (tip != null) TooltipHandler.TipRegion(cardRect, tip);
+                    }
+                    else if (res.def.associatedSkills == null || res.def.associatedSkills.Count == 0)
+                    {
+                        TooltipHandler.TipRegion(cardRect,
+                            (string)"FCS_GovResTooltipNoSkills".Translate(res.def.LabelCap));
+                    }
+                }
+
+                Text.Anchor = TextAnchor.UpperLeft;
             }
         }
 
@@ -766,10 +1016,12 @@ namespace FactionColonies.Specialists
             // Alternating background
             if (rowIdx % 2 == 0) Widgets.DrawLightHighlight(rowRect);
 
+            Color accentColor = Color.white;
+
             // Resource accent bar on left edge
             if (showContribution)
             {
-                Color accentColor = GetBestResourceColor(s);
+                accentColor = GetBestResourceColor(s);
                 accentColor.a = 0.5f;
                 Widgets.DrawBoxSolid(new Rect(rowRect.x, rowRect.y, AccentBarWidth, rowRect.height), accentColor);
             }
@@ -784,6 +1036,7 @@ namespace FactionColonies.Specialists
             float textX = portraitRect.xMax + 8f;
             float btnAreaW = RoleBtnWidth + BtnGap + RecallBtnWidth + CardPadding;
             float textW = rowRect.width - (textX - rowRect.x) - btnAreaW - InfoCardBtnSize - 4f;
+            float textFullW = rowRect.width - (textX - rowRect.x) - 4f;
 
             // Line 1: Name
             Text.Font = GameFont.Small;
@@ -793,7 +1046,6 @@ namespace FactionColonies.Specialists
 
             // Line 2: Identity (title, age, xenotype)
             Text.Font = GameFont.Tiny;
-            Text.WordWrap = false;
             GUI.color = Color.gray;
             string identity = BuildIdentityLine(s.pawn);
             Rect identityRect = new Rect(textX, rowRect.y + 18f, textW, 16f);
@@ -814,10 +1066,9 @@ namespace FactionColonies.Specialists
                 string contrib = GetContributionSummary(s);
                 if (contrib.Length > 0)
                 {
-                    GUI.color = GetBestResourceColor(s);
-                    Rect contribRect = new Rect(textX, rowRect.y + 50f, textW, 16f);
-                    Widgets.Label(contribRect, contrib);
-                    GUI.color = Color.white;
+                    accentColor.a = 1f;
+                    Rect contribRect = new Rect(textX, rowRect.y + 50f, textFullW, 34f);
+                    UIUtil.DrawColoredLabel(contribRect, contrib, accentColor);
 
                     // Contribution tooltip
                     string contribTip = BuildContributionTooltip(s);
@@ -827,18 +1078,17 @@ namespace FactionColonies.Specialists
                     }
                 }
             }
-            Text.WordWrap = true;
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
             // Info card button (next to name, right side)
             float infoX = textX + textW + 2f;
-            float infoY = rowRect.y + 2f;
+            float infoY = rowRect.y + 10f;
             Widgets.InfoCardButton(infoX, infoY, s.pawn);
 
             // Role + Recall buttons (vertically centered)
             float btnX = rowRect.xMax - btnAreaW;
-            float btnY = rowRect.y + (CardHeight - BtnHeight * 2 - BtnGap) / 2f;
+            float btnY = rowRect.y + 10f; //(CardHeight - BtnHeight * 2 - BtnGap) / 2f;
 
             if (Widgets.ButtonText(new Rect(btnX, btnY, RoleBtnWidth, BtnHeight), "FCS_BtnRole".Translate()))
             {
@@ -985,6 +1235,55 @@ namespace FactionColonies.Specialists
                 }
             }
             return bestColor;
+        }
+
+        private string BuildGovResourceTooltip(ResourceFC resource, SpecialistFC gov)
+        {
+            if (gov == null || gov.pawn == null || gov.pawn.skills == null) return null;
+            if (resource.def.associatedSkills == null) return null;
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine((string)"FCS_GovResTooltipHeader".Translate(resource.def.LabelCap));
+            sb.AppendLine("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
+
+            double raw = 0;
+            foreach (SkillDef skillDef in resource.def.associatedSkills)
+            {
+                SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
+                if (weight == null) continue;
+                SkillRecord skill = gov.pawn.skills.GetSkill(skillDef);
+                if (skill != null && skill.Level > 0)
+                {
+                    double contrib = skill.Level * weight.governorMultiplierPerLevel;
+                    raw += contrib;
+                    sb.AppendLine((string)"FCS_GovResTooltipSkill".Translate(
+                        skillDef.skillLabel.CapitalizeFirst(),
+                        skill.Level.ToString(),
+                        weight.governorMultiplierPerLevel.ToString("F3"),
+                        contrib.ToString("F3")));
+                }
+            }
+
+            bool isMeritocratic = HasTrait("meritocratic");
+            SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
+            int socialLevel = social != null ? social.Level : 0;
+            double socialFactor = isMeritocratic
+                ? 0.75 + (socialLevel / 16.0)
+                : 0.5 + (socialLevel / 20.0);
+
+            bool isFocused = gov.HasFocus(resource.def.defName);
+            double focusBonus = isFocused ? (isMeritocratic ? 2.0 : 1.5) : 1.0;
+
+            sb.AppendLine((string)"FCS_GovResTooltipSocial".Translate(socialFactor.ToString("F3")));
+            sb.AppendLine((string)"FCS_GovResTooltipFocus".Translate(focusBonus.ToString("F1")));
+            sb.AppendLine((string)"FCS_GovResTooltipFood".Translate(foodSatisfaction.ToString("F1")));
+            sb.AppendLine("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
+
+            double finalMult = raw * socialFactor * focusBonus * foodSatisfaction;
+            sb.AppendLine((string)"FCS_GovResTooltipFinal".Translate((finalMult * 100).ToString("F1")));
+            sb.Append((string)"FCS_GovResTooltipBarNote".Translate());
+
+            return sb.ToString();
         }
 
         private string BuildGovMultiplierSummary()
@@ -1134,8 +1433,8 @@ namespace FactionColonies.Specialists
 
             if (s.role == SpecialistRole.Specialist && uiSettlement != null)
             {
-                double bestBonus = 0;
-                string bestLabel = "";
+                // Collect all resource bonuses, sorted descending
+                List<KeyValuePair<string, double>> bonuses = new List<KeyValuePair<string, double>>();
                 foreach (ResourceFC resource in uiSettlement.Resources)
                 {
                     if (resource.def.associatedSkills == null) continue;
@@ -1150,15 +1449,21 @@ namespace FactionColonies.Specialists
                             resBonus += skill.Level * weight.specialistAdditivePerLevel;
                         }
                     }
-                    if (resBonus > bestBonus)
+                    if (resBonus > 0.001)
                     {
-                        bestBonus = resBonus;
-                        bestLabel = resource.def.LabelCap;
+                        bonuses.Add(new KeyValuePair<string, double>(resource.def.LabelCap, resBonus));
                     }
                 }
-                if (bestBonus > 0)
+                if (bonuses.Count > 0)
                 {
-                    return "FCS_ContribProduction".Translate(bestBonus.ToString("F2"), bestLabel);
+                    bonuses.Sort((a, b) => b.Value.CompareTo(a.Value));
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < bonuses.Count; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append("+" + bonuses[i].Value.ToString("F2") + " " + bonuses[i].Key);
+                    }
+                    return sb.ToString();
                 }
             }
 
@@ -1310,6 +1615,7 @@ namespace FactionColonies.Specialists
                     }
                     if (total > 0)
                     {
+                        total = Math.Round(total, 2);
                         if (sb.Length > 0) sb.Append("\n");
                         sb.Append("FCS_StatEffectLine".Translate(total.ToString("F1"), def.skill.skillLabel, string.Join(", ", parts)));
                     }
@@ -1425,8 +1731,7 @@ namespace FactionColonies.Specialists
             }
             if (addTotal > 0)
             {
-                return TextUtil.ColorizeAdditiveBonus(addTotal) + " - "
-                    + "FCS_ResSpecialists".Translate(string.Join(", ", addParts));
+                return $"{TextUtil.ColorizeAdditiveBonus(Math.Round(addTotal,2))} - {"FCS_ResSpecialists".Translate(string.Join(", ", addParts))}";
             }
             return null;
         }
@@ -1446,9 +1751,8 @@ namespace FactionColonies.Specialists
             bool isFocused = gov.HasFocus(resource.def.defName);
             string focusTag = isFocused ? "FCS_ResFocusTag".Translate().ToString() : "";
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            int socialLevel = social != null ? social.Level : 0;
-            return TextUtil.ColorizeMultiplierBonus(mult) + " - "
-                + "FCS_ResGovernor".Translate(gov.pawn.LabelShort, socialLevel, focusTag);
+            int socialLevel = social?.Level ?? 0;
+            return $"{TextUtil.ColorizeMultiplierBonus(mult)} - {"FCS_ResGovernor".Translate(gov.pawn.LabelShort, socialLevel, focusTag)}";
         }
     }
 }

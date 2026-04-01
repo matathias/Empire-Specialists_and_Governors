@@ -90,6 +90,27 @@
 	<!-- Governor Details -->
 	<FCS_GovSocial>Social: {0}</FCS_GovSocial>
 	<FCS_GovMultSummary>Best effect: ×{0} {1}</FCS_GovMultSummary>
+	<FCS_GovXpRate>+{0} XP/day</FCS_GovXpRate>
+	<FCS_NoGovernorHint>Send a colonist via caravan to appoint one.</FCS_NoGovernorHint>
+
+	<!-- Governor Focus Card -->
+	<FCS_GovFocusHeader>FOCUS</FCS_GovFocusHeader>
+	<FCS_GovFocusMult>Focus multiplier: {0}x</FCS_GovFocusMult>
+	<FCS_GovMeritocraticTag>(Meritocratic)</FCS_GovMeritocraticTag>
+	<FCS_GovSocialFactor>Social factor: {0}x</FCS_GovSocialFactor>
+	<FCS_GovFoodSat>Food satisfaction: {0}%</FCS_GovFoodSat>
+
+	<!-- Governor Resource Grid -->
+	<FCS_GovResHeader>RESOURCE CONTRIBUTIONS</FCS_GovResHeader>
+	<FCS_GovResTooltipHeader>{0} Production Bonus</FCS_GovResTooltipHeader>
+	<FCS_GovResTooltipSkill>  {0}: {1} × {2} = +{3}</FCS_GovResTooltipSkill>
+	<FCS_GovResTooltipSocial>Social factor: × {0}</FCS_GovResTooltipSocial>
+	<FCS_GovResTooltipFocus>Focus bonus: × {0}</FCS_GovResTooltipFocus>
+	<FCS_GovResTooltipFood>Food satisfaction: × {0}</FCS_GovResTooltipFood>
+	<FCS_GovResTooltipFinal>Final multiplier: +{0}%</FCS_GovResTooltipFinal>
+	<FCS_GovResTooltipBarNote>Bar shows relative contribution strength.</FCS_GovResTooltipBarNote>
+	<FCS_GovResTooltipNoSkills>{0}: No associated skills.\nThis resource is not affected by governor bonuses.</FCS_GovResTooltipNoSkills>
+	<FCS_TooltipSocialFactor>Social factor scales the governor's production bonus.\n\nFormula: {0}\nSocial skill: {1}\nResult: {2}x</FCS_TooltipSocialFactor>
 
 	<!-- Tooltips -->
 	<FCS_TooltipSkills>Highest non-disabled skills.\nSkills matching a resource's associated skills determine this pawn's production bonuses.</FCS_TooltipSkills>
