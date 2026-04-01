@@ -407,205 +407,168 @@ namespace FactionColonies.Specialists
         // --- ISettlementWindowOverview ---
 
         private WorldSettlementFC uiSettlement;
-        private Vector2 scrollPos;
+        private int subTab;
+        private Vector2 scrollPosSpec;
+        private Vector2 scrollPosRes;
 
-        private const float RowHeight = 28f;
-        private const float SectionHeaderHeight = 26f;
+        // --- UI constants ---
+        private const float SubTabHeight = 24f;
+        private const float CardHeight = 64f;
+        private const float GovCardHeight = 90f;
+        private const float CardPadding = 4f;
+        private const float PortraitSize = 54f;
+        private const float GovPortraitSize = 80f;
         private const float RoleBtnWidth = 55f;
         private const float RecallBtnWidth = 50f;
+        private const float BtnHeight = 24f;
         private const float BtnGap = 4f;
+        private const float CardGap = 2f;
+        private const float SectionHeaderHeight = 26f;
 
         public void PreOpenWindow(WorldSettlementFC settlement)
         {
             uiSettlement = settlement;
-            scrollPos = Vector2.zero;
+            subTab = 0;
+            scrollPosSpec = Vector2.zero;
+            scrollPosRes = Vector2.zero;
         }
 
         public void OnTabSwitch()
         {
-            scrollPos = Vector2.zero;
+            subTab = 0;
+            scrollPosSpec = Vector2.zero;
+            scrollPosRes = Vector2.zero;
         }
 
         public void DrawOverviewTab(Rect boundingBox)
         {
-            float x = boundingBox.x;
-            float w = boundingBox.width;
-            float curY = boundingBox.y;
+            GameFont prevFont = Text.Font;
+            TextAnchor prevAnchor = Text.Anchor;
+            bool prevWrap = Text.WordWrap;
+            Color prevColor = GUI.color;
 
-            // --- Governor section (fixed, not scrolled) ---
+            // --- Sub-tab bar ---
+            float tabW = boundingBox.width / 3f;
+            string[] tabLabels =
+            {
+                "FCS_SubGovernor".Translate(),
+                "FCS_SubSpecialists".Translate(),
+                "FCS_SubResidents".Translate()
+            };
+
+            Rect chosenRect = new Rect();
+            for (int i = 0; i < 3; i++)
+            {
+                Rect tabRect = new Rect(boundingBox.x + tabW * i, boundingBox.y, tabW, SubTabHeight);
+                if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: subTab == i))
+                    subTab = i;
+                if (subTab == i)
+                    chosenRect = tabRect;
+            }
+            UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, boundingBox, Color.gray);
+
+            // --- Content area below sub-tabs ---
+            Rect contentRect = new Rect(boundingBox.x, boundingBox.y + SubTabHeight,
+                boundingBox.width, boundingBox.height - SubTabHeight);
+
             SpecialistFC toRecall = null;
-            curY = DrawGovernorSection(x, curY, w, ref toRecall);
-            curY += 4f;
 
-            // Separator line
-            Widgets.DrawLineHorizontal(x, curY, w);
-            curY += 4f;
+            if (subTab == 0)
+                DrawGovernorTab(contentRect, ref toRecall);
+            else if (subTab == 1)
+                DrawSpecialistsTab(contentRect, ref toRecall);
+            else
+                DrawResidentsTab(contentRect, ref toRecall);
 
-            // --- Scrollable list for specialists + residents ---
-            float scrollAreaHeight = boundingBox.yMax - curY;
-            Rect scrollOuterRect = new Rect(x, curY, w, scrollAreaHeight);
-
-            // Calculate total inner height
-            int specCount = CivilianSpecialists.Count();
-            int defCount = DefenseSpecialists.Count();
-            int resCount = Residents.Count();
-            int nonResidentCount = specCount + defCount;
-            float innerHeight = SectionHeaderHeight + (nonResidentCount * RowHeight)
-                + 8f + SectionHeaderHeight + (resCount * RowHeight) + 8f;
-
-            float scrollBarWidth = innerHeight > scrollAreaHeight ? 16f : 0f;
-            Rect scrollInnerRect = new Rect(0f, 0f, w - scrollBarWidth, innerHeight);
-
-            Widgets.BeginScrollView(scrollOuterRect, ref scrollPos, scrollInnerRect);
-            float sy = 0f;
-
-            // --- Specialist / Defense section header ---
-            Text.Font = GameFont.Small;
-            string specHeader = "FCS_SpecDefHeader".Translate(specCount, defCount);
-            Widgets.Label(new Rect(0f, sy, scrollInnerRect.width * 0.6f, SectionHeaderHeight), specHeader);
-
-            double totalUpkeep = CalculateTotalUpkeep();
-            Text.Anchor = TextAnchor.UpperRight;
-            Widgets.Label(new Rect(0f, sy, scrollInnerRect.width, SectionHeaderHeight),
-                "FCS_UpkeepDisplay".Translate(totalUpkeep.ToString("F1")));
-            Text.Anchor = TextAnchor.UpperLeft;
-            sy += SectionHeaderHeight;
-
-            // --- Specialist and Defense rows ---
-            int rowIdx = 0;
-            foreach (SpecialistFC s in allPawns)
-            {
-                if (s.role != SpecialistRole.Specialist && s.role != SpecialistRole.Defense) continue;
-                if (s.pawn == null) continue;
-
-                Rect rowRect = new Rect(0f, sy, scrollInnerRect.width, RowHeight);
-                if (rowIdx % 2 == 1) Widgets.DrawLightHighlight(rowRect);
-
-                float rx = 0f;
-
-                // Name
-                Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(rx, sy, 130f, RowHeight), s.pawn.LabelShort);
-                rx += 134f;
-
-                // Top skill
-                GUI.color = Color.gray;
-                string topSkill = GetTopSkillLabel(s);
-                Widgets.Label(new Rect(rx, sy, 100f, RowHeight), topSkill);
-                rx += 104f;
-                GUI.color = Color.white;
-
-                // Contribution
-                string contrib = GetContributionSummary(s);
-                Widgets.Label(new Rect(rx, sy, 110f, RowHeight), contrib);
-                rx = scrollInnerRect.width - RoleBtnWidth - BtnGap - RecallBtnWidth;
-
-                // Role button
-                Text.Anchor = TextAnchor.UpperLeft;
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "FCS_BtnRole".Translate()))
-                {
-                    ShowRoleChangeMenu(s);
-                }
-                rx += RoleBtnWidth + BtnGap;
-
-                // Recall button
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "FCS_BtnRecall".Translate()))
-                {
-                    toRecall = s;
-                }
-
-                Text.Anchor = TextAnchor.UpperLeft;
-                sy += RowHeight;
-                rowIdx++;
-            }
-
-            sy += 8f;
-
-            // --- Resident section header ---
-            int workerBonus = (int)Math.Floor(resCount / (double)FCSSettings.residentsPerWorker);
-            string resHeader = "FCS_ResidentHeader".Translate(resCount);
-            if (workerBonus > 0) resHeader += "FCS_WorkerBonusSuffix".Translate(workerBonus);
-            Widgets.Label(new Rect(0f, sy, scrollInnerRect.width, SectionHeaderHeight), resHeader);
-            sy += SectionHeaderHeight;
-
-            // --- Resident rows ---
-            rowIdx = 0;
-            foreach (SpecialistFC s in allPawns)
-            {
-                if (s.role != SpecialistRole.Resident) continue;
-                if (s.pawn == null) continue;
-
-                Rect rowRect = new Rect(0f, sy, scrollInnerRect.width, RowHeight);
-                if (rowIdx % 2 == 1) Widgets.DrawLightHighlight(rowRect);
-
-                Text.Anchor = TextAnchor.MiddleLeft;
-                Widgets.Label(new Rect(0f, sy, scrollInnerRect.width - RoleBtnWidth - BtnGap - RecallBtnWidth - 8f, RowHeight),
-                    s.pawn.LabelShort);
-
-                float rx = scrollInnerRect.width - RoleBtnWidth - BtnGap - RecallBtnWidth;
-                Text.Anchor = TextAnchor.UpperLeft;
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RoleBtnWidth, RowHeight - 4f), "FCS_BtnRole".Translate()))
-                {
-                    ShowRoleChangeMenu(s);
-                }
-                rx += RoleBtnWidth + BtnGap;
-
-                if (Widgets.ButtonText(new Rect(rx, sy + 2f, RecallBtnWidth, RowHeight - 4f), "FCS_BtnRecall".Translate()))
-                {
-                    toRecall = s;
-                }
-
-                sy += RowHeight;
-                rowIdx++;
-            }
-
-            Widgets.EndScrollView();
-
-            // Process recall outside the iteration
+            // Process recall outside iteration
             if (toRecall != null)
             {
                 RecallPawn(toRecall);
             }
+
+            Text.Font = prevFont;
+            Text.Anchor = prevAnchor;
+            Text.WordWrap = prevWrap;
+            GUI.color = prevColor;
         }
 
-        private float DrawGovernorSection(float x, float startY, float w, ref SpecialistFC toRecall)
+        // --- Governor sub-tab ---
+
+        private void DrawGovernorTab(Rect contentRect, ref SpecialistFC toRecall)
         {
-            float y = startY;
-            float btnX;
-            Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), "FCS_GovernorHeader".Translate());
-            Text.Font = GameFont.Small;
-            y += SectionHeaderHeight;
+            float x = contentRect.x;
+            float w = contentRect.width;
+            float y = contentRect.y + 8f;
 
             SpecialistFC gov = Governor;
             if (gov == null || gov.pawn == null)
             {
+                Text.Font = GameFont.Small;
+                Text.Anchor = TextAnchor.MiddleCenter;
                 GUI.color = Color.gray;
-                Widgets.Label(new Rect(x, y, w, RowHeight), "FCS_NoGovernor".Translate());
+                Widgets.Label(contentRect, "FCS_NoGovernor".Translate());
                 GUI.color = Color.white;
-                y += RowHeight;
-                return y;
+                Text.Anchor = TextAnchor.UpperLeft;
+                return;
             }
 
-            // Row 1: Name + skills + focus button
-            Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(x, y, 140f, RowHeight), gov.pawn.LabelShort);
+            // --- Governor card ---
+            Rect cardRect = new Rect(x, y, w, GovCardHeight);
+            Widgets.DrawLightHighlight(cardRect);
 
+            // Portrait
+            float portraitY = y + (GovCardHeight - GovPortraitSize) / 2f;
+            Rect portraitRect = new Rect(x + CardPadding, portraitY, GovPortraitSize, GovPortraitSize);
+            UIUtil.DrawPawnPortrait(portraitRect, gov.pawn, cameraZoom: 1.1f);
+
+            // Text area to the right of portrait
+            float textX = portraitRect.xMax + 8f;
+            float btnAreaW = RoleBtnWidth + BtnGap + RecallBtnWidth + CardPadding;
+            float textW = w - (textX - x) - btnAreaW;
+
+            // Name (medium font)
+            Text.Font = GameFont.Medium;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(textX, y + 4f, textW, 28f), gov.pawn.LabelShort);
+
+            // Skills (small, gray, no wrap)
+            Text.Font = GameFont.Small;
+            Text.WordWrap = false;
             GUI.color = Color.gray;
             string skills = GetTopSkillLabel(gov);
-            Widgets.Label(new Rect(x + 144f, y, 120f, RowHeight), skills);
+            Widgets.Label(new Rect(textX, y + 32f, textW, 22f), skills);
             GUI.color = Color.white;
+            Text.WordWrap = true;
 
-            // Focus button(s)
+            // Upkeep
+            Text.Font = GameFont.Small;
+            double upkeep = CalculatePawnUpkeep(gov);
+            Widgets.Label(new Rect(textX, y + 54f, textW, 22f), "FCS_UpkeepDisplay".Translate(upkeep.ToString("F1")));
+            Text.Anchor = TextAnchor.UpperLeft;
+
+            // Role + Recall buttons (vertically centered in card)
+            float btnX = x + w - btnAreaW;
+            float btnY = y + (GovCardHeight - BtnHeight * 2 - BtnGap) / 2f;
+
+            if (Widgets.ButtonText(new Rect(btnX, btnY, RoleBtnWidth, BtnHeight), "FCS_BtnRole".Translate()))
+            {
+                ShowRoleChangeMenu(gov);
+            }
+            if (Widgets.ButtonText(new Rect(btnX + RoleBtnWidth + BtnGap, btnY, RecallBtnWidth, BtnHeight), "FCS_BtnRecall".Translate()))
+            {
+                toRecall = gov;
+            }
+
+            y += GovCardHeight + 12f;
+
+            // --- Focus controls ---
+            Text.Font = GameFont.Small;
             bool isPatrician = HasTrait("patrician");
             int maxFocuses = isPatrician ? 2 : 1;
-            float focusBtnX = x + 268f;
-            float focusBtnW = w - 268f;
-            Text.Anchor = TextAnchor.UpperLeft;
 
             if (maxFocuses > 1)
             {
-                float perBtn = Math.Min((focusBtnW - (maxFocuses - 1) * 4f) / maxFocuses, 90f);
+                float perBtn = Math.Min((w - BtnGap) / 2f, 250f);
                 for (int fi = 0; fi < maxFocuses; fi++)
                 {
                     string fLabel = "FCS_FocusNone".Translate();
@@ -614,9 +577,9 @@ namespace FactionColonies.Specialists
                         ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[fi]);
                         if (fd != null) fLabel = fd.LabelCap;
                     }
-                    btnX = focusBtnX + fi * (perBtn + 4f);
+                    float fbX = x + fi * (perBtn + BtnGap);
                     int localSlot = fi;
-                    if (Widgets.ButtonText(new Rect(btnX, y + 2f, perBtn, RowHeight - 4f),
+                    if (Widgets.ButtonText(new Rect(fbX, y, perBtn, BtnHeight),
                         "FCS_FocusSlotLabel".Translate(fi + 1, fLabel)))
                     {
                         ShowGovernorFocusMenu(gov, localSlot);
@@ -631,34 +594,182 @@ namespace FactionColonies.Specialists
                     ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[0]);
                     if (fd != null) focusLabel = fd.LabelCap;
                 }
-                if (Widgets.ButtonText(new Rect(focusBtnX, y + 2f, Math.Min(focusBtnW, 150f), RowHeight - 4f),
+                if (Widgets.ButtonText(new Rect(x, y, Math.Min(w, 250f), BtnHeight),
                     "FCS_FocusSingleLabel".Translate(focusLabel)))
                 {
                     ShowGovernorFocusMenu(gov, 0);
                 }
             }
-            y += RowHeight;
+        }
 
-            // Row 2: Upkeep + role/recall buttons
-            double upkeep = CalculatePawnUpkeep(gov);
+        // --- Specialists / Defense sub-tab ---
+
+        private void DrawSpecialistsTab(Rect contentRect, ref SpecialistFC toRecall)
+        {
+            float x = contentRect.x;
+            float w = contentRect.width;
+            float y = contentRect.y + 4f;
+
+            // Header
+            int specCount = CivilianSpecialists.Count();
+            int defCount = DefenseSpecialists.Count();
+            int totalCards = specCount + defCount;
+
+            Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(x, y, 200f, RowHeight), "FCS_UpkeepDisplay".Translate(upkeep.ToString("F1")));
+            string specHeader = "FCS_SpecDefHeader".Translate(specCount, defCount);
+            Widgets.Label(new Rect(x, y, w * 0.6f, SectionHeaderHeight), specHeader);
 
+            double totalUpkeep = CalculateTotalUpkeep();
+            Text.Anchor = TextAnchor.MiddleRight;
+            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight),
+                "FCS_UpkeepDisplay".Translate(totalUpkeep.ToString("F1")));
             Text.Anchor = TextAnchor.UpperLeft;
-            btnX = x + w - RoleBtnWidth - BtnGap - RecallBtnWidth;
-            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RoleBtnWidth, RowHeight - 4f), "FCS_BtnRole".Translate()))
+            y += SectionHeaderHeight + 2f;
+
+            if (totalCards == 0)
             {
-                ShowRoleChangeMenu(gov);
-            }
-            btnX += RoleBtnWidth + BtnGap;
-            if (Widgets.ButtonText(new Rect(btnX, y + 2f, RecallBtnWidth, RowHeight - 4f), "FCS_BtnRecall".Translate()))
-            {
-                toRecall = gov;
+                Text.Anchor = TextAnchor.MiddleCenter;
+                GUI.color = Color.gray;
+                Rect emptyRect = new Rect(x, y, w, contentRect.yMax - y);
+                Widgets.Label(emptyRect, "FCS_NoSpecialists".Translate());
+                GUI.color = Color.white;
+                Text.Anchor = TextAnchor.UpperLeft;
+                return;
             }
 
+            // Scrollable card list
+            float scrollH = contentRect.yMax - y;
+            Rect scrollOuter = new Rect(x, y, w, scrollH);
+            float innerH = totalCards * (CardHeight + CardGap);
+            float scrollBarW = innerH > scrollH ? 16f : 0f;
+            Rect scrollInner = new Rect(0f, 0f, w - scrollBarW, innerH);
+
+            Widgets.BeginScrollView(scrollOuter, ref scrollPosSpec, scrollInner);
+            float sy = 0f;
+            int rowIdx = 0;
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (s.role != SpecialistRole.Specialist && s.role != SpecialistRole.Defense) continue;
+                if (s.pawn == null) continue;
+
+                Rect rowRect = new Rect(0f, sy, scrollInner.width, CardHeight);
+                DrawPawnCard(rowRect, s, true, rowIdx, ref toRecall);
+                sy += CardHeight + CardGap;
+                rowIdx++;
+            }
+            Widgets.EndScrollView();
+        }
+
+        // --- Residents sub-tab ---
+
+        private void DrawResidentsTab(Rect contentRect, ref SpecialistFC toRecall)
+        {
+            float x = contentRect.x;
+            float w = contentRect.width;
+            float y = contentRect.y + 4f;
+
+            // Header
+            int resCount = Residents.Count();
+            int workerBonus = (int)Math.Floor(resCount / (double)FCSSettings.residentsPerWorker);
+
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            string resHeader = "FCS_ResidentHeader".Translate(resCount);
+            if (workerBonus > 0) resHeader += "FCS_WorkerBonusSuffix".Translate(workerBonus);
+            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), resHeader);
             Text.Anchor = TextAnchor.UpperLeft;
-            y += RowHeight;
-            return y;
+            y += SectionHeaderHeight + 2f;
+
+            if (resCount == 0)
+            {
+                Text.Anchor = TextAnchor.MiddleCenter;
+                GUI.color = Color.gray;
+                Rect emptyRect = new Rect(x, y, w, contentRect.yMax - y);
+                Widgets.Label(emptyRect, "FCS_NoResidents".Translate());
+                GUI.color = Color.white;
+                Text.Anchor = TextAnchor.UpperLeft;
+                return;
+            }
+
+            // Scrollable card list
+            float scrollH = contentRect.yMax - y;
+            Rect scrollOuter = new Rect(x, y, w, scrollH);
+            float innerH = resCount * (CardHeight + CardGap);
+            float scrollBarW = innerH > scrollH ? 16f : 0f;
+            Rect scrollInner = new Rect(0f, 0f, w - scrollBarW, innerH);
+
+            Widgets.BeginScrollView(scrollOuter, ref scrollPosRes, scrollInner);
+            float sy = 0f;
+            int rowIdx = 0;
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (s.role != SpecialistRole.Resident) continue;
+                if (s.pawn == null) continue;
+
+                Rect rowRect = new Rect(0f, sy, scrollInner.width, CardHeight);
+                DrawPawnCard(rowRect, s, false, rowIdx, ref toRecall);
+                sy += CardHeight + CardGap;
+                rowIdx++;
+            }
+            Widgets.EndScrollView();
+        }
+
+        // --- Shared pawn card drawing ---
+
+        private void DrawPawnCard(Rect rowRect, SpecialistFC s, bool showContribution, int rowIdx, ref SpecialistFC toRecall)
+        {
+            // Alternating background
+            if (rowIdx % 2 == 0) Widgets.DrawLightHighlight(rowRect);
+
+            // Portrait
+            float portraitY = rowRect.y + (CardHeight - PortraitSize) / 2f;
+            Rect portraitRect = new Rect(rowRect.x + CardPadding, portraitY, PortraitSize, PortraitSize);
+            UIUtil.DrawPawnPortrait(portraitRect, s.pawn);
+
+            // Text area
+            float textX = portraitRect.xMax + 8f;
+            float btnAreaW = RoleBtnWidth + BtnGap + RecallBtnWidth + CardPadding;
+            float textW = rowRect.width - (textX - rowRect.x) - btnAreaW;
+
+            // Name
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            Widgets.Label(new Rect(textX, rowRect.y + 4f, textW, 22f), s.pawn.LabelShort);
+
+            // Skills (gray, no wrap)
+            Text.Font = GameFont.Tiny;
+            Text.WordWrap = false;
+            GUI.color = Color.gray;
+            string topSkill = GetTopSkillLabel(s);
+            Widgets.Label(new Rect(textX, rowRect.y + 24f, textW, 18f), topSkill);
+            GUI.color = Color.white;
+
+            // Contribution (if applicable)
+            if (showContribution)
+            {
+                string contrib = GetContributionSummary(s);
+                if (contrib.Length > 0)
+                {
+                    Widgets.Label(new Rect(textX, rowRect.y + 42f, textW, 18f), contrib);
+                }
+            }
+            Text.WordWrap = true;
+            Text.Font = GameFont.Small;
+            Text.Anchor = TextAnchor.UpperLeft;
+
+            // Role + Recall buttons (vertically centered)
+            float btnX = rowRect.xMax - btnAreaW;
+            float btnY = rowRect.y + (CardHeight - BtnHeight * 2 - BtnGap) / 2f;
+
+            if (Widgets.ButtonText(new Rect(btnX, btnY, RoleBtnWidth, BtnHeight), "FCS_BtnRole".Translate()))
+            {
+                ShowRoleChangeMenu(s);
+            }
+            if (Widgets.ButtonText(new Rect(btnX + RoleBtnWidth + BtnGap, btnY, RecallBtnWidth, BtnHeight), "FCS_BtnRecall".Translate()))
+            {
+                toRecall = s;
+            }
         }
 
         private void ShowGovernorFocusMenu(SpecialistFC gov, int slot = 0)
@@ -857,7 +968,7 @@ namespace FactionColonies.Specialists
 
         public double GetStatModifier(FCStatDef stat)
         {
-            double value = 0;
+            double value = stat.IdentityValue;
 
             // Residents contribute bonus workers
             if (stat == FCStatDefOf.workerBaseMax)
@@ -876,22 +987,20 @@ namespace FactionColonies.Specialists
             bool profArmy = HasTrait("professionalArmy");
             bool garrison = HasTrait("garrisonDoctrine");
             List<SpecialistStatEffectDef> effects = SpecialistsCache.StatEffectsForStat(stat);
-            if (effects != null)
+            if (effects?.Count > 0)
             {
                 foreach (SpecialistStatEffectDef def in effects)
                 {
                     foreach (SpecialistFC s in allPawns)
                     {
-                        if (s.pawn == null || s.pawn.Dead) continue;
+                        if (s.pawn?.skills is null || s.pawn.Dead) continue;
                         if (s.role != def.roleFilter) continue;
-                        if (s.pawn.skills == null) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
                         if (skill != null)
                         {
                             double contribution = skill.Level * def.specialistValuePerLevel;
                             // Professional Army: defense specialists contribute 2x military level
-                            if (profArmy && s.role == SpecialistRole.Defense
-                                && stat == FCStatDefOf.militaryBaseLevel)
+                            if (profArmy && s.role == SpecialistRole.Defense && stat == FCStatDefOf.militaryBaseLevel)
                             {
                                 contribution *= 2.0;
                             }
@@ -907,7 +1016,7 @@ namespace FactionColonies.Specialists
                 foreach (SpecialistFC s in allPawns)
                 {
                     if (s.role != SpecialistRole.Defense) continue;
-                    if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
+                    if (s.pawn?.skills is null || s.pawn.Dead) continue;
                     SkillRecord melee = s.pawn.skills.GetSkill(SkillDefOf.Melee);
                     SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
                     int best = Math.Max(melee?.Level ?? 0, shooting?.Level ?? 0);
