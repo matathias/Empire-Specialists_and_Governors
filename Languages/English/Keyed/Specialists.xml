@@ -84,6 +84,24 @@
 	<FCS_NoSpecialists>No specialists assigned</FCS_NoSpecialists>
 	<FCS_NoResidents>No residents assigned</FCS_NoResidents>
 
+	<!-- Identity -->
+	<FCS_IdentityAge>Age {0}</FCS_IdentityAge>
+
+	<!-- Governor Details -->
+	<FCS_GovSocial>Social: {0}</FCS_GovSocial>
+	<FCS_GovMultSummary>Best effect: ×{0} {1}</FCS_GovMultSummary>
+
+	<!-- Tooltips -->
+	<FCS_TooltipSkills>Highest non-disabled skills.\nSkills matching a resource's associated skills determine this pawn's production bonuses.</FCS_TooltipSkills>
+	<FCS_TooltipFocus>Focuses the governor's bonus on this resource.\nFocused resources receive a ×{0} governor multiplier.</FCS_TooltipFocus>
+	<FCS_TooltipContribHeader>{0} production bonus:</FCS_TooltipContribHeader>
+	<FCS_TooltipContribLine>  {0} {1} × {2} = +{3}</FCS_TooltipContribLine>
+	<FCS_TooltipContribTotal>Total: +{0}</FCS_TooltipContribTotal>
+	<FCS_TooltipContribBest>Best contribution: +{0} {1}</FCS_TooltipContribBest>
+	<FCS_TooltipDefenseBonus>Military level bonus:\n  max(Melee {0}, Shooting {1}) × 0.05 = +{2}</FCS_TooltipDefenseBonus>
+	<FCS_TooltipUpkeep>Base: {0}s + (Skills: {1} / {2}) × {3}\n= {4}s/day{5}</FCS_TooltipUpkeep>
+	<FCS_TooltipUpkeepGovMult>\n× {0} (Governor)</FCS_TooltipUpkeepGovMult>
+
 	<!-- Death Letters -->
 	<FCS_LetterGovernorKilled>Governor killed</FCS_LetterGovernorKilled>
 	<FCS_LetterSpecialistKilled>Specialist killed</FCS_LetterSpecialistKilled>
