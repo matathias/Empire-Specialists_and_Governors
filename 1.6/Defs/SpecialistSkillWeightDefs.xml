@@ -4,57 +4,57 @@
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Plants</defName>
     <skill>Plants</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Cooking</defName>
     <skill>Cooking</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Crafting</defName>
     <skill>Crafting</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Animals</defName>
     <skill>Animals</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Mining</defName>
     <skill>Mining</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Medicine</defName>
     <skill>Medicine</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Intellectual</defName>
     <skill>Intellectual</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
   <FactionColonies.Specialists.SpecialistSkillWeightDef>
     <defName>SSW_Construction</defName>
     <skill>Construction</skill>
-    <specialistAdditivePerLevel>0.05</specialistAdditivePerLevel>
-    <governorMultiplierPerLevel>0.008</governorMultiplierPerLevel>
+    <specialistAdditivePerLevel>0.025</specialistAdditivePerLevel>
+    <governorMultiplierPerLevel>0.01</governorMultiplierPerLevel>
   </FactionColonies.Specialists.SpecialistSkillWeightDef>
 
 </Defs>

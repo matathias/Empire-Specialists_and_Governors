@@ -7,7 +7,7 @@ namespace FactionColonies.Specialists
     {
         public Pawn pawn;
         public SpecialistRole role;
-        public List<string> governorFocuses = new List<string>();
+        public List<ResourceTypeDef> governorFocuses = new List<ResourceTypeDef>();
         public int assignedTick;
 
         public SpecialistFC()
@@ -21,20 +21,20 @@ namespace FactionColonies.Specialists
             this.assignedTick = Find.TickManager.TicksGame;
         }
 
-        public bool HasFocus(string resourceDefName)
+        public bool HasFocus(ResourceTypeDef def)
         {
-            return governorFocuses != null && governorFocuses.Contains(resourceDefName);
+            return governorFocuses != null && governorFocuses.Contains(def);
         }
 
         public void ExposeData()
         {
             Scribe_References.Look(ref pawn, "pawn");
             Scribe_Values.Look(ref role, "role", SpecialistRole.Resident);
-            Scribe_Collections.Look(ref governorFocuses, "governorFocuses", LookMode.Value);
+            Scribe_Collections.Look(ref governorFocuses, "governorFocuses", LookMode.Def);
             Scribe_Values.Look(ref assignedTick, "assignedTick");
             if (governorFocuses == null)
             {
-                governorFocuses = new List<string>();
+                governorFocuses = new List<ResourceTypeDef>();
             }
         }
     }

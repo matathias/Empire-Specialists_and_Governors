@@ -23,8 +23,7 @@ namespace FactionColonies.Specialists
                     }
                 }
             }
-            SpecialistSkillWeightDef result;
-            _skillWeights.TryGetValue(skill, out result);
+            _skillWeights.TryGetValue(skill, out SpecialistSkillWeightDef result);
             return result;
         }
 
@@ -36,8 +35,7 @@ namespace FactionColonies.Specialists
                 foreach (SpecialistStatEffectDef def in DefDatabase<SpecialistStatEffectDef>.AllDefs)
                 {
                     if (def.stat == null) continue;
-                    List<SpecialistStatEffectDef> list;
-                    if (!_statEffectsByStat.TryGetValue(def.stat, out list))
+                    if (!_statEffectsByStat.TryGetValue(def.stat, out List<SpecialistStatEffectDef> list))
                     {
                         list = new List<SpecialistStatEffectDef>();
                         _statEffectsByStat[def.stat] = list;
@@ -45,8 +43,7 @@ namespace FactionColonies.Specialists
                     list.Add(def);
                 }
             }
-            List<SpecialistStatEffectDef> result;
-            _statEffectsByStat.TryGetValue(stat, out result);
+            _statEffectsByStat.TryGetValue(stat, out List<SpecialistStatEffectDef> result);
             return result;
         }
 
@@ -56,8 +53,7 @@ namespace FactionColonies.Specialists
             {
                 _traitDefs = new Dictionary<string, FCPolicyDef>();
             }
-            FCPolicyDef result;
-            if (!_traitDefs.TryGetValue(defName, out result))
+            if (!_traitDefs.TryGetValue(defName, out FCPolicyDef result))
             {
                 result = DefDatabase<FCPolicyDef>.GetNamedSilentFail(defName);
                 _traitDefs[defName] = result;

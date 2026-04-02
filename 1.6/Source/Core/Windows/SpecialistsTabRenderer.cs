@@ -37,8 +37,8 @@ namespace FactionColonies.Specialists
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
         private const float GovTopRowHeight = 145f;
-        private const float GovPortraitW = 80f;
-        private const float GovPortraitH = 100f;
+        private const float GovPortraitW = 100f;
+        private const float GovPortraitH = 130f;
         private const float GovResCardW = 90f;
         private const float GovResCardH = 95f;
         private const float GovResCardGap = 4f;
@@ -201,7 +201,8 @@ namespace FactionColonies.Specialists
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleLeft;
             string name = hasGov ? gov.pawn.LabelShort : "\u2014";
-            Widgets.Label(new Rect(textX, lineY, textW - InfoCardBtnSize - 4f, 24f), name);
+            Widgets.DrawHighlight(new Rect(textX, lineY, textW, 28f));
+            Widgets.Label(new Rect(textX + 3f, lineY, textW - InfoCardBtnSize - 7f, 28f), name);
 
             if (hasGov)
             {
@@ -218,7 +219,7 @@ namespace FactionColonies.Specialists
 
             // Social skill
             SkillRecord social = hasGov ? gov.pawn.skills?.GetSkill(SkillDefOf.Social) : null;
-            int socialLevel = social != null ? social.Level : 0;
+            int socialLevel = social?.Level ?? 0;
             GUI.color = hasGov ? Color.white : GovGreyedOut;
             Text.Font = GameFont.Small;
             string socialLabel = "FCS_GovSocial".Translate(hasGov ? socialLevel.ToString() : "\u2014");
@@ -265,7 +266,7 @@ namespace FactionColonies.Specialists
             if (hasGov)
             {
                 string topSkills = GetTopSkillLabel(gov);
-                TooltipHandler.TipRegion(portraitRect, gov.pawn.LabelShort + "\n" + topSkills + "\n\n" + (string)"FCS_TooltipSkills".Translate());
+                TooltipHandler.TipRegion(portraitRect, gov.pawn.LabelShort + "\n" + topSkills + "\n\n" + "FCS_TooltipSkills".Translate());
             }
 
             Text.Anchor = TextAnchor.UpperLeft;
@@ -281,9 +282,11 @@ namespace FactionColonies.Specialists
 
             // Header
             Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleLeft;
+            Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = hasGov ? new Color(0.85f, 0.75f, 0.5f) : GovGreyedOutText;
-            Widgets.Label(new Rect(ix, iy, iw, 22f), "FCS_GovFocusHeader".Translate());
+            Rect headerRect = new Rect(ix, iy, iw, 20f);
+            Widgets.DrawHighlight(headerRect);
+            Widgets.Label(headerRect, "FCS_GovFocusHeader".Translate());
             iy += 24f;
 
             GUI.color = hasGov ? Color.white : GovGreyedOut;
@@ -296,7 +299,7 @@ namespace FactionColonies.Specialists
             // Focus selector button(s)
             if (hasGov)
             {
-                string focusTip = (string)"FCS_TooltipFocus".Translate(focusMult.ToString("F1"));
+                string focusTip = "FCS_TooltipFocus".Translate(Math.Round(focusMult, 2));
                 if (maxFocuses > 1)
                 {
                     float perBtn = (iw - BtnGap) / 2f;
@@ -305,7 +308,7 @@ namespace FactionColonies.Specialists
                         string fLabel = "FCS_FocusNone".Translate();
                         if (fi < gov.governorFocuses.Count && gov.governorFocuses[fi] != null)
                         {
-                            ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[fi]);
+                            ResourceTypeDef fd = gov.governorFocuses[fi];
                             if (fd != null) fLabel = fd.LabelCap;
                         }
                         int localSlot = fi;
@@ -322,10 +325,10 @@ namespace FactionColonies.Specialists
                     string focusLabel = "FCS_FocusNoFocus".Translate();
                     if (gov.governorFocuses.Count > 0 && gov.governorFocuses[0] != null)
                     {
-                        ResourceTypeDef fd = DefDatabase<ResourceTypeDef>.GetNamedSilentFail(gov.governorFocuses[0]);
+                        ResourceTypeDef fd = gov.governorFocuses[0];
                         if (fd != null) focusLabel = fd.LabelCap;
                     }
-                    Rect focusBtnRect = new Rect(ix, iy, Math.Min(iw, 250f), BtnHeight);
+                    Rect focusBtnRect = new Rect(ix, iy, iw, BtnHeight);
                     if (Widgets.ButtonText(focusBtnRect, "FCS_FocusSingleLabel".Translate(focusLabel)))
                     {
                         ShowGovernorFocusMenu(gov, 0);
@@ -344,7 +347,7 @@ namespace FactionColonies.Specialists
             // Multiplier info
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
-            string multLabel = "FCS_GovFocusMult".Translate(focusMult.ToString("F1"));
+            string multLabel = "FCS_GovFocusMult".Translate(Math.Round(focusMult, 2));
             if (isMeritocratic)
                 multLabel += " " + "FCS_GovMeritocraticTag".Translate();
             Widgets.Label(new Rect(ix, iy, iw, 22f), multLabel);
@@ -352,12 +355,12 @@ namespace FactionColonies.Specialists
 
             // Social factor
             SkillRecord social = hasGov ? gov.pawn.skills?.GetSkill(SkillDefOf.Social) : null;
-            int socialLevel = social != null ? social.Level : 0;
+            int socialLevel = social?.Level ?? 0;
             double socialFactor = isMeritocratic
                 ? 0.75 + (socialLevel / 16.0)
                 : 0.5 + (socialLevel / 20.0);
             string socialFactorText = hasGov
-                ? "FCS_GovSocialFactor".Translate(socialFactor.ToString("F3"))
+                ? "FCS_GovSocialFactor".Translate(Math.Round(socialFactor, 2))
                 : "FCS_GovSocialFactor".Translate("\u2014");
             Rect socialFactorRect = new Rect(ix, iy, iw, 22f);
             Widgets.Label(socialFactorRect, socialFactorText);
@@ -367,26 +370,30 @@ namespace FactionColonies.Specialists
                     ? "0.75 + (" + socialLevel + " / 16)"
                     : "0.5 + (" + socialLevel + " / 20)";
                 TooltipHandler.TipRegion(socialFactorRect,
-                    (string)"FCS_TooltipSocialFactor".Translate(formula, socialLevel.ToString(), socialFactor.ToString("F3")));
+                    "FCS_TooltipSocialFactor".Translate(formula, socialLevel, Math.Round(socialFactor, 2)));
             }
             iy += 24f;
 
-            // Food satisfaction
-            Color satColor;
-            if (!hasGov)
-                satColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
-            else if (comp.FoodSatisfaction >= 0.9f)
-                satColor = AccentUtil.StatGood;
-            else if (comp.FoodSatisfaction >= 0.5f)
-                satColor = AccentUtil.StatMedBad;
-            else
-                satColor = AccentUtil.StatBad;
+            if (FCSSettings.RoutesResourcesActive)
+            {
+                // Food satisfaction. Only show when Routes & Resources is active
+                Color satColor;
+                if (!hasGov)
+                    satColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
+                else if (comp.FoodSatisfaction >= 0.9f)
+                    satColor = AccentUtil.StatGood;
+                else if (comp.FoodSatisfaction >= 0.5f)
+                    satColor = AccentUtil.StatMedBad;
+                else
+                    satColor = AccentUtil.StatBad;
 
-            GUI.color = satColor;
-            string satText = hasGov
-                ? "FCS_GovFoodSat".Translate(((int)(comp.FoodSatisfaction * 100)).ToString())
-                : "FCS_GovFoodSat".Translate("\u2014");
-            Widgets.Label(new Rect(ix, iy, iw, 22f), satText);
+                GUI.color = satColor;
+                string satText = hasGov
+                    ? "FCS_GovFoodSat".Translate(Math.Round(comp.FoodSatisfaction * 100))
+                    : "FCS_GovFoodSat".Translate("\u2014");
+                Widgets.Label(new Rect(ix, iy, iw, 22f), satText);
+            }
+
             GUI.color = hasGov ? Color.white : GovGreyedOut;
 
             Text.Anchor = TextAnchor.UpperLeft;
@@ -402,7 +409,8 @@ namespace FactionColonies.Specialists
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
             GUI.color = hasGov ? Color.white : GovGreyedOut;
-            Widgets.Label(new Rect(x, y, w * 0.6f, GovGridHeaderH), "FCS_GovResHeader".Translate());
+            Widgets.DrawHighlight(new Rect(x, y, w, GovGridHeaderH - 2f));
+            Widgets.Label(new Rect(x + 5f, y, w * 0.6f, GovGridHeaderH), "FCS_GovResHeader".Translate());
 
             // Total multiplier (right-aligned)
             if (hasGov)
@@ -412,7 +420,7 @@ namespace FactionColonies.Specialists
                 {
                     Text.Anchor = TextAnchor.MiddleRight;
                     GUI.color = new Color(0.85f, 0.75f, 0.5f);
-                    Widgets.Label(new Rect(x, y, w, GovGridHeaderH), multSummary);
+                    Widgets.Label(new Rect(x, y, w - 5f, GovGridHeaderH), multSummary);
                     GUI.color = Color.white;
                 }
             }
@@ -449,7 +457,7 @@ namespace FactionColonies.Specialists
                 Rect cardRect = new Rect(cx, cy, GovResCardW, GovResCardH);
 
                 // Card background, with focus tint overlay
-                bool isFocused = hasGov && gov.HasFocus(res.def.defName);
+                bool isFocused = hasGov && gov.HasFocus(res.def);
                 Widgets.DrawMenuSection(cardRect);
                 if (isFocused)
                 {
@@ -659,19 +667,19 @@ namespace FactionColonies.Specialists
             // Line 1: Name
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Rect nameRect = new Rect(textX, rowRect.y + 2f, textW, 18f);
+            Rect nameRect = new Rect(textX, rowRect.y + 2f, textW, 22f);
             Widgets.Label(nameRect, s.pawn.LabelShort);
 
             // Line 2: Identity (title, age, xenotype)
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
             string identity = BuildIdentityLine(s.pawn);
-            Rect identityRect = new Rect(textX, rowRect.y + 18f, textW, 16f);
+            Rect identityRect = new Rect(textX, rowRect.y + 22f, textW, 16f);
             Widgets.Label(identityRect, identity);
 
             // Line 3: Skills
             string topSkill = GetTopSkillLabel(s);
-            Rect skillRect = new Rect(textX, rowRect.y + 34f, textW, 16f);
+            Rect skillRect = new Rect(textX, rowRect.y + 38f, textW, 16f);
             Widgets.Label(skillRect, topSkill);
             GUI.color = Color.white;
 
@@ -685,7 +693,7 @@ namespace FactionColonies.Specialists
                 if (contrib.Length > 0)
                 {
                     accentColor.a = 1f;
-                    Rect contribRect = new Rect(textX, rowRect.y + 50f, textFullW, 34f);
+                    Rect contribRect = new Rect(textX, rowRect.y + 54f, textFullW, 34f);
                     UIUtil.DrawColoredLabel(contribRect, contrib, accentColor);
 
                     // Contribution tooltip
@@ -723,12 +731,12 @@ namespace FactionColonies.Specialists
         internal static string BuildIdentityLine(Pawn pawn)
         {
             List<string> parts = new List<string>();
-            string title = pawn.story != null ? pawn.story.TitleShortCap : null;
+            string title = pawn.story?.TitleShortCap;
             if (!string.IsNullOrEmpty(title))
             {
                 parts.Add(title);
             }
-            parts.Add((string)"FCS_IdentityAge".Translate(pawn.ageTracker.AgeBiologicalYears));
+            parts.Add("FCS_IdentityAge".Translate(pawn.ageTracker.AgeBiologicalYears));
             if (ModsConfig.BiotechActive && pawn.genes?.Xenotype != null)
             {
                 parts.Add(pawn.genes.XenotypeLabelCap);
@@ -744,10 +752,10 @@ namespace FactionColonies.Specialists
             {
                 SkillRecord melee = s.pawn.skills.GetSkill(SkillDefOf.Melee);
                 SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
-                int meleeLevel = melee != null ? melee.Level : 0;
-                int shootingLevel = shooting != null ? shooting.Level : 0;
+                int meleeLevel = melee?.Level ?? 0;
+                int shootingLevel = shooting?.Level ?? 0;
                 double bonus = Math.Max(meleeLevel, shootingLevel) * 0.05;
-                return (string)"FCS_TooltipDefenseBonus".Translate(
+                return "FCS_TooltipDefenseBonus".Translate(
                     meleeLevel.ToString(), shootingLevel.ToString(), bonus.ToString("F2"));
             }
 
@@ -761,7 +769,7 @@ namespace FactionColonies.Specialists
                     if (resource.def.associatedSkills == null) continue;
                     double resTotal = 0;
                     StringBuilder resSb = new StringBuilder();
-                    resSb.AppendLine((string)"FCS_TooltipContribHeader".Translate(resource.def.LabelCap));
+                    resSb.AppendLine("FCS_TooltipContribHeader".Translate(resource.def.LabelCap));
                     foreach (SkillDef skillDef in resource.def.associatedSkills)
                     {
                         SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
@@ -771,16 +779,16 @@ namespace FactionColonies.Specialists
                         {
                             double contrib = skill.Level * weight.specialistAdditivePerLevel;
                             resTotal += contrib;
-                            resSb.AppendLine((string)"FCS_TooltipContribLine".Translate(
+                            resSb.AppendLine("FCS_TooltipContribLine".Translate(
                                 skillDef.skillLabel.CapitalizeFirst(),
                                 skill.Level.ToString(),
-                                weight.specialistAdditivePerLevel.ToString("F2"),
+                                weight.specialistAdditivePerLevel.ToString("F3"),
                                 contrib.ToString("F2")));
                         }
                     }
                     if (resTotal > 0)
                     {
-                        resSb.AppendLine((string)"FCS_TooltipContribTotal".Translate(resTotal.ToString("F2")));
+                        resSb.AppendLine("FCS_TooltipContribTotal".Translate(resTotal.ToString("F2")));
                         if (sb.Length > 0) sb.AppendLine();
                         sb.Append(resSb.ToString().TrimEnd());
                         if (resTotal > bestBonus)
@@ -793,7 +801,7 @@ namespace FactionColonies.Specialists
                 if (bestBonus > 0)
                 {
                     sb.AppendLine();
-                    sb.Append((string)"FCS_TooltipContribBest".Translate(bestBonus.ToString("F2"), bestLabel));
+                    sb.Append("FCS_TooltipContribBest".Translate(bestBonus.ToString("F2"), bestLabel));
                 }
                 return sb.Length > 0 ? sb.ToString() : null;
             }
@@ -814,9 +822,9 @@ namespace FactionColonies.Specialists
             if (s.role == SpecialistRole.Governor)
             {
                 double mult = comp.HasTrait("meritocratic") ? 3.0 : 2.0;
-                govMult = (string)"FCS_TooltipUpkeepGovMult".Translate(mult.ToString("F1"));
+                govMult = "FCS_TooltipUpkeepGovMult".Translate(mult.ToString("F1"));
             }
-            return (string)"FCS_TooltipUpkeep".Translate(
+            return "FCS_TooltipUpkeep".Translate(
                 FCSSettings.specialistBaseCost.ToString("F1"),
                 skillSum.ToString("F0"),
                 FCSSettings.skillDivisor.ToString("F0"),
@@ -861,7 +869,7 @@ namespace FactionColonies.Specialists
             if (resource.def.associatedSkills == null) return null;
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine((string)"FCS_GovResTooltipHeader".Translate(resource.def.LabelCap));
+            sb.AppendLine("FCS_GovResTooltipHeader".Translate(resource.def.LabelCap));
             sb.AppendLine("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
 
             double raw = 0;
@@ -874,7 +882,7 @@ namespace FactionColonies.Specialists
                 {
                     double contrib = skill.Level * weight.governorMultiplierPerLevel;
                     raw += contrib;
-                    sb.AppendLine((string)"FCS_GovResTooltipSkill".Translate(
+                    sb.AppendLine("FCS_GovResTooltipSkill".Translate(
                         skillDef.skillLabel.CapitalizeFirst(),
                         skill.Level.ToString(),
                         weight.governorMultiplierPerLevel.ToString("F3"),
@@ -884,22 +892,22 @@ namespace FactionColonies.Specialists
 
             bool isMeritocratic = comp.HasTrait("meritocratic");
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            int socialLevel = social != null ? social.Level : 0;
+            int socialLevel = social?.Level ?? 0;
             double socialFactor = isMeritocratic
                 ? 0.75 + (socialLevel / 16.0)
                 : 0.5 + (socialLevel / 20.0);
 
-            bool isFocused = gov.HasFocus(resource.def.defName);
+            bool isFocused = gov.HasFocus(resource.def);
             double focusBonus = isFocused ? (isMeritocratic ? 2.0 : 1.5) : 1.0;
 
-            sb.AppendLine((string)"FCS_GovResTooltipSocial".Translate(socialFactor.ToString("F3")));
-            sb.AppendLine((string)"FCS_GovResTooltipFocus".Translate(focusBonus.ToString("F1")));
-            sb.AppendLine((string)"FCS_GovResTooltipFood".Translate(comp.FoodSatisfaction.ToString("F1")));
+            sb.AppendLine("FCS_GovResTooltipSocial".Translate(socialFactor.ToString("F3")));
+            sb.AppendLine("FCS_GovResTooltipFocus".Translate(focusBonus.ToString("F1")));
+            sb.AppendLine("FCS_GovResTooltipFood".Translate(comp.FoodSatisfaction.ToString("F1")));
             sb.AppendLine("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
 
             double finalMult = raw * socialFactor * focusBonus * comp.FoodSatisfaction;
-            sb.AppendLine((string)"FCS_GovResTooltipFinal".Translate((finalMult * 100).ToString("F1")));
-            sb.Append((string)"FCS_GovResTooltipBarNote".Translate());
+            sb.AppendLine("FCS_GovResTooltipFinal".Translate((finalMult * 100).ToString("F1")));
+            sb.Append("FCS_GovResTooltipBarNote".Translate());
 
             return sb.ToString();
         }
@@ -923,14 +931,14 @@ namespace FactionColonies.Specialists
             }
             if (bestMult > 1.001)
             {
-                return (string)"FCS_GovMultSummary".Translate(bestMult.ToString("F2"), bestLabel);
+                return "FCS_GovMultSummary".Translate(bestMult.ToString("F2"), bestLabel);
             }
             return null;
         }
 
         private void ShowGovernorFocusMenu(SpecialistFC gov, int slot = 0)
         {
-            if (gov == null || gov.pawn == null) return;
+            if (gov?.pawn is null) return;
 
             List<FloatMenuOption> options = new List<FloatMenuOption>();
             foreach (ResourceFC resource in comp.Settlement.Resources)
@@ -944,7 +952,7 @@ namespace FactionColonies.Specialists
                 foreach (SkillDef sk in resDef.associatedSkills)
                 {
                     SkillRecord rec = gov.pawn.skills.GetSkill(sk);
-                    if (rec != null && rec.Level > bestLevel)
+                    if (rec?.Level > bestLevel)
                     {
                         bestLevel = rec.Level;
                         bestSkillLabel = sk.skillLabel;
@@ -955,14 +963,13 @@ namespace FactionColonies.Specialists
                     label = "FCS_FocusSkillLevel".Translate(label, bestSkillLabel, bestLevel);
                 }
 
-                string currentFocus = slot < gov.governorFocuses.Count ? gov.governorFocuses[slot] : null;
-                if (currentFocus == resDef.defName) label += " *";
+                ResourceTypeDef currentFocus = slot < gov.governorFocuses.Count ? gov.governorFocuses[slot] : null;
+                if (currentFocus == resDef) label += " *";
 
-                string defName = resDef.defName;
                 int localSlot = slot;
                 options.Add(new FloatMenuOption(label, delegate
                 {
-                    comp.SetGovernorFocus(gov, defName, localSlot);
+                    comp.SetGovernorFocus(gov, resDef, localSlot);
                 }));
             }
 

@@ -102,7 +102,7 @@ namespace FactionColonies.Specialists
         {
             get
             {
-                int baseMax = 5 + (int)Math.Floor(Settlement.settlementLevel / 3.0);
+                int baseMax = FCSSettings.specialistBaseMax + (int)Math.Floor(Settlement.settlementLevel / (double)FCSSettings.specialistPerLevels);
                 if (HasTrait("specialistCorps")) baseMax += 2;
                 return baseMax;
             }
@@ -118,14 +118,14 @@ namespace FactionColonies.Specialists
 
             if (RoleIsMaxLimited(role) && SpecialistCount >= MaxSpecialists)
             {
-                LogUtil.Warning("Cannot assign " + pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
+                LogSG.Warning("Cannot assign " + pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
                 Messages.Message("FCS_CannotAssignSpecialistRole".Translate(pawn.LabelShort, role.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
                 return;
             }
 
             if (role == SpecialistRole.Governor && Governor != null)
             {
-                LogUtil.Warning("Settlement already has a governor. Demoting existing governor to Specialist.");
+                LogSG.Warning("Settlement already has a governor. Demoting existing governor to Specialist.");
                 ChangeRole(Governor, SpecialistRole.Specialist);
             }
 
@@ -138,7 +138,7 @@ namespace FactionColonies.Specialists
                 Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
             }
 
-            LogUtil.Message("Assigned " + pawn.LabelShort + " as " + role + " to " + Settlement.Name);
+            LogSG.Message("Assigned " + pawn.LabelShort + " as " + role + " to " + Settlement.Name);
             Settlement.InvalidateStatCache();
         }
 
@@ -163,7 +163,7 @@ namespace FactionColonies.Specialists
                 false
             );
 
-            LogUtil.Message("Recalled " + pawn.LabelShort + " from " + Settlement.Name);
+            LogSG.Message("Recalled " + pawn.LabelShort + " from " + Settlement.Name);
             Settlement.InvalidateStatCache();
         }
 
@@ -174,14 +174,14 @@ namespace FactionColonies.Specialists
             // If the specialist's current role isn't max limited, but its target role is, and we're at the max, then reject the role change
             if (RoleIsMaxLimited(newRole) && !RoleIsMaxLimited(specialist.role) && SpecialistCount >= MaxSpecialists)
             {
-                LogUtil.Warning("Cannot assign " + specialist.pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
+                LogSG.Warning("Cannot assign " + specialist.pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
                 Messages.Message("FCS_CannotAssignSpecialistRole".Translate(specialist.pawn.LabelShort, newRole.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
                 return;
             }
 
             if (newRole == SpecialistRole.Governor && Governor != null && Governor != specialist)
             {
-                LogUtil.Warning("Settlement already has a governor. Demoting existing governor to Specialist.");
+                LogSG.Warning("Settlement already has a governor. Demoting existing governor to Specialist.");
                 ChangeRole(Governor, SpecialistRole.Specialist);
             }
 
@@ -247,7 +247,7 @@ namespace FactionColonies.Specialists
             }
 
             pawnsDeployedToBattle = true;
-            LogUtil.Message("Deployed " + deployedPawns.Count + " specialists to defend " + Settlement.Name);
+            LogSG.Message("Deployed " + deployedPawns.Count + " specialists to defend " + Settlement.Name);
         }
 
         public void RecoverFromBattle()
@@ -304,7 +304,7 @@ namespace FactionColonies.Specialists
             deployedPawns.Clear();
             pawnsDeployedToBattle = false;
             Settlement.InvalidateStatCache();
-            LogUtil.Message("Recovered specialists from battle at " + Settlement.Name);
+            LogSG.Message("Recovered specialists from battle at " + Settlement.Name);
         }
 
         // --- Serialization ---
@@ -436,14 +436,14 @@ namespace FactionColonies.Specialists
         public void PostCloseWindow() { TabRenderer.PostCloseWindow(); }
         public string OverviewTabName() { return TabRenderer.OverviewTabName(); }
 
-        public void SetGovernorFocus(SpecialistFC gov, string focusDefName, int slot = 0)
+        public void SetGovernorFocus(SpecialistFC gov, ResourceTypeDef def, int slot = 0)
         {
             if (gov == null || gov.role != SpecialistRole.Governor) return;
             while (gov.governorFocuses.Count <= slot)
             {
                 gov.governorFocuses.Add(null);
             }
-            gov.governorFocuses[slot] = focusDefName;
+            gov.governorFocuses[slot] = def;
             Settlement.InvalidateStatCache();
         }
 
@@ -652,8 +652,7 @@ namespace FactionColonies.Specialists
                 }
             }
 
-            string resDefName = resource.def.defName;
-            bool isFocused = gov.HasFocus(resDefName);
+            bool isFocused = gov.HasFocus(resource.def);
             double baseFocusBonus = meritocratic ? 2.0 : 1.5;
             double focusBonus = isFocused ? baseFocusBonus : 1.0;
 
@@ -715,7 +714,7 @@ namespace FactionColonies.Specialists
             if (Math.Abs(mult - 1.0) <= 0.001)
                 return null;
 
-            bool isFocused = gov.HasFocus(resource.def.defName);
+            bool isFocused = gov.HasFocus(resource.def);
             string focusTag = isFocused ? "FCS_ResFocusTag".Translate().ToString() : "";
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
             int socialLevel = social?.Level ?? 0;

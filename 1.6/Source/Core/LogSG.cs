@@ -3,7 +3,7 @@ using Verse;
 
 namespace FactionColonies.Specialists
 {
-    public static class LogUtil
+    public static class LogSG
     {
         public const string slug = "[Empire-Specialists]";
 

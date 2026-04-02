@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -9,6 +10,13 @@ namespace FactionColonies.Specialists
     {
         private static bool printDebug = false;
         public static bool PrintDebug => printDebug;
+
+        private static bool isRoutesResourcesActive = false;
+        public static bool RoutesResourcesActive => isRoutesResourcesActive;
+
+        // Specialist capacity
+        public static int specialistBaseMax = 5;
+        public static int specialistPerLevels = 3;
 
         // Workers
         public static int residentsPerWorker = 5;
@@ -39,6 +47,8 @@ namespace FactionColonies.Specialists
         {
             base.ExposeData();
             Scribe_Values.Look(ref printDebug, "printDebug", false);
+            Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", 5);
+            Scribe_Values.Look(ref specialistPerLevels, "specialistPerLevels", 3);
             Scribe_Values.Look(ref residentsPerWorker, "residentsPerWorker", 5);
             Scribe_Values.Look(ref specialistBaseCost, "specialistBaseCost", 3f);
             Scribe_Values.Look(ref skillDivisor, "skillDivisor", 20f);
@@ -61,6 +71,13 @@ namespace FactionColonies.Specialists
             Listing_Standard ls = new Listing_Standard();
             ls.Begin(inRect);
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
+
+            // Specialist capacity
+            ls.Gap(12f);
+            ls.Label("FCS_SettingSpecBaseMax".Translate() + specialistBaseMax);
+            specialistBaseMax = (int)ls.Slider(specialistBaseMax, 1, 20);
+            ls.Label("FCS_SettingSpecPerLevels".Translate() + specialistPerLevels);
+            specialistPerLevels = (int)ls.Slider(specialistPerLevels, 1, 10);
 
             // Workers
             ls.Gap(12f);
@@ -109,6 +126,15 @@ namespace FactionColonies.Specialists
 
             ls.End();
         }
+
+        public static void CheckForRoutesAndResources()
+        {
+            if (LoadedModManager.RunningMods.Any(mod => mod.PackageId.ToLower() == "matathias.empire.supplychain"))
+            {
+                isRoutesResourcesActive = true;
+            }
+            LogSG.MessageForce($"Routes & Resources is active: {isRoutesResourcesActive}");
+        }
     }
 
     [StaticConstructorOnStartup]
@@ -136,6 +162,7 @@ namespace FactionColonies.Specialists
         public SpecialistsMod(ModContentPack content) : base(content)
         {
             settings = GetSettings<FCSSettings>();
+            FCSSettings.CheckForRoutesAndResources();
         }
 
         public override string SettingsCategory() => "FCS_SettingsCategory".Translate();

@@ -18,6 +18,8 @@
 	<FCS_SettingDefenseDeathChance>Defense specialist death chance: </FCS_SettingDefenseDeathChance>
 	<FCS_SettingResidentDeathChance>Resident death chance: </FCS_SettingResidentDeathChance>
 	<FCS_SettingDeathReduction>Death reduction per defender: </FCS_SettingDeathReduction>
+	<FCS_SettingSpecBaseMax>Base Specialist Limit: </FCS_SettingSpecBaseMax>
+	<FCS_SettingSpecPerLevels>Settlement Levels per Specialist Limit Increase: </FCS_SettingSpecPerLevels>
 
 	<!-- Role Names -->
 	<FCS_RoleResident>Resident</FCS_RoleResident>
@@ -44,7 +46,7 @@
 	<FCS_FocusNone>None</FCS_FocusNone>
 	<FCS_FocusSlotLabel>F{0}: {1}</FCS_FocusSlotLabel>
 	<FCS_FocusNoFocus>No focus</FCS_FocusNoFocus>
-	<FCS_FocusSingleLabel>Focus: {0}</FCS_FocusSingleLabel>
+	<FCS_FocusSingleLabel>{0}</FCS_FocusSingleLabel>
 	<FCS_FocusSkillLevel>{0} ({1} {2})</FCS_FocusSkillLevel>
 	<FCS_UpkeepDisplay>Upkeep: {0}s/day</FCS_UpkeepDisplay>
 
