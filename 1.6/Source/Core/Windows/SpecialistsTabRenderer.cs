@@ -34,6 +34,10 @@ namespace FactionColonies.Specialists
         private static readonly Color DefenseContribColor = new Color(0.9f, 0.4f, 0.4f);
         private static readonly Color PawnBG = new Color(0.12f, 0.12f, 0.12f);
 
+        private static readonly Color GovTabBG = new Color(0.85f, 0.75f, 0.5f);
+        private static readonly Color SpecTabBG = new Color(0.45f, 0.75f, 0.35f);
+        private static readonly Color ResTabBG = new Color(0.35f, 0.50f, 0.80f);
+
         // Governor dashboard layout constants
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
@@ -51,6 +55,19 @@ namespace FactionColonies.Specialists
         private static readonly Color GovEmptyOverlay = new Color(0f, 0f, 0f, 0.45f);
         private static readonly Color GovGreyedOut = new Color(1f, 1f, 1f, 0.35f);
         private static readonly Color GovGreyedOutText = new Color(0.5f, 0.5f, 0.5f, 0.35f);
+        
+        private static readonly string[] tabLabels =
+        {
+            "FCS_SubGovernor".Translate(),
+            "FCS_SubSpecialists".Translate(),
+            "FCS_SubResidents".Translate()
+        };
+        private static readonly Color[] tabColors =
+        {
+            new Color(0.85f, 0.75f, 0.5f),
+            new Color(0.45f, 0.75f, 0.35f),
+            new Color(0.35f, 0.50f, 0.80f)
+        };
 
         public SpecialistsTabRenderer(WorldObjectComp_SettlementSpecialists comp)
         {
@@ -80,12 +97,6 @@ namespace FactionColonies.Specialists
 
             // --- Sub-tab bar ---
             float tabW = boundingBox.width / 3f;
-            string[] tabLabels =
-            {
-                "FCS_SubGovernor".Translate(),
-                "FCS_SubSpecialists".Translate(),
-                "FCS_SubResidents".Translate()
-            };
 
             Rect chosenRect = new Rect();
             for (int i = 0; i < 3; i++)
@@ -96,11 +107,15 @@ namespace FactionColonies.Specialists
                 if (subTab == i)
                     chosenRect = tabRect;
             }
-            UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, boundingBox, Color.gray);
+
+            UIUtil.DrawColoredHighlight(chosenRect, tabColors[subTab]);
+            UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, boundingBox, tabColors[subTab]);//Color.gray);
 
             // --- Content area below sub-tabs ---
             Rect contentRect = new Rect(boundingBox.x, boundingBox.y + SubTabHeight,
                 boundingBox.width, boundingBox.height - SubTabHeight);
+            
+            UIUtil.DrawColoredHighlight(contentRect, tabColors[subTab]);
 
             SpecialistFC toRecall = null;
 
@@ -538,10 +553,9 @@ namespace FactionColonies.Specialists
             string specHeader = "FCS_SpecDefHeader".Translate(specCount, defCount, specCount+defCount, comp.MaxSpecialists);
             Widgets.Label(new Rect(x, y, w * 0.6f, SectionHeaderHeight), specHeader);
 
-            double totalUpkeep = comp.CalculateTotalUpkeep();
+            double totalUpkeep = comp.CalculateSpecialistUpkeep();
             Text.Anchor = TextAnchor.MiddleRight;
-            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight),
-                "FCS_UpkeepDisplay".Translate(totalUpkeep.ToString("F1")));
+            Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), "FCS_UpkeepDisplay".Translate(totalUpkeep.ToString("F1")));
             Text.Anchor = TextAnchor.UpperLeft;
             y += SectionHeaderHeight + 2f;
 

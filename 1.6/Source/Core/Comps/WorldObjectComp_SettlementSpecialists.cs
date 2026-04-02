@@ -53,11 +53,11 @@ namespace FactionColonies.Specialists
             get { return allPawns.FirstOrDefault(s => s.role == SpecialistRole.Governor); }
         }
 
-        public bool RoleIsMaxLimited(SpecialistRole role) => role == SpecialistRole.Defense || role == SpecialistRole.Specialist; 
+        public bool RoleIsRegularSpecialist(SpecialistRole role) => role == SpecialistRole.Defense || role == SpecialistRole.Specialist; 
 
         public int SpecialistCount
         {
-            get { return allPawns.Count(s => RoleIsMaxLimited(s.role)); }
+            get { return allPawns.Count(s => RoleIsRegularSpecialist(s.role)); }
         }
 
         public int CivilianSpecialistCount
@@ -116,7 +116,7 @@ namespace FactionColonies.Specialists
         {
             if (pawn == null) return;
 
-            if (RoleIsMaxLimited(role) && SpecialistCount >= MaxSpecialists)
+            if (RoleIsRegularSpecialist(role) && SpecialistCount >= MaxSpecialists)
             {
                 LogSG.Warning("Cannot assign " + pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
                 Messages.Message("FCS_CannotAssignSpecialistRole".Translate(pawn.LabelShort, role.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
@@ -172,7 +172,7 @@ namespace FactionColonies.Specialists
             if (specialist == null) return;
 
             // If the specialist's current role isn't max limited, but its target role is, and we're at the max, then reject the role change
-            if (RoleIsMaxLimited(newRole) && !RoleIsMaxLimited(specialist.role) && SpecialistCount >= MaxSpecialists)
+            if (RoleIsRegularSpecialist(newRole) && !RoleIsRegularSpecialist(specialist.role) && SpecialistCount >= MaxSpecialists)
             {
                 LogSG.Warning("Cannot assign " + specialist.pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
                 Messages.Message("FCS_CannotAssignSpecialistRole".Translate(specialist.pawn.LabelShort, newRole.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
@@ -455,6 +455,20 @@ namespace FactionColonies.Specialists
             foreach (SpecialistFC s in allPawns)
             {
                 total += CalculatePawnUpkeep(s);
+            }
+            return total;
+        }
+        /// <summary>
+        /// Calculates the upkeep of regular Specialists only, excluding Governors. Includes Defense Specialists.
+        /// </summary>
+        /// <returns></returns>
+        public double CalculateSpecialistUpkeep()
+        {
+            double total = 0;
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (RoleIsRegularSpecialist(s.role))
+                    total += CalculatePawnUpkeep(s);
             }
             return total;
         }

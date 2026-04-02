@@ -24,15 +24,8 @@ namespace FactionColonies.Specialists.SC
     {
         private WorldObjectComp_SettlementSpecialists specialistsComp;
 
-        private WorldObjectComp_SettlementSpecialists Specialists
-        {
-            get
-            {
-                if (specialistsComp == null)
-                    specialistsComp = parent.GetComponent<WorldObjectComp_SettlementSpecialists>();
-                return specialistsComp;
-            }
-        }
+        private WorldObjectComp_SettlementSpecialists Specialists => specialistsComp ??
+                                                                     (specialistsComp = parent.GetComponent<WorldObjectComp_SettlementSpecialists>());
 
         private static readonly List<NeedPenalty> foodPenalties = new List<NeedPenalty>();
         private static readonly List<NeedPenalty> medicinePenalties = new List<NeedPenalty>();
@@ -48,13 +41,13 @@ namespace FactionColonies.Specialists.SC
                     {
                         stat = happinessLost,
                         penaltyPerUnit = FCSSettings.foodPenaltyPerUnit,
-                        label = "specialist hunger"
+                        label = "FCSRR_happinesspenalty".Translate()
                     });
                     medicinePenalties.Add(new NeedPenalty
                     {
                         stat = happinessLost,
                         penaltyPerUnit = FCSSettings.medicinePenaltyPerUnit,
-                        label = "specialist medical care"
+                        label = "FCSRR_happinesspenalty".Translate()
                     });
                 }
             }
@@ -81,7 +74,7 @@ namespace FactionColonies.Specialists.SC
                 needs.Add(new NeedEntry
                 {
                     needId = "specialist.food",
-                    label = "Specialist Food",
+                    label = "FCSRR_FoodNeed".Translate(),
                     resource = ResourceTypeDefOf.RTD_Food,
                     amount = foodAmount,
                     penalties = foodPenalties
@@ -97,7 +90,7 @@ namespace FactionColonies.Specialists.SC
                     needs.Add(new NeedEntry
                     {
                         needId = "specialist.medicine",
-                        label = "Specialist Medicine",
+                        label = "FCSRR_MedicineNeed".Translate(),
                         resource = ResourceTypeDefOf.RTD_Medicine,
                         amount = medAmount,
                         penalties = medicinePenalties

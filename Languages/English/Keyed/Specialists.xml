@@ -137,5 +137,10 @@
 	<FCS_LetterSpecialistKilled>Specialist killed</FCS_LetterSpecialistKilled>
 	<FCS_LetterDeathAttack>{0} ({1}) was killed in the attack on {2}.</FCS_LetterDeathAttack>
 	<FCS_LetterDeathDefending>{0} ({1}) died defending {2}.</FCS_LetterDeathDefending>
+	
+	<!-- Routes & Resources -->
+	<FCSRR_MedicineNeed>Specialist Medicine</FCSRR_MedicineNeed>
+	<FCSRR_FoodNeed>Specialist Food</FCSRR_FoodNeed>
+	<FCSRR_happinesspenalty>happiness</FCSRR_happinesspenalty>
 
 </LanguageData>
