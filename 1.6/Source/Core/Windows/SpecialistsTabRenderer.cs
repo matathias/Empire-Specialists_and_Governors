@@ -529,7 +529,7 @@ namespace FactionColonies.Specialists
 
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
-            string specHeader = "FCS_SpecDefHeader".Translate(specCount, defCount);
+            string specHeader = "FCS_SpecDefHeader".Translate(specCount, defCount, specCount+defCount, comp.MaxSpecialists);
             Widgets.Label(new Rect(x, y, w * 0.6f, SectionHeaderHeight), specHeader);
 
             double totalUpkeep = comp.CalculateTotalUpkeep();

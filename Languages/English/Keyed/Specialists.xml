@@ -49,7 +49,9 @@
 	<FCS_UpkeepDisplay>Upkeep: {0}s/day</FCS_UpkeepDisplay>
 
 	<!-- Specialist Section -->
-	<FCS_SpecDefHeader>Specialists ({0})  |  Defense ({1})</FCS_SpecDefHeader>
+	<FCS_SpecDefHeader>Specialists ({0})  |  Defense ({1})  | Total ({2}/{3})</FCS_SpecDefHeader>
+	
+	<FCS_CannotAssignSpecialistRole>Cannot assign {0} to role {1} at {2}: Max {3} Specialists are already assigned.</FCS_CannotAssignSpecialistRole>
 
 	<!-- Buttons -->
 	<FCS_BtnRole>Role</FCS_BtnRole>

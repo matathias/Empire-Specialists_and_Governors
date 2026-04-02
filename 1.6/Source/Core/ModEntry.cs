@@ -81,19 +81,6 @@ namespace FactionColonies.Specialists
             ls.Label("FCS_SettingXpPerDay".Translate() + xpPerDay.ToString("F0"));
             xpPerDay = (float)System.Math.Round(ls.Slider(xpPerDay, 0f, 2000f), 0);
 
-            // Supply chain needs (only show if Supply Chain submod is active)
-            if (ModsConfig.IsActive("Matathias.Empire.SupplyChain"))
-            {
-                ls.Gap(8f);
-                ls.Label("FCS_SettingSCHeader".Translate());
-                ls.Label("FCS_SettingFoodPerSpec".Translate() + foodPerSpecialist.ToString("F2"));
-                foodPerSpecialist = (float)System.Math.Round(ls.Slider(foodPerSpecialist, 0f, 2f), 2);
-                ls.Label("FCS_SettingFoodPerResident".Translate() + foodPerResident.ToString("F2"));
-                foodPerResident = (float)System.Math.Round(ls.Slider(foodPerResident, 0f, 1f), 2);
-                ls.Label("FCS_SettingMedPerSpec".Translate() + medicinePerSpecialist.ToString("F2"));
-                medicinePerSpecialist = (float)System.Math.Round(ls.Slider(medicinePerSpecialist, 0f, 1f), 2);
-            }
-
             // Death chances
             ls.Gap(8f);
             ls.Label("FCS_SettingCivilianDeathChance".Translate() + (civilianDeathChance * 100f).ToString("F0") + "%");
@@ -106,6 +93,19 @@ namespace FactionColonies.Specialists
             residentDeathChance = (float)System.Math.Round(ls.Slider(residentDeathChance, 0f, 1f), 2);
             ls.Label("FCS_SettingDeathReduction".Translate() + (deathReductionPerDefender * 100f).ToString("F0") + "%");
             deathReductionPerDefender = (float)System.Math.Round(ls.Slider(deathReductionPerDefender, 0f, 0.1f), 2);
+
+            // Supply chain needs (only show if Supply Chain submod is active)
+            if (ModsConfig.IsActive("Matathias.Empire.SupplyChain"))
+            {
+                ls.Gap(8f);
+                ls.Label("FCS_SettingSCHeader".Translate());
+                ls.Label("FCS_SettingFoodPerSpec".Translate() + foodPerSpecialist.ToString("F2"));
+                foodPerSpecialist = (float)System.Math.Round(ls.Slider(foodPerSpecialist, 0f, 2f), 2);
+                ls.Label("FCS_SettingFoodPerResident".Translate() + foodPerResident.ToString("F2"));
+                foodPerResident = (float)System.Math.Round(ls.Slider(foodPerResident, 0f, 1f), 2);
+                ls.Label("FCS_SettingMedPerSpec".Translate() + medicinePerSpecialist.ToString("F2"));
+                medicinePerSpecialist = (float)System.Math.Round(ls.Slider(medicinePerSpecialist, 0f, 1f), 2);
+            }
 
             ls.End();
         }

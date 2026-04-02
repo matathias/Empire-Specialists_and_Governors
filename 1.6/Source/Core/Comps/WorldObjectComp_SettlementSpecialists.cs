@@ -53,9 +53,11 @@ namespace FactionColonies.Specialists
             get { return allPawns.FirstOrDefault(s => s.role == SpecialistRole.Governor); }
         }
 
+        public bool RoleIsMaxLimited(SpecialistRole role) => role == SpecialistRole.Defense || role == SpecialistRole.Specialist; 
+
         public int SpecialistCount
         {
-            get { return allPawns.Count(s => s.role != SpecialistRole.Resident); }
+            get { return allPawns.Count(s => RoleIsMaxLimited(s.role)); }
         }
 
         public int CivilianSpecialistCount
@@ -114,9 +116,10 @@ namespace FactionColonies.Specialists
         {
             if (pawn == null) return;
 
-            if (role != SpecialistRole.Resident && SpecialistCount >= MaxSpecialists)
+            if (RoleIsMaxLimited(role) && SpecialistCount >= MaxSpecialists)
             {
                 LogUtil.Warning("Cannot assign " + pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
+                Messages.Message("FCS_CannotAssignSpecialistRole".Translate(pawn.LabelShort, role.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
                 return;
             }
 
@@ -167,6 +170,14 @@ namespace FactionColonies.Specialists
         public void ChangeRole(SpecialistFC specialist, SpecialistRole newRole)
         {
             if (specialist == null) return;
+
+            // If the specialist's current role isn't max limited, but its target role is, and we're at the max, then reject the role change
+            if (RoleIsMaxLimited(newRole) && !RoleIsMaxLimited(specialist.role) && SpecialistCount >= MaxSpecialists)
+            {
+                LogUtil.Warning("Cannot assign " + specialist.pawn.LabelShort + ": max specialists reached at " + Settlement.Name);
+                Messages.Message("FCS_CannotAssignSpecialistRole".Translate(specialist.pawn.LabelShort, newRole.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
+                return;
+            }
 
             if (newRole == SpecialistRole.Governor && Governor != null && Governor != specialist)
             {
