@@ -32,13 +32,14 @@ namespace FactionColonies.Specialists
         private const float InfoCardBtnSize = 24f;
         private const float AccentBarWidth = 3f;
         private static readonly Color DefenseContribColor = new Color(0.9f, 0.4f, 0.4f);
+        private static readonly Color PawnBG = new Color(0.12f, 0.12f, 0.12f);
 
         // Governor dashboard layout constants
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
         private const float GovTopRowHeight = 145f;
         private const float GovPortraitW = 100f;
-        private const float GovPortraitH = 130f;
+        private const float GovPortraitH = 133f;
         private const float GovResCardW = 90f;
         private const float GovResCardH = 95f;
         private const float GovResCardGap = 4f;
@@ -184,13 +185,10 @@ namespace FactionColonies.Specialists
             float py = rect.y + (rect.height - GovPortraitH) / 2f;
             Rect portraitRect = new Rect(px, py, GovPortraitW, GovPortraitH);
 
+            Widgets.DrawBoxSolid(portraitRect, PawnBG);
             if (hasGov)
             {
                 UIUtil.DrawPawnPortrait(portraitRect, gov.pawn, cameraZoom: 1.1f);
-            }
-            else
-            {
-                Widgets.DrawBoxSolid(portraitRect, new Color(0.12f, 0.12f, 0.12f));
             }
 
             float textX = portraitRect.xMax + 8f;
@@ -656,6 +654,7 @@ namespace FactionColonies.Specialists
             float portraitX = rowRect.x + CardPadding + (showContribution ? AccentBarWidth : 0f);
             float portraitY = rowRect.y + (CardHeight - PortraitSize) / 2f;
             Rect portraitRect = new Rect(portraitX, portraitY, PortraitSize, PortraitSize);
+            Widgets.DrawBoxSolid(portraitRect, PawnBG);
             UIUtil.DrawPawnPortrait(portraitRect, s.pawn);
 
             // Text area
@@ -915,7 +914,7 @@ namespace FactionColonies.Specialists
         private string BuildGovMultiplierSummary()
         {
             SpecialistFC gov = comp.Governor;
-            if (gov == null || gov.pawn == null || gov.pawn.Dead || gov.pawn.skills == null || uiSettlement == null)
+            if (gov?.pawn is null || gov.pawn.Dead || gov.pawn.skills is null || uiSettlement is null)
                 return null;
 
             double bestMult = 0;

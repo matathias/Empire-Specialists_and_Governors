@@ -5,7 +5,7 @@
 	<FCS_SettingsCategory>Empire Refactored: Specialists &amp; Governors</FCS_SettingsCategory>
 	<FCS_SettingDebugLog>Enable debug logging</FCS_SettingDebugLog>
 	<FCS_SettingResidentsPerWorker>Residents per bonus worker: </FCS_SettingResidentsPerWorker>
-	<FCS_SettingBaseUpkeep>Specialist base upkeep (silver/day): </FCS_SettingBaseUpkeep>
+	<FCS_SettingBaseUpkeep>Specialist base upkeep (silver/period): </FCS_SettingBaseUpkeep>
 	<FCS_SettingSkillDivisor>Upkeep skill divisor: </FCS_SettingSkillDivisor>
 	<FCS_SettingScalingFactor>Upkeep scaling factor: </FCS_SettingScalingFactor>
 	<FCS_SettingXpPerDay>XP per day per skill: </FCS_SettingXpPerDay>
@@ -48,7 +48,7 @@
 	<FCS_FocusNoFocus>No focus</FCS_FocusNoFocus>
 	<FCS_FocusSingleLabel>{0}</FCS_FocusSingleLabel>
 	<FCS_FocusSkillLevel>{0} ({1} {2})</FCS_FocusSkillLevel>
-	<FCS_UpkeepDisplay>Upkeep: {0}s/day</FCS_UpkeepDisplay>
+	<FCS_UpkeepDisplay>Upkeep: {0}s/period</FCS_UpkeepDisplay>
 
 	<!-- Specialist Section -->
 	<FCS_SpecDefHeader>Specialists ({0})  |  Defense ({1})  | Total ({2}/{3})</FCS_SpecDefHeader>
@@ -124,8 +124,9 @@
 	<FCS_TooltipContribTotal>Total: +{0}</FCS_TooltipContribTotal>
 	<FCS_TooltipContribBest>Best contribution: +{0} {1}</FCS_TooltipContribBest>
 	<FCS_TooltipDefenseBonus>Military level bonus:\n  max(Melee {0}, Shooting {1}) × 0.05 = +{2}</FCS_TooltipDefenseBonus>
-	<FCS_TooltipUpkeep>Base: {0}s + (Skills: {1} / {2}) × {3}\n= {4}s/day{5}</FCS_TooltipUpkeep>
+	<FCS_TooltipUpkeep>Base: {0}s + (Skills: {1} / {2}) × {3}\n= {4}s/period{5}</FCS_TooltipUpkeep>
 	<FCS_TooltipUpkeepGovMult>\n× {0} (Governor)</FCS_TooltipUpkeepGovMult>
+	<FCS_UpkeepSettlementLine>Specialists</FCS_UpkeepSettlementLine>
 
 	<!-- Assignment Dialog -->
 	<FCS_PreviewNoBonus>No production bonus</FCS_PreviewNoBonus>

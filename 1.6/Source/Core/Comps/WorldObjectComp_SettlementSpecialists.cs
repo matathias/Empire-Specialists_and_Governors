@@ -11,7 +11,7 @@ using Verse.AI.Group;
 namespace FactionColonies.Specialists
 {
     public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
-        ISettlementWindowOverview, IStatModifierProvider, IResourceProductionModifier
+        ISettlementWindowOverview, IStatModifierProvider, IResourceProductionModifier, IProfitContributor
     {
         private List<SpecialistFC> allPawns = new List<SpecialistFC>();
 
@@ -461,7 +461,7 @@ namespace FactionColonies.Specialists
 
         public double CalculatePawnUpkeep(SpecialistFC s)
         {
-            if (s.pawn == null || s.role == SpecialistRole.Resident) return 0;
+            if (s.pawn is null || s.role == SpecialistRole.Resident) return 0;
             double skillSum = 0;
             foreach (SkillRecord sk in s.pawn.skills.skills)
             {
@@ -473,6 +473,30 @@ namespace FactionColonies.Specialists
                 upkeep *= HasTrait("meritocratic") ? 3.0 : 2.0;
             }
             return upkeep;
+        }
+
+        // --- IUpkeepContributor ---
+
+        public double GetUpkeepContribution()
+        {
+            return CalculateTotalUpkeep();
+        }
+
+        public string GetUpkeepContributionDesc()
+        {
+            double total = CalculateTotalUpkeep();
+            if (total <= 0) return null;
+            return $"+{Math.Round(total, 2)} - {"FCS_UpkeepSettlementLine".Translate()}";
+        }
+
+        public double GetIncomeContribution()
+        {
+            return 0;
+        }
+
+        public string GetIncomeContributionDesc()
+        {
+            return null;
         }
 
         // --- IStatModifierProvider ---
