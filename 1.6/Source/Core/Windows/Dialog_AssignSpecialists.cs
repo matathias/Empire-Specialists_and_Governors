@@ -155,7 +155,7 @@ namespace FactionColonies.Specialists
             Text.Font = GameFont.Tiny;
             Text.WordWrap = false;
             GUI.color = Color.gray;
-            string identity = WorldObjectComp_SettlementSpecialists.BuildIdentityLine(entry.pawn);
+            string identity = SpecialistsTabRenderer.BuildIdentityLine(entry.pawn);
             Widgets.Label(new Rect(textX, rowRect.y + 18f, textW, 16f), identity);
 
             // Line 3: Skills
