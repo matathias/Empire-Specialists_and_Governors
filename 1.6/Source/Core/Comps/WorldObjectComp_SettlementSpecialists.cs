@@ -168,14 +168,6 @@ namespace FactionColonies.Specialists
         {
             if (specialist == null) return;
 
-            // Professional Army: defense specialists cannot be reassigned
-            if (specialist.role == SpecialistRole.Defense && newRole != SpecialistRole.Defense
-                && HasTrait("professionalArmy"))
-            {
-                LogUtil.Warning("Professional Army: defense specialists cannot be reassigned.");
-                return;
-            }
-
             if (newRole == SpecialistRole.Governor && Governor != null && Governor != specialist)
             {
                 LogUtil.Warning("Settlement already has a governor. Demoting existing governor to Specialist.");
@@ -581,7 +573,7 @@ namespace FactionColonies.Specialists
                     {
                         total = Math.Round(total, 2);
                         if (sb.Length > 0) sb.Append("\n");
-                        sb.Append("FCS_StatEffectLine".Translate(total.ToString("F1"), def.skill.skillLabel, string.Join(", ", parts)));
+                        sb.Append("FCS_StatEffectLine".Translate(total.ToString("F1"), def.skill.skillLabel.CapitalizeFirst(), string.Join(", ", parts)));
                     }
                 }
             }
@@ -716,7 +708,7 @@ namespace FactionColonies.Specialists
             string focusTag = isFocused ? "FCS_ResFocusTag".Translate().ToString() : "";
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
             int socialLevel = social?.Level ?? 0;
-            return $"{TextUtil.ColorizeMultiplierBonus(mult)} - {"FCS_ResGovernor".Translate(gov.pawn.LabelShort, socialLevel, focusTag)}";
+            return $"{TextUtil.ColorizeMultiplierBonus(Math.Round(mult, 2))} - {"FCS_ResGovernor".Translate(gov.pawn.LabelShort, socialLevel, focusTag)}";
         }
     }
 }

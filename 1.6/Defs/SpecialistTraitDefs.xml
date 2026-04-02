@@ -55,7 +55,7 @@
 	<FactionColonies.FCPolicyDef>
 		<defName>professionalArmy</defName>
 		<label>Professional Army</label>
-		<desc>Defense specialists are trained career soldiers. Their military contributions are doubled and they provide greater protection to civilians, but they cannot be reassigned to other roles.</desc>
+		<desc>Defense specialists are trained career soldiers. Their military contributions are doubled and they provide greater protection to civilians.</desc>
 		<category>Trait</category>
 		<factionLevelRequirement>0</factionLevelRequirement>
 		<techLevelRequirement>Undefined</techLevelRequirement>
@@ -63,9 +63,6 @@
 			<li>- Defense specialists contribute 2x military level</li>
 			<li>- Death reduction per defender doubled (4% instead of 2%)</li>
 		</positiveEffects>
-		<negativeEffects>
-			<li>- Defense specialists cannot be reassigned to other roles</li>
-		</negativeEffects>
 	</FactionColonies.FCPolicyDef>
 
 	<FactionColonies.FCPolicyDef>

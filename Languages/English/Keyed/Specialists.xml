@@ -68,7 +68,7 @@
 
 	<!-- Stat Modifier Descriptions -->
 	<FCS_StatWorkerBonus>+{0} workers ({1} residents)</FCS_StatWorkerBonus>
-	<FCS_StatEffectLine>+{0} ({1}: {2})</FCS_StatEffectLine>
+	<FCS_StatEffectLine>+{0} - {1}: {2}</FCS_StatEffectLine>
 
 	<!-- Resource Modifier Descriptions -->
 	<FCS_ResSpecialists>Specialists ({0})</FCS_ResSpecialists>
