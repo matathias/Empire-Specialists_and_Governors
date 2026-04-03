@@ -23,5 +23,6 @@ namespace FactionColonies.Specialists
                 default:                         return role.ToString();
             }
         }
+        public static bool IsRegularSpecialist(this SpecialistRole role) => role == SpecialistRole.Defense || role == SpecialistRole.Specialist;
     }
 }

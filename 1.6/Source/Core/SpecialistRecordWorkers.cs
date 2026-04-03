@@ -4,26 +4,61 @@ using Verse;
 
 namespace FactionColonies.Specialists
 {
+    public static class SpecialistRoster
+    {
+        private static Dictionary<int, SpecialistRole> assignments = new Dictionary<int, SpecialistRole>();
+
+        public static void Assign(Pawn pawn, SpecialistRole role)
+        {
+            if (pawn != null)
+                assignments[pawn.thingIDNumber] = role;
+        }
+
+        public static void Recall(Pawn pawn)
+        {
+            if (pawn != null)
+                assignments.Remove(pawn.thingIDNumber);
+        }
+
+        public static SpecialistRole? GetRole(Pawn pawn)
+        {
+            if (pawn != null && assignments.TryGetValue(pawn.thingIDNumber, out SpecialistRole role))
+                return role;
+            return null;
+        }
+
+        public static bool IsAssigned(Pawn pawn)
+        {
+            return pawn != null && assignments.ContainsKey(pawn.thingIDNumber);
+        }
+
+        /// <summary>
+        /// Clears and rebuilds the dictionary from all settlement specialist comps.
+        /// Called from GameComponent_SpecialistRoster.FinalizeInit after all cross-refs are resolved.
+        /// </summary>
+        public static void Rebuild()
+        {
+            assignments.Clear();
+            List<WorldSettlementFC> settlements = FactionCache.FactionComp?.settlements;
+            if (settlements is null) return;
+            foreach (WorldSettlementFC settlement in settlements)
+            {
+                List<SpecialistFC> pawns = settlement.GetComponent<WorldObjectComp_SettlementSpecialists>()?.AllPawnsInternal;
+                if (pawns is null) continue;
+                foreach (SpecialistFC s in pawns)
+                {
+                    if (s.pawn != null && !s.pawn.Dead)
+                        assignments[s.pawn.thingIDNumber] = s.role;
+                }
+            }
+        }
+    }
+
     public abstract class RecordWorker_SpecialistBase : RecordWorker
     {
         protected static SpecialistRole? GetRole(Pawn pawn)
         {
-            FactionFC fc = FactionCache.FactionComp;
-            if (fc is null) return null;
-            List<WorldSettlementFC> settlements = fc.settlements;
-            for (int i = 0; i < settlements.Count; i++)
-            {
-                WorldObjectComp_SettlementSpecialists comp =
-                    settlements[i].GetComponent<WorldObjectComp_SettlementSpecialists>();
-                if (comp is null) continue;
-                List<SpecialistFC> pawns = comp.AllPawnsInternal;
-                for (int j = 0; j < pawns.Count; j++)
-                {
-                    if (pawns[j].pawn == pawn)
-                        return pawns[j].role;
-                }
-            }
-            return null;
+            return SpecialistRoster.GetRole(pawn);
         }
     }
 

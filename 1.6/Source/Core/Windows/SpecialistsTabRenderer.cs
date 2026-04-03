@@ -34,10 +34,6 @@ namespace FactionColonies.Specialists
         private static readonly Color DefenseContribColor = new Color(0.9f, 0.4f, 0.4f);
         private static readonly Color PawnBG = new Color(0.12f, 0.12f, 0.12f);
 
-        private static readonly Color GovTabBG = new Color(0.85f, 0.75f, 0.5f);
-        private static readonly Color SpecTabBG = new Color(0.45f, 0.75f, 0.35f);
-        private static readonly Color ResTabBG = new Color(0.35f, 0.50f, 0.80f);
-
         // Governor dashboard layout constants
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
@@ -254,9 +250,7 @@ namespace FactionColonies.Specialists
             // XP rate (mirrors CompTick logic)
             Text.Font = GameFont.Tiny;
             GUI.color = hasGov ? new Color(0.7f, 0.7f, 0.7f) : GovGreyedOutText;
-            float xpPerDay = FCSSettings.xpPerDay;
-            if (comp.HasTrait("specialistCorps")) xpPerDay *= 2f;
-            else if (comp.HasTrait("meritocratic")) xpPerDay *= 1.5f;
+            float xpPerDay = SpecUtil.XPPerDay();
             string xpText = hasGov
                 ? (string)"FCS_GovXpRate".Translate(((int)xpPerDay).ToString())
                 : "\u2014";
@@ -304,8 +298,8 @@ namespace FactionColonies.Specialists
 
             GUI.color = hasGov ? Color.white : GovGreyedOut;
 
-            bool isPatrician = comp.HasTrait("patrician");
-            bool isMeritocratic = comp.HasTrait("meritocratic");
+            bool isPatrician = SpecUtil.HasTrait(SpecPolicyDefOf.FCSpatrician);
+            bool isMeritocratic = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic);
             int maxFocuses = isPatrician ? 2 : 1;
             double focusMult = isMeritocratic ? 2.0 : 1.5;
 
@@ -369,9 +363,7 @@ namespace FactionColonies.Specialists
             // Social factor
             SkillRecord social = hasGov ? gov.pawn.skills?.GetSkill(SkillDefOf.Social) : null;
             int socialLevel = social?.Level ?? 0;
-            double socialFactor = isMeritocratic
-                ? 0.75 + (socialLevel / 16.0)
-                : 0.5 + (socialLevel / 20.0);
+            double socialFactor = SpecUtil.GovSocialFactor(socialLevel);
             string socialFactorText = hasGov
                 ? "FCS_GovSocialFactor".Translate(Math.Round(socialFactor, 2))
                 : "FCS_GovSocialFactor".Translate("\u2014");
@@ -379,9 +371,7 @@ namespace FactionColonies.Specialists
             Widgets.Label(socialFactorRect, socialFactorText);
             if (hasGov)
             {
-                string formula = isMeritocratic
-                    ? "0.75 + (" + socialLevel + " / 16)"
-                    : "0.5 + (" + socialLevel + " / 20)";
+                string formula = SpecUtil.GovSocialFactorDesc(socialLevel);
                 TooltipHandler.TipRegion(socialFactorRect,
                     "FCS_TooltipSocialFactor".Translate(formula, socialLevel, Math.Round(socialFactor, 2)));
             }
@@ -759,7 +749,7 @@ namespace FactionColonies.Specialists
 
         private string BuildContributionTooltip(SpecialistFC s)
         {
-            if (s.pawn == null || s.pawn.skills == null) return null;
+            if (s.pawn?.skills is null) return null;
 
             if (s.role == SpecialistRole.Defense)
             {
@@ -767,7 +757,7 @@ namespace FactionColonies.Specialists
                 SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
                 int meleeLevel = melee?.Level ?? 0;
                 int shootingLevel = shooting?.Level ?? 0;
-                double bonus = Math.Max(meleeLevel, shootingLevel) * 0.05;
+                double bonus = SpecUtil.GetMilBonus(meleeLevel, shootingLevel);
                 return "FCS_TooltipDefenseBonus".Translate(
                     meleeLevel.ToString(), shootingLevel.ToString(), bonus.ToString("F2"));
             }
@@ -779,14 +769,14 @@ namespace FactionColonies.Specialists
                 string bestLabel = "";
                 foreach (ResourceFC resource in uiSettlement.Resources)
                 {
-                    if (resource.def.associatedSkills == null) continue;
+                    if (resource.def.associatedSkills is null) continue;
                     double resTotal = 0;
                     StringBuilder resSb = new StringBuilder();
                     resSb.AppendLine("FCS_TooltipContribHeader".Translate(resource.def.LabelCap));
                     foreach (SkillDef skillDef in resource.def.associatedSkills)
                     {
                         SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                        if (weight == null) continue;
+                        if (weight is null) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
                         if (skill != null && skill.Level > 0)
                         {
@@ -824,7 +814,7 @@ namespace FactionColonies.Specialists
 
         private string BuildUpkeepTooltip(SpecialistFC s)
         {
-            if (s.pawn == null || s.role == SpecialistRole.Resident) return null;
+            if (s.pawn is null || s.role == SpecialistRole.Resident) return null;
             double skillSum = 0;
             foreach (SkillRecord sk in s.pawn.skills.skills)
             {
@@ -834,7 +824,7 @@ namespace FactionColonies.Specialists
             string govMult = "";
             if (s.role == SpecialistRole.Governor)
             {
-                double mult = comp.HasTrait("meritocratic") ? 3.0 : 2.0;
+                double mult = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
                 govMult = "FCS_TooltipUpkeepGovMult".Translate(mult.ToString("F1"));
             }
             return "FCS_TooltipUpkeep".Translate(
@@ -849,18 +839,18 @@ namespace FactionColonies.Specialists
         private Color GetBestResourceColor(SpecialistFC s)
         {
             if (s.role == SpecialistRole.Defense) return DefenseContribColor;
-            if (s.pawn == null || s.pawn.skills == null || uiSettlement == null) return Color.white;
+            if (s.pawn?.skills is null || uiSettlement == null) return Color.white;
 
             double bestBonus = 0;
             Color bestColor = Color.white;
             foreach (ResourceFC resource in uiSettlement.Resources)
             {
-                if (resource.def.associatedSkills == null) continue;
+                if (resource.def.associatedSkills is null) continue;
                 double resBonus = 0;
                 foreach (SkillDef skillDef in resource.def.associatedSkills)
                 {
                     SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                    if (weight == null) continue;
+                    if (weight is null) continue;
                     SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
                     if (skill != null)
                     {
@@ -878,8 +868,8 @@ namespace FactionColonies.Specialists
 
         private string BuildGovResourceTooltip(ResourceFC resource, SpecialistFC gov)
         {
-            if (gov == null || gov.pawn == null || gov.pawn.skills == null) return null;
-            if (resource.def.associatedSkills == null) return null;
+            if (gov?.pawn?.skills is null) return null;
+            if (resource.def.associatedSkills is null) return null;
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("FCS_GovResTooltipHeader".Translate(resource.def.LabelCap));
@@ -889,7 +879,7 @@ namespace FactionColonies.Specialists
             foreach (SkillDef skillDef in resource.def.associatedSkills)
             {
                 SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                if (weight == null) continue;
+                if (weight is null) continue;
                 SkillRecord skill = gov.pawn.skills.GetSkill(skillDef);
                 if (skill != null && skill.Level > 0)
                 {
@@ -903,12 +893,9 @@ namespace FactionColonies.Specialists
                 }
             }
 
-            bool isMeritocratic = comp.HasTrait("meritocratic");
+            bool isMeritocratic = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic);
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            int socialLevel = social?.Level ?? 0;
-            double socialFactor = isMeritocratic
-                ? 0.75 + (socialLevel / 16.0)
-                : 0.5 + (socialLevel / 20.0);
+            double socialFactor = SpecUtil.GovSocialFactor(social?.Level ?? 0);
 
             bool isFocused = gov.HasFocus(resource.def);
             double focusBonus = isFocused ? (isMeritocratic ? 2.0 : 1.5) : 1.0;
@@ -928,7 +915,7 @@ namespace FactionColonies.Specialists
         private string BuildGovMultiplierSummary()
         {
             SpecialistFC gov = comp.Governor;
-            if (gov?.pawn is null || gov.pawn.Dead || gov.pawn.skills is null || uiSettlement is null)
+            if (gov?.pawn?.skills is null || gov.pawn.Dead || uiSettlement is null)
                 return null;
 
             double bestMult = 0;
@@ -1014,23 +1001,23 @@ namespace FactionColonies.Specialists
 
         private string GetTopSkillLabel(SpecialistFC s)
         {
-            if (s.pawn == null || s.pawn.skills == null) return "";
+            if (s.pawn?.skills is null) return "";
             SkillRecord best = null;
             SkillRecord second = null;
             foreach (SkillRecord sk in s.pawn.skills.skills)
             {
                 if (sk.TotallyDisabled) continue;
-                if (best == null || sk.Level > best.Level)
+                if (best is null || sk.Level > best.Level)
                 {
                     second = best;
                     best = sk;
                 }
-                else if (second == null || sk.Level > second.Level)
+                else if (second is null || sk.Level > second.Level)
                 {
                     second = sk;
                 }
             }
-            if (best == null) return "";
+            if (best is null) return "";
             string result = best.def.skillLabel.CapitalizeFirst() + " " + best.Level;
             if (second != null)
             {
@@ -1041,15 +1028,11 @@ namespace FactionColonies.Specialists
 
         private string GetContributionSummary(SpecialistFC s)
         {
-            if (s.pawn == null || s.pawn.skills == null) return "";
+            if (s.pawn?.skills is null) return "";
 
             if (s.role == SpecialistRole.Defense)
             {
-                SkillRecord melee = s.pawn.skills.GetSkill(SkillDefOf.Melee);
-                SkillRecord shooting = s.pawn.skills.GetSkill(SkillDefOf.Shooting);
-                int meleeLevel = melee?.Level ?? 0;
-                int shootingLevel = shooting?.Level ?? 0;
-                double bonus = Math.Max(meleeLevel, shootingLevel) * 0.05;
+                double bonus = SpecUtil.GetMilBonus(s);
                 return "FCS_ContribMilLevel".Translate(bonus.ToString("F2"));
             }
 
@@ -1059,12 +1042,12 @@ namespace FactionColonies.Specialists
                 List<KeyValuePair<string, double>> bonuses = new List<KeyValuePair<string, double>>();
                 foreach (ResourceFC resource in uiSettlement.Resources)
                 {
-                    if (resource.def.associatedSkills == null) continue;
+                    if (resource.def.associatedSkills is null) continue;
                     double resBonus = 0;
                     foreach (SkillDef skillDef in resource.def.associatedSkills)
                     {
                         SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                        if (weight == null) continue;
+                        if (weight is null) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
                         if (skill != null)
                         {
