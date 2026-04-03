@@ -19,6 +19,9 @@
 			<displayName>Empire Refactored</displayName>
 		</li>
 	</modDependencies>
+	<loadAfter>
+		<li>Matathias.Empire</li>
+	</loadAfter>
 
 	<description>A sub-mod for Empire Refactored. Adds the ability to send your pawns to Empire settlements, where they can fill a number of different roles.</description>
 
