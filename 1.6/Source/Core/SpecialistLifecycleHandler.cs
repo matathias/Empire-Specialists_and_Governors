@@ -15,7 +15,7 @@ namespace FactionColonies.Specialists
 
             WorldObjectComp_SettlementSpecialists comp =
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp == null || comp.TotalCount == 0) return;
+            if (comp is null || comp.TotalCount == 0) return;
 
             // Skip if specialists were deployed to a manual battle — deaths handled by RecoverFromBattle
             if (comp.PawnsDeployedToBattle) return;
@@ -29,7 +29,7 @@ namespace FactionColonies.Specialists
 
             foreach (SpecialistFC s in comp.AllPawnsSnapshot())
             {
-                if (s.pawn == null || s.pawn.Dead) continue;
+                if (!s.IsAlive) continue;
                 float deathChance = GetDeathChance(s.role, defenseCount, garrison, profArmy);
                 if (Rand.Chance(deathChance))
                 {
@@ -44,12 +44,9 @@ namespace FactionColonies.Specialists
                 comp.RemoveSpecialist(s);
                 pawn.Kill(null);
 
-                LetterDef letterDef = role == SpecialistRole.Governor
-                    ? LetterDefOf.Death : LetterDefOf.NegativeEvent;
-                string label = role == SpecialistRole.Governor
-                    ? "FCS_LetterGovernorKilled".Translate() : "FCS_LetterSpecialistKilled".Translate();
-                string text = "FCS_LetterDeathAttack".Translate(pawn.LabelShort, role.Translate(), settlement.Name);
-                Find.LetterStack.ReceiveLetter(label, text, letterDef);
+                //TODO: figure out if this letter actually needs to be sent. pawn.Kill might take care of that for us...
+                SpecUtil.SendDeathLetter(role,
+                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, role.Translate(), settlement.Name));
             }
         }
 

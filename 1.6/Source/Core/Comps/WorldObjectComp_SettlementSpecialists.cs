@@ -63,6 +63,18 @@ namespace FactionColonies.Specialists
             get { return allPawns.Count(s => s.role == SpecialistRole.Resident); }
         }
 
+        public int LiveResidentCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (SpecialistFC s in allPawns)
+                    if (s.role == SpecialistRole.Resident && s.IsAlive)
+                        count++;
+                return count;
+            }
+        }
+
         public bool HasGovernor
         {
             get { return allPawns.Any(s => s.role == SpecialistRole.Governor); }
@@ -179,7 +191,7 @@ namespace FactionColonies.Specialists
         {
             int removed = allPawns.RemoveAll(s =>
             {
-                if (s.pawn is null || s.pawn.Dead)
+                if (!s.IsAlive)
                 {
                     SpecialistRoster.Recall(s.pawn);
                     return true;
@@ -206,7 +218,7 @@ namespace FactionColonies.Specialists
             foreach (SpecialistFC s in allPawns)
             {
                 Pawn pawn = s.pawn;
-                if (pawn == null || pawn.Dead) continue;
+                if (!s.IsAlive) continue;
 
                 if (pawn.IsWorldPawn())
                 {
@@ -268,13 +280,8 @@ namespace FactionColonies.Specialists
                 allPawns.Remove(s);
                 SpecialistRoster.Recall(pawn);
 
-                LetterDef letterDef = role == SpecialistRole.Governor
-                    ? LetterDefOf.Death : LetterDefOf.NegativeEvent;
-                string label = role == SpecialistRole.Governor
-                    ? "FCS_LetterGovernorKilled".Translate() : "FCS_LetterSpecialistKilled".Translate();
-                Find.LetterStack.ReceiveLetter(label,
-                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, role.Translate(), Settlement.Name),
-                    letterDef);
+                SpecUtil.SendDeathLetter(role,
+                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, role.Translate(), Settlement.Name));
             }
 
             WorldObjectComp_SettlementMilitary milComp =
@@ -321,7 +328,7 @@ namespace FactionColonies.Specialists
             foreach (SpecialistFC s in allPawns)
             {
                 if (s.role == SpecialistRole.Resident) continue;
-                if (s.pawn == null || s.pawn.Dead || s.pawn.skills == null) continue;
+                if (!s.HasUsableSkills) continue;
 
                 float xp = SpecUtil.XPPerDay();
                 foreach (SkillDef skill in GetRelevantSkills(s))
@@ -452,15 +459,11 @@ namespace FactionColonies.Specialists
         public double CalculatePawnUpkeep(SpecialistFC s)
         {
             if (s.pawn is null || s.role == SpecialistRole.Resident) return 0;
-            double skillSum = 0;
-            foreach (SkillRecord sk in s.pawn.skills.skills)
-            {
-                skillSum += sk.Level;
-            }
-            double upkeep = FCSSettings.specialistBaseCost + (skillSum / FCSSettings.skillDivisor) * FCSSettings.scalingFactor;
+            double skillSum = SpecUtil.PawnSkillSum(s.pawn);
+            double upkeep = SpecUtil.BaseUpkeep(skillSum);
             if (s.role == SpecialistRole.Governor)
             {
-                upkeep *= SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
+                upkeep *= SpecUtil.GovernorUpkeepMultiplier();
             }
             return upkeep;
         }
@@ -498,13 +501,7 @@ namespace FactionColonies.Specialists
             // Residents contribute bonus workers
             if (stat == FCStatDefOf.workerBaseMax)
             {
-                int residentCount = 0;
-                foreach (SpecialistFC s in allPawns)
-                {
-                    if (s.role == SpecialistRole.Resident && s.pawn != null && !s.pawn.Dead)
-                        residentCount++;
-                }
-                value += Math.Floor(residentCount / (double)FCSSettings.residentsPerWorker);
+                value += SpecUtil.WorkerBonusFromResidents(LiveResidentCount);
             }
 
             // SpecialistStatEffectDefs: skill -> stat contributions
@@ -517,7 +514,7 @@ namespace FactionColonies.Specialists
                 {
                     foreach (SpecialistFC s in allPawns)
                     {
-                        if (s.pawn?.skills is null || s.pawn.Dead) continue;
+                        if (!s.HasUsableSkills) continue;
                         if (s.role != def.roleFilter) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
                         if (skill != null)
@@ -540,7 +537,7 @@ namespace FactionColonies.Specialists
                 foreach (SpecialistFC s in allPawns)
                 {
                     if (s.role != SpecialistRole.Defense) continue;
-                    if (s.pawn?.skills is null || s.pawn.Dead) continue;
+                    if (!s.HasUsableSkills) continue;
                     double bonus = SpecUtil.GetMilBonus(s);
                     value += bonus;
                 }
@@ -556,13 +553,8 @@ namespace FactionColonies.Specialists
             // Worker bonus from residents
             if (stat == FCStatDefOf.workerBaseMax)
             {
-                int residentCount = 0;
-                foreach (SpecialistFC s in allPawns)
-                {
-                    if (s.role == SpecialistRole.Resident && s.pawn != null && !s.pawn.Dead)
-                        residentCount++;
-                }
-                int bonus = (int)Math.Floor(residentCount / (double)FCSSettings.residentsPerWorker);
+                int residentCount = LiveResidentCount;
+                int bonus = SpecUtil.WorkerBonusFromResidents(residentCount);
                 if (bonus > 0)
                 {
                     sb.Append("FCS_StatWorkerBonus".Translate(bonus, residentCount));
@@ -579,7 +571,7 @@ namespace FactionColonies.Specialists
                     List<string> parts = new List<string>();
                     foreach (SpecialistFC s in allPawns)
                     {
-                        if (s.pawn?.skills is null || s.pawn.Dead) continue;
+                        if (!s.HasUsableSkills) continue;
                         if (s.role != def.roleFilter) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
                         if (skill != null && skill.Level > 0)
@@ -611,18 +603,8 @@ namespace FactionColonies.Specialists
             foreach (SpecialistFC s in allPawns)
             {
                 if (s.role != SpecialistRole.Specialist) continue;
-                if (s.pawn?.skills is null || s.pawn.Dead) continue;
-
-                foreach (SkillDef skillDef in resource.def.associatedSkills)
-                {
-                    SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                    if (weight is null) continue;
-                    SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
-                    if (skill != null)
-                    {
-                        bonus += skill.Level * weight.specialistAdditivePerLevel;
-                    }
-                }
+                if (!s.HasUsableSkills) continue;
+                bonus += SpecUtil.SpecialistAdditiveForResource(s.pawn, resource);
             }
 
             if (bonus > 0 && SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps))
@@ -636,31 +618,19 @@ namespace FactionColonies.Specialists
         public double GetResourceMultiplierModifier(ResourceFC resource)
         {
             SpecialistFC gov = Governor;
-            if (gov?.pawn?.skills is null || gov.pawn.Dead)
+            if (gov == null || !gov.HasUsableSkills)
                 return 1.0;
 
             if (resource.def.associatedSkills is null)
                 return 1.0;
 
             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            bool meritocratic = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic);
             double socialFactor = SpecUtil.GovSocialFactor(social?.Level ?? 0);
 
-            double raw = 0;
-            foreach (SkillDef skillDef in resource.def.associatedSkills)
-            {
-                SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                if (weight is null) continue;
-                SkillRecord skill = gov.pawn.skills.GetSkill(skillDef);
-                if (skill != null)
-                {
-                    raw += skill.Level * weight.governorMultiplierPerLevel;
-                }
-            }
+            double raw = SpecUtil.GovernorRawMultiplierForResource(gov.pawn, resource);
 
             bool isFocused = gov.HasFocus(resource.def);
-            double baseFocusBonus = meritocratic ? 2.0 : 1.5;
-            double focusBonus = isFocused ? baseFocusBonus : 1.0;
+            double focusBonus = isFocused ? SpecUtil.FocusBonusMultiplier() : 1.0;
 
             double multiplier = raw * socialFactor * focusBonus;
             return 1.0 + (multiplier * FoodSatisfaction);
@@ -675,29 +645,24 @@ namespace FactionColonies.Specialists
             foreach (SpecialistFC s in allPawns)
             {
                 if (s.role != SpecialistRole.Specialist) continue;
-                if (s.pawn?.skills is null || s.pawn.Dead) continue;
+                if (!s.HasUsableSkills) continue;
 
-                double pawnBonus = 0;
-                string bestSkillName = null;
-                int bestSkillLevel = 0;
-                foreach (SkillDef skillDef in resource.def.associatedSkills)
+                double pawnBonus = SpecUtil.SpecialistAdditiveForResource(s.pawn, resource);
+                if (pawnBonus > 0)
                 {
-                    SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                    if (weight is null) continue;
-                    SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
-                    if (skill != null)
+                    addTotal += pawnBonus;
+                    // Find the best skill for the label
+                    string bestSkillName = null;
+                    int bestSkillLevel = 0;
+                    foreach (SkillDef skillDef in resource.def.associatedSkills)
                     {
-                        pawnBonus += skill.Level * weight.specialistAdditivePerLevel;
-                        if (skill.Level > bestSkillLevel)
+                        SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
+                        if (skill != null && skill.Level > bestSkillLevel)
                         {
                             bestSkillLevel = skill.Level;
                             bestSkillName = skillDef.skillLabel;
                         }
                     }
-                }
-                if (pawnBonus > 0)
-                {
-                    addTotal += pawnBonus;
                     addParts.Add(s.pawn.LabelShort + " " + bestSkillName + " " + bestSkillLevel);
                 }
             }
@@ -713,7 +678,7 @@ namespace FactionColonies.Specialists
             if (resource.def.associatedSkills is null) return null;
 
             SpecialistFC gov = Governor;
-            if (gov?.pawn?.skills is null || gov.pawn.Dead)
+            if (gov is null || !gov.HasUsableSkills)
                 return null;
 
             double mult = GetResourceMultiplierModifier(resource);

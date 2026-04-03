@@ -241,27 +241,23 @@ namespace FactionColonies.Specialists
         {
             if (pawn.skills == null || role == SpecialistRole.Resident)
             {
-                text = (string)"FCS_PreviewNoBonus".Translate();
+                text = "FCS_PreviewNoBonus".Translate();
                 color = Color.gray;
                 return;
             }
 
             if (role == SpecialistRole.Defense)
             {
-                SkillRecord melee = pawn.skills.GetSkill(SkillDefOf.Melee);
-                SkillRecord shooting = pawn.skills.GetSkill(SkillDefOf.Shooting);
-                int meleeLevel = melee?.Level ?? 0;
-                int shootingLevel = shooting?.Level ?? 0;
-                double bonus = Math.Max(meleeLevel, shootingLevel) * 0.05;
+                double bonus = SpecUtil.GetMilBonus(pawn);
                 text = "FCS_ContribMilLevel".Translate(bonus.ToString("F2"));
                 color = DefenseColor;
                 return;
             }
 
             WorldSettlementFC settlement = comp.Settlement;
-            if (settlement == null)
+            if (settlement is null)
             {
-                text = (string)"FCS_PreviewNoBonus".Translate();
+                text = "FCS_PreviewNoBonus".Translate();
                 color = Color.gray;
                 return;
             }
@@ -273,18 +269,7 @@ namespace FactionColonies.Specialists
                 Color bestColor = Color.white;
                 foreach (ResourceFC resource in settlement.Resources)
                 {
-                    if (resource.def.associatedSkills == null) continue;
-                    double resBonus = 0;
-                    foreach (SkillDef skillDef in resource.def.associatedSkills)
-                    {
-                        SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                        if (weight == null) continue;
-                        SkillRecord skill = pawn.skills.GetSkill(skillDef);
-                        if (skill != null)
-                        {
-                            resBonus += skill.Level * weight.specialistAdditivePerLevel;
-                        }
-                    }
+                    double resBonus = SpecUtil.SpecialistAdditiveForResource(pawn, resource);
                     if (resBonus > bestBonus)
                     {
                         bestBonus = resBonus;
@@ -304,29 +289,13 @@ namespace FactionColonies.Specialists
             {
                 // Preview best multiplier for this pawn as governor
                 SkillRecord social = pawn.skills.GetSkill(SkillDefOf.Social);
-                int socialLevel = social != null ? social.Level : 0;
-                FCPolicyDef meritDef = SpecialistsCache.TraitDef("meritocratic");
-                bool meritocratic = meritDef != null && FactionCache.FactionComp.HasTrait(meritDef);
-                double socialFactor = meritocratic
-                    ? 0.75 + (socialLevel / 16.0)
-                    : 0.5 + (socialLevel / 20.0);
+                double socialFactor = SpecUtil.GovSocialFactor(social?.Level ?? 0);
 
                 double bestMult = 0;
                 string bestLabel = "";
                 foreach (ResourceFC resource in settlement.Resources)
                 {
-                    if (resource.def.associatedSkills == null) continue;
-                    double raw = 0;
-                    foreach (SkillDef skillDef in resource.def.associatedSkills)
-                    {
-                        SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                        if (weight == null) continue;
-                        SkillRecord skill = pawn.skills.GetSkill(skillDef);
-                        if (skill != null)
-                        {
-                            raw += skill.Level * weight.governorMultiplierPerLevel;
-                        }
-                    }
+                    double raw = SpecUtil.GovernorRawMultiplierForResource(pawn, resource);
                     double mult = 1.0 + (raw * socialFactor);
                     if (mult > bestMult)
                     {
@@ -336,13 +305,13 @@ namespace FactionColonies.Specialists
                 }
                 if (bestMult > 1.001)
                 {
-                    text = (string)"FCS_PreviewGovMult".Translate(bestMult.ToString("F2"), bestLabel);
+                    text = "FCS_PreviewGovMult".Translate(bestMult.ToString("F2"), bestLabel);
                     color = GovColor;
                     return;
                 }
             }
 
-            text = (string)"FCS_PreviewNoBonus".Translate();
+            text = "FCS_PreviewNoBonus".Translate();
             color = Color.gray;
         }
 
@@ -369,7 +338,7 @@ namespace FactionColonies.Specialists
 
         private string GetTopSkills(Pawn pawn, int count)
         {
-            if (pawn.skills == null) return "";
+            if (pawn.skills is null) return "";
 
             List<SkillRecord> sorted = pawn.skills.skills
                 .Where(s => !s.TotallyDisabled)

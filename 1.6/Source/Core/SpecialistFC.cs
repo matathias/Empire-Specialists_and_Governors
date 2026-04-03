@@ -21,6 +21,10 @@ namespace FactionColonies.Specialists
             this.assignedTick = Find.TickManager.TicksGame;
         }
 
+        public bool IsAlive => pawn != null && !pawn.Dead;
+
+        public bool HasUsableSkills => pawn?.skills != null && !pawn.Dead;
+
         public bool HasFocus(ResourceTypeDef def)
         {
             return governorFocuses != null && governorFocuses.Contains(def);

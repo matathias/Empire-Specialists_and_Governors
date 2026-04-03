@@ -47,7 +47,7 @@ namespace FactionColonies.Specialists
                 if (pawns is null) continue;
                 foreach (SpecialistFC s in pawns)
                 {
-                    if (s.pawn != null && !s.pawn.Dead)
+                    if (s.IsAlive)
                         assignments[s.pawn.thingIDNumber] = s.role;
                 }
             }
