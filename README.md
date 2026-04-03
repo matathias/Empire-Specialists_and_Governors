@@ -10,6 +10,6 @@ The bonuses a pawn provides depend on the role they are assigned.
 
 Assigning pawns to a settlement is as simple as sending them via a caravan.
 
-This assignment isn't completely free, however. Specialists and Governors cost silver to upkeep, and whenever a settlement loses a battle, there is a small chance that assigned pawns will die. This chance can be mitigated by assigning Defender Specialists; this special type of Specialist doesn't provide resource bonuses, but each one will reduce the odds of other pawns dying after a failed defense.
+This assignment isn't completely free, however. Specialists and Governors cost silver to upkeep, and whenever a settlement loses a battle, there is a small chance that assigned pawns will die. This chance can be mitigated by assigning Defender Specialists; this special type of Specialist doesn't provide resource bonuses, but each one will reduce the odds of other pawns dying after a failed defense, in addition to boosting the settlement's defenses.
 
 If you play with Routes & Resources, then specialists and governors will also have a food and medicine need. Be sure to keep them happy and well-fed!

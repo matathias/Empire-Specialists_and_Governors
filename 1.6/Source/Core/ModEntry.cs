@@ -112,7 +112,7 @@ namespace FactionColonies.Specialists
             deathReductionPerDefender = (float)System.Math.Round(ls.Slider(deathReductionPerDefender, 0f, 0.1f), 2);
 
             // Supply chain needs (only show if Supply Chain submod is active)
-            if (ModsConfig.IsActive("Matathias.Empire.SupplyChain"))
+            if (isRoutesResourcesActive)
             {
                 ls.Gap(8f);
                 ls.Label("FCS_SettingSCHeader".Translate());
