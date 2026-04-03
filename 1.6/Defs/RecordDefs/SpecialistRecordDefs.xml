@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+    <RecordDef>
+        <defName>FCS_TimeAssigned</defName>
+        <label>time assigned to a settlement</label>
+        <description>Total time this pawn has spent assigned to an Empire settlement in any role.</description>
+        <type>Time</type>
+        <workerClass>FactionColonies.Specialists.RecordWorker_FCS_TimeAssigned</workerClass>
+        <displayOrder>2000</displayOrder>
+    </RecordDef>
+
+    <RecordDef>
+        <defName>FCS_TimeAsResident</defName>
+        <label>time as a resident</label>
+        <description>Total time this pawn has spent as a resident at an Empire settlement.</description>
+        <type>Time</type>
+        <workerClass>FactionColonies.Specialists.RecordWorker_FCS_TimeAsResident</workerClass>
+        <displayOrder>2001</displayOrder>
+    </RecordDef>
+
+    <RecordDef>
+        <defName>FCS_TimeAsSpecialist</defName>
+        <label>time as a specialist</label>
+        <description>Total time this pawn has spent as a specialist at an Empire settlement.</description>
+        <type>Time</type>
+        <workerClass>FactionColonies.Specialists.RecordWorker_FCS_TimeAsSpecialist</workerClass>
+        <displayOrder>2002</displayOrder>
+    </RecordDef>
+
+    <RecordDef>
+        <defName>FCS_TimeAsDefense</defName>
+        <label>time as a defense specialist</label>
+        <description>Total time this pawn has spent as a defense specialist at an Empire settlement.</description>
+        <type>Time</type>
+        <workerClass>FactionColonies.Specialists.RecordWorker_FCS_TimeAsDefense</workerClass>
+        <displayOrder>2003</displayOrder>
+    </RecordDef>
+
+    <RecordDef>
+        <defName>FCS_TimeAsGovernor</defName>
+        <label>time as a governor</label>
+        <description>Total time this pawn has spent as a governor of an Empire settlement.</description>
+        <type>Time</type>
+        <workerClass>FactionColonies.Specialists.RecordWorker_FCS_TimeAsGovernor</workerClass>
+        <displayOrder>2004</displayOrder>
+    </RecordDef>
+
+</Defs>
