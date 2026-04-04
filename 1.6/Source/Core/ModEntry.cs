@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Reflection;
+using FactionColonies;
 using HarmonyLib;
 using UnityEngine;
 using Verse;
@@ -124,6 +125,10 @@ namespace FactionColonies.Specialists
                 medicinePerSpecialist = (float)System.Math.Round(ls.Slider(medicinePerSpecialist, 0f, 1f), 2);
             }
 
+            ls.Gap(12f);
+            if (ls.ButtonText("SP_OpenPatchNotes".Translate()))
+                Find.WindowStack.Add(new PatchNotesDisplayWindow("matathias.empire.specialists", "SP_PatchTitle".Translate()));
+
             ls.End();
         }
 
@@ -163,6 +168,16 @@ namespace FactionColonies.Specialists
         {
             settings = GetSettings<FCSSettings>();
             FCSSettings.CheckForRoutesAndResources();
+            
+            string modVersion = content?.ModMetaData?.ModVersion;
+            if (modVersion.NullOrEmpty())
+            {
+                LogSG.MessageForce("Did not load a mod version");
+            }
+            else
+            {
+                LogSG.MessageForce($"v{modVersion}");
+            }
         }
 
         public override string SettingsCategory() => "FCS_SettingsCategory".Translate();

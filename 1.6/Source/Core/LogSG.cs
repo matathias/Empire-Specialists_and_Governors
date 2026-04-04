@@ -5,56 +5,26 @@ namespace FactionColonies.Specialists
 {
     public static class LogSG
     {
-        public const string slug = "[Empire-Specialists]";
-
-        public static void LogMessage(string message, LogMessageType messageType = LogMessageType.Message, bool forceLog = false, bool errorOnce = false, int errorOnceKey = 0)
-        {
-            switch (messageType)
-            {
-                case LogMessageType.Message:
-                    if (FCSSettings.PrintDebug || forceLog)
-                    {
-                        Log.Message(slug + " " + message);
-                    }
-                    break;
-                case LogMessageType.Warning:
-                    Log.Warning(slug + " " + message);
-                    break;
-                case LogMessageType.Error:
-                    if (errorOnce)
-                    {
-                        Log.ErrorOnce(slug + " " + message, errorOnceKey);
-                    }
-                    else
-                    {
-                        Log.Error(slug + " " + message);
-                    }
-                    break;
-            }
-        }
+        private const string Slug = "[Empire-Specialists]";
 
         public static void Message(string message)
         {
-            LogMessage(message, LogMessageType.Message);
+            if (FCSSettings.PrintDebug)
+                Log.Message($"{Slug} {message}");
         }
-        /// <summary>
-        /// Prints a non-warning, non-error message to the log even if the user has disabled Verbose Logging.
-        /// </summary>
         public static void MessageForce(string message)
         {
-            LogMessage(message, LogMessageType.Message, true);
+            Log.Message($"{Slug} {message}");
         }
+
         public static void Warning(string message)
         {
-            LogMessage(message, LogMessageType.Warning);
+            Log.Warning($"{Slug} {message}");
         }
+
         public static void Error(string message)
         {
-            LogMessage(message, LogMessageType.Error);
-        }
-        public static void ErrorOnce(string message, int key)
-        {
-            LogMessage(message, LogMessageType.Error, true, true, key);
+            Log.Error($"{Slug} {message}");
         }
     }
 }

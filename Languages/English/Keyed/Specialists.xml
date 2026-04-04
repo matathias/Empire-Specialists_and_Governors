@@ -138,6 +138,10 @@
 	<FCS_LetterDeathAttack>{0} ({1}) was killed in the attack on {2}.</FCS_LetterDeathAttack>
 	<FCS_LetterDeathDefending>{0} ({1}) died defending {2}.</FCS_LetterDeathDefending>
 	
+	<!-- Patch Notes -->
+	<SP_PatchTitle>Patch Notes: Specialists &amp; Governors</SP_PatchTitle>
+	<SP_OpenPatchNotes>Open Patch Notes</SP_OpenPatchNotes>
+
 	<!-- Routes & Resources -->
 	<FCSRR_MedicineNeed>Specialist Medicine</FCSRR_MedicineNeed>
 	<FCSRR_FoodNeed>Specialist Food</FCSRR_FoodNeed>
