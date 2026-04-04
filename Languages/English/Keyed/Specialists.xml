@@ -2,7 +2,7 @@
 <LanguageData>
 
 	<!-- Settings -->
-	<FCS_SettingsCategory>Empire Refactored: Specialists &amp; Governors</FCS_SettingsCategory>
+	<FCS_SettingsCategory>Empire: Specialists &amp; Governors</FCS_SettingsCategory>
 	<FCS_SettingDebugLog>Enable debug logging</FCS_SettingDebugLog>
 	<FCS_SettingResidentsPerWorker>Residents per bonus worker: </FCS_SettingResidentsPerWorker>
 	<FCS_SettingBaseUpkeep>Specialist base upkeep (silver/period): </FCS_SettingBaseUpkeep>
