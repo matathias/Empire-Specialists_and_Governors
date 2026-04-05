@@ -44,6 +44,8 @@ namespace FactionColonies.Specialists
         public static float residentDeathChance = 0.15f;
         public static float deathReductionPerDefender = 0.02f;
 
+        private static Vector2 scrollPos;
+
         public override void ExposeData()
         {
             base.ExposeData();
@@ -70,59 +72,61 @@ namespace FactionColonies.Specialists
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            ls.Begin(inRect);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 750f : 580f);
+            Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
+            ls.Begin(viewRect);
+
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
+            ls.GapLine();
 
             // Specialist capacity
-            ls.Gap(12f);
-            ls.Label("FCS_SettingSpecBaseMax".Translate() + specialistBaseMax);
-            specialistBaseMax = (int)ls.Slider(specialistBaseMax, 1, 20);
-            ls.Label("FCS_SettingSpecPerLevels".Translate() + specialistPerLevels);
-            specialistPerLevels = (int)ls.Slider(specialistPerLevels, 1, 10);
+            ls.Label("FCS_Header_Capacity".Translate());
+            ls.Gap(4f);
+            specialistBaseMax = (int)SliderLabeled(ls, "FCS_SettingSpecBaseMax".Translate(), specialistBaseMax, 1f, 20f);
+            specialistPerLevels = (int)SliderLabeled(ls, "FCS_SettingSpecPerLevels".Translate(), specialistPerLevels, 1f, 10f);
+            ls.GapLine();
 
             // Workers
-            ls.Gap(12f);
-            ls.Label("FCS_SettingResidentsPerWorker".Translate() + residentsPerWorker);
-            residentsPerWorker = (int)ls.Slider(residentsPerWorker, 1, 20);
+            ls.Label("FCS_Header_Workers".Translate());
+            ls.Gap(4f);
+            residentsPerWorker = (int)SliderLabeled(ls, "FCS_SettingResidentsPerWorker".Translate(), residentsPerWorker, 1f, 20f);
+            ls.GapLine();
 
             // Upkeep
-            ls.Gap(8f);
-            ls.Label("FCS_SettingBaseUpkeep".Translate() + specialistBaseCost.ToString("F1"));
-            specialistBaseCost = (float)System.Math.Round(ls.Slider(specialistBaseCost, 0f, 20f), 1);
-            ls.Label("FCS_SettingSkillDivisor".Translate() + skillDivisor.ToString("F0"));
-            skillDivisor = (float)System.Math.Round(ls.Slider(skillDivisor, 1f, 50f), 0);
-            ls.Label("FCS_SettingScalingFactor".Translate() + scalingFactor.ToString("F1"));
-            scalingFactor = (float)System.Math.Round(ls.Slider(scalingFactor, 0f, 5f), 1);
+            ls.Label("FCS_Header_Upkeep".Translate());
+            ls.Gap(4f);
+            specialistBaseCost = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingBaseUpkeep".Translate(), specialistBaseCost, 0f, 20f), 1);
+            skillDivisor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillDivisor".Translate(), skillDivisor, 1f, 50f), 0);
+            scalingFactor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingScalingFactor".Translate(), scalingFactor, 0f, 5f), 1);
+            ls.GapLine();
 
             // XP
-            ls.Gap(8f);
-            ls.Label("FCS_SettingXpPerDay".Translate() + xpPerDay.ToString("F0"));
-            xpPerDay = (float)System.Math.Round(ls.Slider(xpPerDay, 0f, 2000f), 0);
+            ls.Label("FCS_Header_XP".Translate());
+            ls.Gap(4f);
+            xpPerDay = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingXpPerDay".Translate(), xpPerDay, 0f, 2000f), 0);
+            ls.GapLine();
 
             // Death chances
-            ls.Gap(8f);
-            ls.Label("FCS_SettingCivilianDeathChance".Translate() + (civilianDeathChance * 100f).ToString("F0") + "%");
-            civilianDeathChance = (float)System.Math.Round(ls.Slider(civilianDeathChance, 0f, 1f), 2);
-            ls.Label("FCS_SettingGovernorDeathChance".Translate() + (governorDeathChance * 100f).ToString("F0") + "%");
-            governorDeathChance = (float)System.Math.Round(ls.Slider(governorDeathChance, 0f, 1f), 2);
-            ls.Label("FCS_SettingDefenseDeathChance".Translate() + (defenseDeathChance * 100f).ToString("F0") + "%");
-            defenseDeathChance = (float)System.Math.Round(ls.Slider(defenseDeathChance, 0f, 1f), 2);
-            ls.Label("FCS_SettingResidentDeathChance".Translate() + (residentDeathChance * 100f).ToString("F0") + "%");
-            residentDeathChance = (float)System.Math.Round(ls.Slider(residentDeathChance, 0f, 1f), 2);
-            ls.Label("FCS_SettingDeathReduction".Translate() + (deathReductionPerDefender * 100f).ToString("F0") + "%");
-            deathReductionPerDefender = (float)System.Math.Round(ls.Slider(deathReductionPerDefender, 0f, 0.1f), 2);
+            ls.Label("FCS_Header_Death".Translate());
+            ls.Gap(4f);
+            civilianDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingCivilianDeathChance".Translate(), civilianDeathChance, 0f, 1f), 2);
+            governorDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingGovernorDeathChance".Translate(), governorDeathChance, 0f, 1f), 2);
+            defenseDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingDefenseDeathChance".Translate(), defenseDeathChance, 0f, 1f), 2);
+            residentDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingResidentDeathChance".Translate(), residentDeathChance, 0f, 1f), 2);
+            deathReductionPerDefender = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingDeathReduction".Translate(), deathReductionPerDefender, 0f, 0.1f), 2);
+            ls.GapLine();
 
             // Supply chain needs (only show if Supply Chain submod is active)
             if (isRoutesResourcesActive)
             {
-                ls.Gap(8f);
-                ls.Label("FCS_SettingSCHeader".Translate());
-                ls.Label("FCS_SettingFoodPerSpec".Translate() + foodPerSpecialist.ToString("F2"));
-                foodPerSpecialist = (float)System.Math.Round(ls.Slider(foodPerSpecialist, 0f, 2f), 2);
-                ls.Label("FCS_SettingFoodPerResident".Translate() + foodPerResident.ToString("F2"));
-                foodPerResident = (float)System.Math.Round(ls.Slider(foodPerResident, 0f, 1f), 2);
-                ls.Label("FCS_SettingMedPerSpec".Translate() + medicinePerSpecialist.ToString("F2"));
-                medicinePerSpecialist = (float)System.Math.Round(ls.Slider(medicinePerSpecialist, 0f, 1f), 2);
+                ls.Label("FCS_Header_SupplyChain".Translate());
+                ls.Gap(4f);
+                foodPerSpecialist = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingFoodPerSpec".Translate(), foodPerSpecialist, 0f, 2f), 2);
+                foodPerResident = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingFoodPerResident".Translate(), foodPerResident, 0f, 1f), 2);
+                medicinePerSpecialist = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingMedPerSpec".Translate(), medicinePerSpecialist, 0f, 1f), 2);
+                foodPenaltyPerUnit = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingFoodPenalty".Translate(), foodPenaltyPerUnit, 0f, 2f), 2);
+                medicinePenaltyPerUnit = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingMedPenalty".Translate(), medicinePenaltyPerUnit, 0f, 2f), 2);
+                ls.GapLine();
             }
 
             ls.Gap(12f);
@@ -130,6 +134,17 @@ namespace FactionColonies.Specialists
                 Find.WindowStack.Add(new PatchNotesDisplayWindow("matathias.empire.specialists", "SP_PatchTitle".Translate()));
 
             ls.End();
+            Widgets.EndScrollView();
+        }
+
+        private static float SliderLabeled(Listing_Standard ls, string label, float val, float min, float max)
+        {
+            return ls.SliderLabeled(label + val.ToString("F2"), val, min, max);
+        }
+
+        private static float SliderLabeledPct(Listing_Standard ls, string label, float val, float min, float max)
+        {
+            return ls.SliderLabeled(label + (val * 100f).ToString("F0") + "%", val, min, max);
         }
 
         public static void CheckForRoutesAndResources()

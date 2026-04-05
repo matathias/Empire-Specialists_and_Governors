@@ -4,22 +4,43 @@
 	<!-- Settings -->
 	<FCS_SettingsCategory>Empire: Specialists &amp; Governors</FCS_SettingsCategory>
 	<FCS_SettingDebugLog>Enable debug logging</FCS_SettingDebugLog>
+
+	<!-- Section Headers -->
+	<FCS_Header_Capacity>Specialist Capacity</FCS_Header_Capacity>
+	<FCS_Header_Workers>Workers</FCS_Header_Workers>
+	<FCS_Header_Upkeep>Upkeep</FCS_Header_Upkeep>
+	<FCS_Header_XP>Experience</FCS_Header_XP>
+	<FCS_Header_Death>Death Chances</FCS_Header_Death>
+	<FCS_Header_SupplyChain>Supply Chain Integration</FCS_Header_SupplyChain>
+
+	<!-- Capacity -->
+	<FCS_SettingSpecBaseMax>Base Specialist Limit: </FCS_SettingSpecBaseMax>
+	<FCS_SettingSpecPerLevels>Levels per Limit Increase: </FCS_SettingSpecPerLevels>
+
+	<!-- Workers -->
 	<FCS_SettingResidentsPerWorker>Residents per bonus worker: </FCS_SettingResidentsPerWorker>
-	<FCS_SettingBaseUpkeep>Specialist base upkeep (silver/period): </FCS_SettingBaseUpkeep>
-	<FCS_SettingSkillDivisor>Upkeep skill divisor: </FCS_SettingSkillDivisor>
-	<FCS_SettingScalingFactor>Upkeep scaling factor: </FCS_SettingScalingFactor>
+
+	<!-- Upkeep -->
+	<FCS_SettingBaseUpkeep>Base upkeep (silver/period): </FCS_SettingBaseUpkeep>
+	<FCS_SettingSkillDivisor>Skill divisor: </FCS_SettingSkillDivisor>
+	<FCS_SettingScalingFactor>Scaling factor: </FCS_SettingScalingFactor>
+
+	<!-- XP -->
 	<FCS_SettingXpPerDay>XP per day per skill: </FCS_SettingXpPerDay>
-	<FCS_SettingSCHeader>-- Supply Chain Integration --</FCS_SettingSCHeader>
+
+	<!-- Death Chances -->
+	<FCS_SettingCivilianDeathChance>Civilian specialist: </FCS_SettingCivilianDeathChance>
+	<FCS_SettingGovernorDeathChance>Governor: </FCS_SettingGovernorDeathChance>
+	<FCS_SettingDefenseDeathChance>Defense specialist: </FCS_SettingDefenseDeathChance>
+	<FCS_SettingResidentDeathChance>Resident: </FCS_SettingResidentDeathChance>
+	<FCS_SettingDeathReduction>Reduction per defender: </FCS_SettingDeathReduction>
+
+	<!-- Supply Chain -->
 	<FCS_SettingFoodPerSpec>Food per specialist/governor: </FCS_SettingFoodPerSpec>
 	<FCS_SettingFoodPerResident>Food per resident: </FCS_SettingFoodPerResident>
 	<FCS_SettingMedPerSpec>Medicine per specialist/governor: </FCS_SettingMedPerSpec>
-	<FCS_SettingCivilianDeathChance>Civilian specialist death chance: </FCS_SettingCivilianDeathChance>
-	<FCS_SettingGovernorDeathChance>Governor death chance: </FCS_SettingGovernorDeathChance>
-	<FCS_SettingDefenseDeathChance>Defense specialist death chance: </FCS_SettingDefenseDeathChance>
-	<FCS_SettingResidentDeathChance>Resident death chance: </FCS_SettingResidentDeathChance>
-	<FCS_SettingDeathReduction>Death reduction per defender: </FCS_SettingDeathReduction>
-	<FCS_SettingSpecBaseMax>Base Specialist Limit: </FCS_SettingSpecBaseMax>
-	<FCS_SettingSpecPerLevels>Settlement Levels per Specialist Limit Increase: </FCS_SettingSpecPerLevels>
+	<FCS_SettingFoodPenalty>Food penalty per unit: </FCS_SettingFoodPenalty>
+	<FCS_SettingMedPenalty>Medicine penalty per unit: </FCS_SettingMedPenalty>
 
 	<!-- Role Names -->
 	<FCS_RoleResident>Resident</FCS_RoleResident>
