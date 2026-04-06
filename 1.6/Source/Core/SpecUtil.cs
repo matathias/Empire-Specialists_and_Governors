@@ -1,11 +1,19 @@
 ﻿using RimWorld;
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace FactionColonies.Specialists
 {
     public static class SpecUtil
     {
+        /// <summary>
+        /// Returns 0 if the skill level is below the configured skill floor, otherwise returns the level unchanged.
+        /// </summary>
+        public static int EffectiveLevel(int level)
+        {
+            return level >= FCSSettings.skillFloor ? level : 0;
+        }
         public static float XPPerDay()
         {
             float xp = FCSSettings.xpPerDay;
@@ -17,7 +25,7 @@ namespace FactionColonies.Specialists
 
         public static double GetMilBonus(int meleeLevel, int shootingLevel)
         {
-            return Math.Max(meleeLevel, shootingLevel) * 0.05;
+            return Math.Max(EffectiveLevel(meleeLevel), EffectiveLevel(shootingLevel)) * 0.05;
         }
 
         public static double GetMilBonus(Pawn pawn)
@@ -74,7 +82,7 @@ namespace FactionColonies.Specialists
                 if (weight is null) continue;
                 SkillRecord skill = pawn.skills.GetSkill(skillDef);
                 if (skill != null)
-                    bonus += skill.Level * weight.specialistAdditivePerLevel;
+                    bonus += EffectiveLevel(skill.Level) * weight.specialistAdditivePerLevel;
             }
             return bonus;
         }
@@ -89,7 +97,7 @@ namespace FactionColonies.Specialists
                 if (weight is null) continue;
                 SkillRecord skill = pawn.skills.GetSkill(skillDef);
                 if (skill != null)
-                    raw += skill.Level * weight.governorMultiplierPerLevel;
+                    raw += EffectiveLevel(skill.Level) * weight.governorMultiplierPerLevel;
             }
             return raw;
         }
@@ -111,6 +119,41 @@ namespace FactionColonies.Specialists
         public static double GovernorUpkeepMultiplier()
         {
             return HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
+        }
+
+        /// <summary>
+        /// Computes the total heal rate bonus from specialists' and governor's Medicine skill.
+        /// Returns the value to add to 1.0 for the mercHealRateMultiplier stat.
+        /// </summary>
+        public static double MedicalHealRateBonus(List<SpecialistFC> allPawns, SpecialistFC governor)
+        {
+            double bonus = 0;
+
+            foreach (SpecialistFC s in allPawns)
+            {
+                if (s.role != SpecialistRole.Specialist) continue;
+                if (!s.HasUsableSkills) continue;
+                SkillRecord med = s.pawn.skills.GetSkill(SkillDefOf.Medicine);
+                if (med != null)
+                {
+                    int level = EffectiveLevel(med.Level);
+                    bonus += level * FCSSettings.healRatePerLevelSpecialist;
+                }
+            }
+
+            if (governor != null && governor.HasUsableSkills)
+            {
+                SkillRecord govMed = governor.pawn.skills.GetSkill(SkillDefOf.Medicine);
+                if (govMed != null)
+                {
+                    int level = EffectiveLevel(govMed.Level);
+                    SkillRecord social = governor.pawn.skills.GetSkill(SkillDefOf.Social);
+                    double socialFactor = GovSocialFactor(social?.Level ?? 0);
+                    bonus += level * FCSSettings.healRatePerLevelGovernor * socialFactor;
+                }
+            }
+
+            return bonus;
         }
 
         public static void SendDeathLetter(SpecialistRole role, string bodyText)

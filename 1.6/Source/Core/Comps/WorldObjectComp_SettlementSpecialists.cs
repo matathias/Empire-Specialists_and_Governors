@@ -519,7 +519,7 @@ namespace FactionColonies.Specialists
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
                         if (skill != null)
                         {
-                            double contribution = skill.Level * def.specialistValuePerLevel;
+                            double contribution = SpecUtil.EffectiveLevel(skill.Level) * def.specialistValuePerLevel;
                             // Professional Army: defense specialists contribute 2x military level
                             if (profArmy && s.role == SpecialistRole.Defense && stat == FCStatDefOf.militaryBaseLevel)
                             {
@@ -541,6 +541,12 @@ namespace FactionColonies.Specialists
                     double bonus = SpecUtil.GetMilBonus(s);
                     value += bonus;
                 }
+            }
+
+            // Medicine skill -> merc heal rate multiplier
+            if (stat == FCStatDefOf.mercHealRateMultiplier)
+            {
+                value += SpecUtil.MedicalHealRateBonus(allPawns, Governor);
             }
 
             return value;
@@ -574,9 +580,9 @@ namespace FactionColonies.Specialists
                         if (!s.HasUsableSkills) continue;
                         if (s.role != def.roleFilter) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
-                        if (skill != null && skill.Level > 0)
+                        if (skill != null && SpecUtil.EffectiveLevel(skill.Level) > 0)
                         {
-                            double contribution = skill.Level * def.specialistValuePerLevel;
+                            double contribution = SpecUtil.EffectiveLevel(skill.Level) * def.specialistValuePerLevel;
                             total += contribution;
                             parts.Add(s.pawn.LabelShort + " " + skill.Level);
                         }
@@ -587,6 +593,55 @@ namespace FactionColonies.Specialists
                         if (sb.Length > 0) sb.Append("\n");
                         sb.Append("FCS_StatEffectLine".Translate(total, def.skill.skillLabel.CapitalizeFirst(), string.Join(", ", parts)));
                     }
+                }
+            }
+
+            // Heal rate multiplier description
+            if (stat == FCStatDefOf.mercHealRateMultiplier)
+            {
+                List<string> healParts = new List<string>();
+                double healTotal = 0;
+
+                foreach (SpecialistFC s in allPawns)
+                {
+                    if (s.role != SpecialistRole.Specialist) continue;
+                    if (!s.HasUsableSkills) continue;
+                    SkillRecord med = s.pawn.skills.GetSkill(SkillDefOf.Medicine);
+                    if (med != null)
+                    {
+                        int level = SpecUtil.EffectiveLevel(med.Level);
+                        if (level > 0)
+                        {
+                            double contribution = level * FCSSettings.healRatePerLevelSpecialist;
+                            healTotal += contribution;
+                            healParts.Add(s.pawn.LabelShort + " " + med.Level);
+                        }
+                    }
+                }
+
+                SpecialistFC gov = Governor;
+                if (gov != null && gov.HasUsableSkills)
+                {
+                    SkillRecord govMed = gov.pawn.skills.GetSkill(SkillDefOf.Medicine);
+                    if (govMed != null)
+                    {
+                        int level = SpecUtil.EffectiveLevel(govMed.Level);
+                        if (level > 0)
+                        {
+                            SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
+                            double socialFactor = SpecUtil.GovSocialFactor(social?.Level ?? 0);
+                            double contribution = level * FCSSettings.healRatePerLevelGovernor * socialFactor;
+                            healTotal += contribution;
+                            healParts.Add(gov.pawn.LabelShort + " " + govMed.Level + " (Gov)");
+                        }
+                    }
+                }
+
+                if (healTotal > 0)
+                {
+                    healTotal = Math.Round(healTotal, 2);
+                    if (sb.Length > 0) sb.Append("\n");
+                    sb.Append("FCS_HealRateLine".Translate(healTotal, string.Join(", ", healParts)));
                 }
             }
 

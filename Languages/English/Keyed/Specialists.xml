@@ -6,12 +6,17 @@
 	<FCS_SettingDebugLog>Enable debug logging</FCS_SettingDebugLog>
 
 	<!-- Section Headers -->
+	<FCS_Header_SkillFloor>Skill Requirements</FCS_Header_SkillFloor>
 	<FCS_Header_Capacity>Specialist Capacity</FCS_Header_Capacity>
+	<FCS_Header_Healing>Healing</FCS_Header_Healing>
 	<FCS_Header_Workers>Workers</FCS_Header_Workers>
 	<FCS_Header_Upkeep>Upkeep</FCS_Header_Upkeep>
 	<FCS_Header_XP>Experience</FCS_Header_XP>
 	<FCS_Header_Death>Death Chances</FCS_Header_Death>
 	<FCS_Header_SupplyChain>Supply Chain Integration</FCS_Header_SupplyChain>
+
+	<!-- Skill Floor -->
+	<FCS_SettingSkillFloor>Minimum skill level for bonuses (0 = off): </FCS_SettingSkillFloor>
 
 	<!-- Capacity -->
 	<FCS_SettingSpecBaseMax>Base Specialist Limit: </FCS_SettingSpecBaseMax>
@@ -24,6 +29,10 @@
 	<FCS_SettingBaseUpkeep>Base upkeep (silver/period): </FCS_SettingBaseUpkeep>
 	<FCS_SettingSkillDivisor>Skill divisor: </FCS_SettingSkillDivisor>
 	<FCS_SettingScalingFactor>Scaling factor: </FCS_SettingScalingFactor>
+
+	<!-- Healing -->
+	<FCS_SettingHealRateSpec>Heal rate per Medicine level (Specialist): </FCS_SettingHealRateSpec>
+	<FCS_SettingHealRateGov>Heal rate per Medicine level (Governor): </FCS_SettingHealRateGov>
 
 	<!-- XP -->
 	<FCS_SettingXpPerDay>XP per day per skill: </FCS_SettingXpPerDay>
@@ -94,6 +103,7 @@
 	<!-- Stat Modifier Descriptions -->
 	<FCS_StatWorkerBonus>+{0} workers ({1} residents)</FCS_StatWorkerBonus>
 	<FCS_StatEffectLine>+{0} - {1}: {2}</FCS_StatEffectLine>
+	<FCS_HealRateLine>+{0} heal rate - Medicine: {1}</FCS_HealRateLine>
 
 	<!-- Resource Modifier Descriptions -->
 	<FCS_ResSpecialists>Specialists ({0})</FCS_ResSpecialists>

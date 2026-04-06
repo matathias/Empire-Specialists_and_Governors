@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_2_1</defName>
+		<label>Skills update</label>
+		<description>Adds a configurable skill floor and medicine-based merc heal rate boosts.</description>
+		<releaseDate>2026-04-05</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Adds configurable skill floor. Specialist skill levels below this floor do not provide bonuses</li>
+		<li>Specialist medicine skills now increase the rate at which mercs heal</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
+</Defs>

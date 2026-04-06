@@ -778,9 +778,10 @@ namespace FactionColonies.Specialists
                         SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
                         if (weight is null) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
-                        if (skill != null && skill.Level > 0)
+                        if (skill != null && SpecUtil.EffectiveLevel(skill.Level) > 0)
                         {
-                            double contrib = skill.Level * weight.specialistAdditivePerLevel;
+                            int eff = SpecUtil.EffectiveLevel(skill.Level);
+                            double contrib = eff * weight.specialistAdditivePerLevel;
                             resTotal += contrib;
                             resSb.AppendLine("FCS_TooltipContribLine".Translate(
                                 skillDef.skillLabel.CapitalizeFirst(),
@@ -866,9 +867,10 @@ namespace FactionColonies.Specialists
                 SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
                 if (weight is null) continue;
                 SkillRecord skill = gov.pawn.skills.GetSkill(skillDef);
-                if (skill != null && skill.Level > 0)
+                if (skill != null && SpecUtil.EffectiveLevel(skill.Level) > 0)
                 {
-                    double contrib = skill.Level * weight.governorMultiplierPerLevel;
+                    int eff = SpecUtil.EffectiveLevel(skill.Level);
+                    double contrib = eff * weight.governorMultiplierPerLevel;
                     raw += contrib;
                     sb.AppendLine("FCS_GovResTooltipSkill".Translate(
                         skillDef.skillLabel.CapitalizeFirst(),

@@ -15,6 +15,9 @@ namespace FactionColonies.Specialists
         private static bool isRoutesResourcesActive = false;
         public static bool RoutesResourcesActive => isRoutesResourcesActive;
 
+        // Skill floor: skills below this level contribute 0 (Governor Social exempt)
+        public static int skillFloor = 0;
+
         // Specialist capacity
         public static int specialistBaseMax = 5;
         public static int specialistPerLevels = 3;
@@ -26,6 +29,10 @@ namespace FactionColonies.Specialists
         public static float specialistBaseCost = 3f;
         public static float skillDivisor = 20f;
         public static float scalingFactor = 1f;
+
+        // Healing
+        public static float healRatePerLevelSpecialist = 0.02f;
+        public static float healRatePerLevelGovernor = 0.02f;
 
         // XP
         public static float xpPerDay = 500f;
@@ -50,12 +57,15 @@ namespace FactionColonies.Specialists
         {
             base.ExposeData();
             Scribe_Values.Look(ref printDebug, "printDebug", false);
+            Scribe_Values.Look(ref skillFloor, "skillFloor", 0);
             Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", 5);
             Scribe_Values.Look(ref specialistPerLevels, "specialistPerLevels", 3);
             Scribe_Values.Look(ref residentsPerWorker, "residentsPerWorker", 5);
             Scribe_Values.Look(ref specialistBaseCost, "specialistBaseCost", 3f);
             Scribe_Values.Look(ref skillDivisor, "skillDivisor", 20f);
             Scribe_Values.Look(ref scalingFactor, "scalingFactor", 1f);
+            Scribe_Values.Look(ref healRatePerLevelSpecialist, "healRatePerLevelSpecialist", 0.02f);
+            Scribe_Values.Look(ref healRatePerLevelGovernor, "healRatePerLevelGovernor", 0.02f);
             Scribe_Values.Look(ref xpPerDay, "xpPerDay", 500f);
             Scribe_Values.Look(ref foodPerSpecialist, "foodPerSpecialist", 0.3f);
             Scribe_Values.Look(ref foodPerResident, "foodPerResident", 0.15f);
@@ -72,11 +82,17 @@ namespace FactionColonies.Specialists
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 750f : 580f);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 900f : 730f);
             Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
             ls.Begin(viewRect);
 
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
+            ls.GapLine();
+
+            // Skill floor
+            ls.Label("FCS_Header_SkillFloor".Translate());
+            ls.Gap(4f);
+            skillFloor = (int)SliderLabeled(ls, "FCS_SettingSkillFloor".Translate(), skillFloor, 0f, 15f);
             ls.GapLine();
 
             // Specialist capacity
@@ -98,6 +114,13 @@ namespace FactionColonies.Specialists
             specialistBaseCost = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingBaseUpkeep".Translate(), specialistBaseCost, 0f, 20f), 1);
             skillDivisor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillDivisor".Translate(), skillDivisor, 1f, 50f), 0);
             scalingFactor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingScalingFactor".Translate(), scalingFactor, 0f, 5f), 1);
+            ls.GapLine();
+
+            // Healing
+            ls.Label("FCS_Header_Healing".Translate());
+            ls.Gap(4f);
+            healRatePerLevelSpecialist = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingHealRateSpec".Translate(), healRatePerLevelSpecialist, 0f, 0.1f), 3);
+            healRatePerLevelGovernor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingHealRateGov".Translate(), healRatePerLevelGovernor, 0f, 0.1f), 3);
             ls.GapLine();
 
             // XP
