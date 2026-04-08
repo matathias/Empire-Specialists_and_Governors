@@ -82,7 +82,7 @@ namespace FactionColonies.Specialists
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 900f : 730f);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 1050f : 850f);
             Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
             ls.Begin(viewRect);
 

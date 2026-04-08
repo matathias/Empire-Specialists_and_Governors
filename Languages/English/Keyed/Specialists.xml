@@ -16,14 +16,14 @@
 	<FCS_Header_SupplyChain>Supply Chain Integration</FCS_Header_SupplyChain>
 
 	<!-- Skill Floor -->
-	<FCS_SettingSkillFloor>Minimum skill level for bonuses (0 = off): </FCS_SettingSkillFloor>
+	<FCS_SettingSkillFloor>Minimum skill level for bonuses: </FCS_SettingSkillFloor>
 
 	<!-- Capacity -->
 	<FCS_SettingSpecBaseMax>Base Specialist Limit: </FCS_SettingSpecBaseMax>
-	<FCS_SettingSpecPerLevels>Levels per Limit Increase: </FCS_SettingSpecPerLevels>
+	<FCS_SettingSpecPerLevels>Settlement Levels per +1 Specialists Limit: </FCS_SettingSpecPerLevels>
 
 	<!-- Workers -->
-	<FCS_SettingResidentsPerWorker>Residents per bonus worker: </FCS_SettingResidentsPerWorker>
+	<FCS_SettingResidentsPerWorker>Number of Residents for each bonus worker: </FCS_SettingResidentsPerWorker>
 
 	<!-- Upkeep -->
 	<FCS_SettingBaseUpkeep>Base upkeep (silver/period): </FCS_SettingBaseUpkeep>

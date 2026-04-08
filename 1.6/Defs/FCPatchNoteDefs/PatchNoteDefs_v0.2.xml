@@ -14,4 +14,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_2_2</defName>
+		<label>Minor Settings Page Tweaks</label>
+		<description>Some minor tweaks to the mod settings page.</description>
+		<releaseDate>2026-04-08</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Minor tweaks to the mod settings page</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
