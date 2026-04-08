@@ -519,7 +519,7 @@ namespace FactionColonies.Specialists
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
                         if (skill != null)
                         {
-                            double contribution = SpecUtil.EffectiveLevel(skill.Level) * def.specialistValuePerLevel;
+                            double contribution = SpecUtil.EffectiveLevel(skill.Level, def.roleFilter) * def.specialistValuePerLevel;
                             // Professional Army: defense specialists contribute 2x military level
                             if (profArmy && s.role == SpecialistRole.Defense && stat == FCStatDefOf.militaryBaseLevel)
                             {
@@ -580,9 +580,9 @@ namespace FactionColonies.Specialists
                         if (!s.HasUsableSkills) continue;
                         if (s.role != def.roleFilter) continue;
                         SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
-                        if (skill != null && SpecUtil.EffectiveLevel(skill.Level) > 0)
+                        if (skill != null && SpecUtil.EffectiveLevel(skill.Level, def.roleFilter) > 0)
                         {
-                            double contribution = SpecUtil.EffectiveLevel(skill.Level) * def.specialistValuePerLevel;
+                            double contribution = SpecUtil.EffectiveLevel(skill.Level, def.roleFilter) * def.specialistValuePerLevel;
                             total += contribution;
                             parts.Add(s.pawn.LabelShort + " " + skill.Level);
                         }
@@ -609,7 +609,7 @@ namespace FactionColonies.Specialists
                     SkillRecord med = s.pawn.skills.GetSkill(SkillDefOf.Medicine);
                     if (med != null)
                     {
-                        int level = SpecUtil.EffectiveLevel(med.Level);
+                        int level = SpecUtil.EffectiveLevel(med.Level, SpecialistRole.Specialist);
                         if (level > 0)
                         {
                             double contribution = level * FCSSettings.healRatePerLevelSpecialist;
@@ -625,7 +625,7 @@ namespace FactionColonies.Specialists
                     SkillRecord govMed = gov.pawn.skills.GetSkill(SkillDefOf.Medicine);
                     if (govMed != null)
                     {
-                        int level = SpecUtil.EffectiveLevel(govMed.Level);
+                        int level = SpecUtil.EffectiveLevel(govMed.Level, SpecialistRole.Governor);
                         if (level > 0)
                         {
                             SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);

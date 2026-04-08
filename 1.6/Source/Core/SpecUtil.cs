@@ -8,11 +8,18 @@ namespace FactionColonies.Specialists
     public static class SpecUtil
     {
         /// <summary>
-        /// Returns 0 if the skill level is below the configured skill floor, otherwise returns the level unchanged.
+        /// Returns 0 if the skill level is below the configured skill floor for the given role, otherwise returns the level unchanged.
         /// </summary>
-        public static int EffectiveLevel(int level)
+        public static int EffectiveLevel(int level, SpecialistRole role)
         {
-            return level >= FCSSettings.skillFloor ? level : 0;
+            int floor;
+            switch (role)
+            {
+                case SpecialistRole.Governor: floor = FCSSettings.skillFloorGovernor; break;
+                case SpecialistRole.Defense:  floor = FCSSettings.skillFloorDefense; break;
+                default:                      floor = FCSSettings.skillFloorSpecialist; break;
+            }
+            return level >= floor ? level : 0;
         }
         public static float XPPerDay()
         {
@@ -25,7 +32,7 @@ namespace FactionColonies.Specialists
 
         public static double GetMilBonus(int meleeLevel, int shootingLevel)
         {
-            return Math.Max(EffectiveLevel(meleeLevel), EffectiveLevel(shootingLevel)) * 0.05;
+            return Math.Max(EffectiveLevel(meleeLevel, SpecialistRole.Defense), EffectiveLevel(shootingLevel, SpecialistRole.Defense)) * 0.05;
         }
 
         public static double GetMilBonus(Pawn pawn)
@@ -82,7 +89,7 @@ namespace FactionColonies.Specialists
                 if (weight is null) continue;
                 SkillRecord skill = pawn.skills.GetSkill(skillDef);
                 if (skill != null)
-                    bonus += EffectiveLevel(skill.Level) * weight.specialistAdditivePerLevel;
+                    bonus += EffectiveLevel(skill.Level, SpecialistRole.Specialist) * weight.specialistAdditivePerLevel;
             }
             return bonus;
         }
@@ -97,7 +104,7 @@ namespace FactionColonies.Specialists
                 if (weight is null) continue;
                 SkillRecord skill = pawn.skills.GetSkill(skillDef);
                 if (skill != null)
-                    raw += EffectiveLevel(skill.Level) * weight.governorMultiplierPerLevel;
+                    raw += EffectiveLevel(skill.Level, SpecialistRole.Governor) * weight.governorMultiplierPerLevel;
             }
             return raw;
         }
@@ -136,7 +143,7 @@ namespace FactionColonies.Specialists
                 SkillRecord med = s.pawn.skills.GetSkill(SkillDefOf.Medicine);
                 if (med != null)
                 {
-                    int level = EffectiveLevel(med.Level);
+                    int level = EffectiveLevel(med.Level, SpecialistRole.Specialist);
                     bonus += level * FCSSettings.healRatePerLevelSpecialist;
                 }
             }
@@ -146,7 +153,7 @@ namespace FactionColonies.Specialists
                 SkillRecord govMed = governor.pawn.skills.GetSkill(SkillDefOf.Medicine);
                 if (govMed != null)
                 {
-                    int level = EffectiveLevel(govMed.Level);
+                    int level = EffectiveLevel(govMed.Level, SpecialistRole.Governor);
                     SkillRecord social = governor.pawn.skills.GetSkill(SkillDefOf.Social);
                     double socialFactor = GovSocialFactor(social?.Level ?? 0);
                     bonus += level * FCSSettings.healRatePerLevelGovernor * socialFactor;

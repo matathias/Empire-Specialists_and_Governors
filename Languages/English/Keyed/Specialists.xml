@@ -16,7 +16,9 @@
 	<FCS_Header_SupplyChain>Supply Chain Integration</FCS_Header_SupplyChain>
 
 	<!-- Skill Floor -->
-	<FCS_SettingSkillFloor>Minimum skill level for bonuses: </FCS_SettingSkillFloor>
+	<FCS_SettingSkillFloorSpecialist>Specialist minimum skill level: </FCS_SettingSkillFloorSpecialist>
+	<FCS_SettingSkillFloorDefense>Defense minimum skill level: </FCS_SettingSkillFloorDefense>
+	<FCS_SettingSkillFloorGovernor>Governor minimum skill level: </FCS_SettingSkillFloorGovernor>
 
 	<!-- Capacity -->
 	<FCS_SettingSpecBaseMax>Base Specialist Limit: </FCS_SettingSpecBaseMax>

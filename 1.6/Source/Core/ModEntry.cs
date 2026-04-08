@@ -16,7 +16,9 @@ namespace FactionColonies.Specialists
         public static bool RoutesResourcesActive => isRoutesResourcesActive;
 
         // Skill floor: skills below this level contribute 0 (Governor Social exempt)
-        public static int skillFloor = 0;
+        public static int skillFloorSpecialist = 0;
+        public static int skillFloorDefense = 0;
+        public static int skillFloorGovernor = 0;
 
         // Specialist capacity
         public static int specialistBaseMax = 5;
@@ -57,7 +59,9 @@ namespace FactionColonies.Specialists
         {
             base.ExposeData();
             Scribe_Values.Look(ref printDebug, "printDebug", false);
-            Scribe_Values.Look(ref skillFloor, "skillFloor", 0);
+            Scribe_Values.Look(ref skillFloorSpecialist, "skillFloorSpecialist", 0);
+            Scribe_Values.Look(ref skillFloorDefense, "skillFloorDefense", 0);
+            Scribe_Values.Look(ref skillFloorGovernor, "skillFloorGovernor", 0);
             Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", 5);
             Scribe_Values.Look(ref specialistPerLevels, "specialistPerLevels", 3);
             Scribe_Values.Look(ref residentsPerWorker, "residentsPerWorker", 5);
@@ -82,7 +86,7 @@ namespace FactionColonies.Specialists
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 1050f : 850f);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 1100f : 900f);
             Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
             ls.Begin(viewRect);
 
@@ -92,7 +96,9 @@ namespace FactionColonies.Specialists
             // Skill floor
             ls.Label("FCS_Header_SkillFloor".Translate());
             ls.Gap(4f);
-            skillFloor = (int)SliderLabeled(ls, "FCS_SettingSkillFloor".Translate(), skillFloor, 0f, 15f);
+            skillFloorSpecialist = (int)SliderLabeled(ls, "FCS_SettingSkillFloorSpecialist".Translate(), skillFloorSpecialist, 0f, 15f);
+            skillFloorDefense = (int)SliderLabeled(ls, "FCS_SettingSkillFloorDefense".Translate(), skillFloorDefense, 0f, 15f);
+            skillFloorGovernor = (int)SliderLabeled(ls, "FCS_SettingSkillFloorGovernor".Translate(), skillFloorGovernor, 0f, 15f);
             ls.GapLine();
 
             // Specialist capacity

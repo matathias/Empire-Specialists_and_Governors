@@ -28,4 +28,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_2_3</defName>
+		<label>Skill floor change</label>
+		<description>Split the skill floor setting to be per-Specialist type.</description>
+		<releaseDate>2026-04-08</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>The minimum skill level for a specialist to provide their bonus can now be individually configured for each type of Specialist</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
