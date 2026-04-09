@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -84,8 +83,8 @@ namespace FactionColonies.Specialists
             float scrollBarW = totalHeight > listHeight ? 16f : 0f;
             Rect listInnerRect = new Rect(0f, 0f, listOuterRect.width - scrollBarW, totalHeight);
 
-            bool hasGovernor = comp.Governor != null;
-            int pendingNonResident = entries.Count(e => e.selected && e.role != SpecialistRole.Resident);
+            bool hasGovernor = comp.HasGovernor;
+            int pendingNonResident = entries.Count(e => e.selected && e.role is object && !e.isGovernor);
             bool capReached = (comp.SpecialistCount + pendingNonResident) >= comp.MaxSpecialists;
 
             Widgets.BeginScrollView(listOuterRect, ref scrollPos, listInnerRect);
@@ -166,7 +165,7 @@ namespace FactionColonies.Specialists
             // Line 4: Bonus preview + checkbox
             string bonusText;
             Color bonusColor;
-            PreviewContribution(entry.pawn, entry.role, out bonusText, out bonusColor);
+            PreviewContribution(entry, out bonusText, out bonusColor);
 
             GUI.color = bonusColor;
             Rect bonusRect = new Rect(textX, rowRect.y + 50f, textW - CheckboxSize - 8f, 16f);
@@ -185,7 +184,9 @@ namespace FactionColonies.Specialists
             // Role button (right side, vertically centered)
             float roleBtnX = rowRect.xMax - RoleBtnWidth - 4f;
             float roleBtnY = rowRect.y + (CardRowHeight - RoleBtnHeight) / 2f;
-            string roleLabel = entry.role.Translate();
+            string roleLabel = entry.isGovernor
+                ? "FCS_RoleGovernor".Translate()
+                : (entry.role is object ? entry.role.LabelCap : "FCS_RoleResident".Translate());
             if (Widgets.ButtonText(new Rect(roleBtnX, roleBtnY, RoleBtnWidth, RoleBtnHeight), roleLabel))
             {
                 ShowRoleMenu(entry, hasGovernor, capReached);
@@ -195,21 +196,44 @@ namespace FactionColonies.Specialists
         private void ShowRoleMenu(PawnEntry entry, bool hasGovernor, bool capReached)
         {
             List<FloatMenuOption> options = new List<FloatMenuOption>();
-            foreach (SpecialistRole role in Enum.GetValues(typeof(SpecialistRole)))
-            {
-                SpecialistRole localRole = role;
-                bool disabled = false;
-                string label = role.Translate();
 
-                if (role == SpecialistRole.Governor && hasGovernor && !IsAnyEntryGovernor())
+            // Resident option (role = null, not governor)
+            {
+                string label = "FCS_RoleResident".Translate();
+                if (!entry.isGovernor && entry.role is null)
                 {
-                    label = "FCS_RoleOccupied".Translate(label);
-                    disabled = true;
+                    label += " *";
                 }
-                else if (role != SpecialistRole.Resident && role != entry.role && capReached)
+                options.Add(new FloatMenuOption(label, delegate
                 {
-                    label = "FCS_RoleCapReached".Translate(label);
-                    disabled = true;
+                    entry.role = null;
+                    entry.isGovernor = false;
+                    entry.governorFocus = null;
+                }));
+            }
+
+            // Specialist role options from DefDatabase
+            foreach (SpecialistRoleDef roleDef in DefDatabase<SpecialistRoleDef>.AllDefs)
+            {
+                SpecialistRoleDef localRole = roleDef;
+                bool disabled = false;
+                string label = roleDef.LabelCap;
+
+                // Mark current selection
+                if (!entry.isGovernor && entry.role == roleDef)
+                {
+                    label += " *";
+                }
+
+                // Cap check: if switching to a specialist role from resident/governor, check capacity
+                if (entry.role != roleDef && capReached)
+                {
+                    // Allow if entry is already a non-resident specialist (swapping roles doesn't change count)
+                    if (entry.isGovernor || entry.role is null)
+                    {
+                        label = "FCS_RoleCapReached".Translate(label);
+                        disabled = true;
+                    }
                 }
 
                 if (disabled)
@@ -220,37 +244,88 @@ namespace FactionColonies.Specialists
                 {
                     options.Add(new FloatMenuOption(label, delegate
                     {
-                        if (localRole == SpecialistRole.Governor)
-                        {
-                            foreach (PawnEntry other in entries)
-                            {
-                                if (other != entry && other.role == SpecialistRole.Governor)
-                                {
-                                    other.role = SpecialistRole.Specialist;
-                                }
-                            }
-                        }
                         entry.role = localRole;
+                        entry.isGovernor = false;
+                        entry.governorFocus = null;
                     }));
                 }
             }
+
+            // Governor option — opens sub-menu for GovernorFocusDef selection
+            {
+                bool govDisabled = false;
+                string govLabel = "FCS_RoleGovernor".Translate();
+
+                if (entry.isGovernor)
+                {
+                    govLabel += " *";
+                }
+
+                if (hasGovernor && !IsAnyEntryGovernor())
+                {
+                    govLabel = "FCS_RoleOccupied".Translate(govLabel);
+                    govDisabled = true;
+                }
+
+                if (govDisabled)
+                {
+                    options.Add(new FloatMenuOption(govLabel, null));
+                }
+                else
+                {
+                    options.Add(new FloatMenuOption(govLabel, delegate
+                    {
+                        ShowGovernorFocusSubMenu(entry);
+                    }));
+                }
+            }
+
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
-        private void PreviewContribution(Pawn pawn, SpecialistRole role, out string text, out Color color)
+        private void ShowGovernorFocusSubMenu(PawnEntry entry)
         {
-            if (pawn.skills == null || role == SpecialistRole.Resident)
+            List<FloatMenuOption> focusOptions = new List<FloatMenuOption>();
+            foreach (GovernorFocusDef focusDef in DefDatabase<GovernorFocusDef>.AllDefs)
+            {
+                GovernorFocusDef localFocus = focusDef;
+                string label = focusDef.LabelCap;
+                if (entry.isGovernor && entry.governorFocus == focusDef)
+                {
+                    label += " *";
+                }
+                focusOptions.Add(new FloatMenuOption(label, delegate
+                {
+                    // Demote any other entry currently set as governor
+                    foreach (PawnEntry other in entries)
+                    {
+                        if (other != entry && other.isGovernor)
+                        {
+                            other.isGovernor = false;
+                            other.governorFocus = null;
+                            other.role = null; // demote to resident
+                        }
+                    }
+                    entry.isGovernor = true;
+                    entry.governorFocus = localFocus;
+                    entry.role = null;
+                }));
+            }
+            if (focusOptions.Count > 0)
+            {
+                Find.WindowStack.Add(new FloatMenu(focusOptions));
+            }
+        }
+
+        private void PreviewContribution(PawnEntry entry, out string text, out Color color)
+        {
+            Pawn pawn = entry.pawn;
+
+            // Residents: no bonus preview
+            if (pawn.skills is null || (!entry.isGovernor && entry.role is null))
             {
                 text = "FCS_PreviewNoBonus".Translate();
                 color = Color.gray;
-                return;
-            }
-
-            if (role == SpecialistRole.Defense)
-            {
-                double bonus = SpecUtil.GetMilBonus(pawn);
-                text = "FCS_ContribMilLevel".Translate(bonus.ToString("F2"));
-                color = DefenseColor;
                 return;
             }
 
@@ -262,14 +337,47 @@ namespace FactionColonies.Specialists
                 return;
             }
 
-            if (role == SpecialistRole.Specialist)
+            // Governor preview
+            if (entry.isGovernor && entry.governorFocus is object)
             {
+                GovernorFocusDef focus = entry.governorFocus;
+                // Create a temporary governor to compute skill score and multiplier
+                SettlementGovernor tempGov = new SettlementGovernor(pawn, focus);
+
+                double bestMult = 0;
+                string bestLabel = "";
+                foreach (ResourceFC resource in settlement.Resources)
+                {
+                    double mult = SpecUtil.GovernorMultiplierForResource(tempGov, resource.def);
+                    if (mult > bestMult)
+                    {
+                        bestMult = mult;
+                        bestLabel = resource.def.LabelCap;
+                    }
+                }
+                if (bestMult > 1.001)
+                {
+                    text = "FCS_PreviewGovMult".Translate(bestMult.ToString("F2"), bestLabel);
+                    color = GovColor;
+                    return;
+                }
+
+                text = "FCS_PreviewNoBonus".Translate();
+                color = Color.gray;
+                return;
+            }
+
+            // Specialist preview
+            if (entry.role is object)
+            {
+                SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.role);
+
                 double bestBonus = 0;
                 string bestLabel = "";
                 Color bestColor = Color.white;
                 foreach (ResourceFC resource in settlement.Resources)
                 {
-                    double resBonus = SpecUtil.SpecialistAdditiveForResource(pawn, resource);
+                    double resBonus = SpecUtil.SpecialistAdditiveForResource(tempSpec, resource.def);
                     if (resBonus > bestBonus)
                     {
                         bestBonus = resBonus;
@@ -285,39 +393,13 @@ namespace FactionColonies.Specialists
                 }
             }
 
-            if (role == SpecialistRole.Governor)
-            {
-                // Preview best multiplier for this pawn as governor
-                SkillRecord social = pawn.skills.GetSkill(SkillDefOf.Social);
-                double socialFactor = SpecUtil.GovSocialFactor(social?.Level ?? 0);
-
-                double bestMult = 0;
-                string bestLabel = "";
-                foreach (ResourceFC resource in settlement.Resources)
-                {
-                    double raw = SpecUtil.GovernorRawMultiplierForResource(pawn, resource);
-                    double mult = 1.0 + (raw * socialFactor);
-                    if (mult > bestMult)
-                    {
-                        bestMult = mult;
-                        bestLabel = resource.def.LabelCap;
-                    }
-                }
-                if (bestMult > 1.001)
-                {
-                    text = "FCS_PreviewGovMult".Translate(bestMult.ToString("F2"), bestLabel);
-                    color = GovColor;
-                    return;
-                }
-            }
-
             text = "FCS_PreviewNoBonus".Translate();
             color = Color.gray;
         }
 
         private bool IsAnyEntryGovernor()
         {
-            return entries.Any(e => e.selected && e.role == SpecialistRole.Governor);
+            return entries.Any(e => e.selected && e.isGovernor);
         }
 
         private void AssignSelected()
@@ -327,7 +409,15 @@ namespace FactionColonies.Specialists
             foreach (PawnEntry entry in selected)
             {
                 caravan.RemovePawn(entry.pawn);
-                comp.AssignPawn(entry.pawn, entry.role);
+
+                if (entry.isGovernor && entry.governorFocus is object)
+                {
+                    comp.AssignGovernor(entry.pawn, entry.governorFocus);
+                }
+                else
+                {
+                    comp.AssignSpecialist(entry.pawn, entry.role);
+                }
             }
 
             if (!caravan.Destroyed && caravan.PawnsListForReading.Count == 0)
@@ -353,13 +443,17 @@ namespace FactionColonies.Specialists
         {
             public Pawn pawn;
             public bool selected;
-            public SpecialistRole role;
+            public SpecialistRoleDef role;
+            public GovernorFocusDef governorFocus;
+            public bool isGovernor;
 
             public PawnEntry(Pawn pawn)
             {
                 this.pawn = pawn;
                 this.selected = false;
-                this.role = SpecialistRole.Resident;
+                this.role = null;
+                this.governorFocus = null;
+                this.isGovernor = false;
             }
         }
     }

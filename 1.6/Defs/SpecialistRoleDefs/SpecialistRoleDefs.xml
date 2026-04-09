@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+
+  <!-- ==================== Generalist ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Generalist</defName>
+    <label>generalist</label>
+    <description>A jack-of-all-trades who contributes a small amount to every aspect of settlement production.</description>
+    <isGeneralist>true</isGeneralist>
+    <providesBaselineProduction>true</providesBaselineProduction>
+    <baselineProductionValue>0.02</baselineProductionValue>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>2</baseUpkeepSilver>
+    <skillUpkeepScaling>0.1</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Shooting</skill><weight>0.08</weight></li>
+      <li><skill>Melee</skill><weight>0.08</weight></li>
+      <li><skill>Construction</skill><weight>0.08</weight></li>
+      <li><skill>Mining</skill><weight>0.08</weight></li>
+      <li><skill>Cooking</skill><weight>0.08</weight></li>
+      <li><skill>Plants</skill><weight>0.08</weight></li>
+      <li><skill>Animals</skill><weight>0.08</weight></li>
+      <li><skill>Crafting</skill><weight>0.08</weight></li>
+      <li><skill>Artistic</skill><weight>0.08</weight></li>
+      <li><skill>Medicine</skill><weight>0.08</weight></li>
+      <li><skill>Social</skill><weight>0.08</weight></li>
+      <li><skill>Intellectual</skill><weight>0.08</weight></li>
+    </skillWeights>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Farmer ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Farmer</defName>
+    <label>farmer</label>
+    <description>A skilled agriculturalist who tends crops and boosts food production at the settlement.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Plants</skill><weight>1.0</weight></li>
+      <li><skill>Animals</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Food</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Rancher ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Rancher</defName>
+    <label>rancher</label>
+    <description>An animal handler who raises livestock, increasing the settlement's animal product output.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Animals</skill><weight>1.0</weight></li>
+      <li><skill>Plants</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Animals</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Miner ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Miner</defName>
+    <label>miner</label>
+    <description>A seasoned excavator who extracts ore and stone, boosting mining output at the settlement.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Mining</skill><weight>1.0</weight></li>
+      <li><skill>Construction</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Mining</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Forester ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Forester</defName>
+    <label>forester</label>
+    <description>A woodsman skilled in sustainable timber harvesting, increasing logging production.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Plants</skill><weight>1.0</weight></li>
+      <li><skill>Construction</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Logging</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Weaponsmith ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Weaponsmith</defName>
+    <label>weaponsmith</label>
+    <description>A master forger of arms who increases the settlement's weapons production.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Crafting</skill><weight>1.0</weight></li>
+      <li><skill>Shooting</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Weapons</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Tailor ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Tailor</defName>
+    <label>tailor</label>
+    <description>A textile artisan who crafts clothing and armor, boosting the settlement's apparel output.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Crafting</skill><weight>1.0</weight></li>
+      <li><skill>Artistic</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Apparel</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Apothecary ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Apothecary</defName>
+    <label>apothecary</label>
+    <description>A healer and herbalist who produces medicine and can tend to the settlement's wounded.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Medicine</skill><weight>1.0</weight></li>
+      <li><skill>Intellectual</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Medicine</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+    <modExtensions>
+      <li Class="FactionColonies.Specialists.RoleBehaviorExt_Apothecary">
+        <behaviorClass>FactionColonies.Specialists.RoleBehavior_Apothecary</behaviorClass>
+        <healRatePerSkillPoint>0.02</healRatePerSkillPoint>
+      </li>
+    </modExtensions>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Researcher ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Researcher</defName>
+    <label>researcher</label>
+    <description>A dedicated scholar who advances the settlement's research output through rigorous study.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Intellectual</skill><weight>1.0</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Research</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Engineer ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Engineer</defName>
+    <label>engineer</label>
+    <description>A technical specialist who maintains power infrastructure and improves energy production.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Construction</skill><weight>1.0</weight></li>
+      <li><skill>Crafting</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Power</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Chemist ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Chemist</defName>
+    <label>chemist</label>
+    <description>A chemical specialist who refines fuel compounds, increasing the settlement's chemfuel output.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Crafting</skill><weight>0.7</weight></li>
+      <li><skill>Intellectual</skill><weight>0.5</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Chemfuel</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Physicist ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Physicist</defName>
+    <label>physicist</label>
+    <description>A theoretical physicist who pushes the boundaries of gravitic technology research.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>5</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Intellectual</skill><weight>1.0</weight></li>
+      <li><skill>Construction</skill><weight>0.3</weight></li>
+    </skillWeights>
+    <resourceBonuses>
+      <li><resource>RTD_Gravtech</resource><baseValue>0.05</baseValue></li>
+    </resourceBonuses>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Commander ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Commander</defName>
+    <label>commander</label>
+    <description>A military leader who drills troops and improves the combat effectiveness of the settlement's forces.</description>
+    <maxPerSettlement>2</maxPerSettlement>
+    <baseUpkeepSilver>8</baseUpkeepSilver>
+    <skillUpkeepScaling>0.4</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Shooting</skill><weight>0.6</weight></li>
+      <li><skill>Melee</skill><weight>0.6</weight></li>
+    </skillWeights>
+    <statModifiers>
+      <li><stat>militaryCombatEfficiency</stat><value>0.01</value></li>
+      <li><stat>militaryBaseLevel</stat><value>0.05</value></li>
+    </statModifiers>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Defense ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Defense</defName>
+    <label>defense</label>
+    <description>A defensive specialist who protects the settlement's inhabitants, reducing casualties during attacks.</description>
+    <maxPerSettlement>3</maxPerSettlement>
+    <baseUpkeepSilver>8</baseUpkeepSilver>
+    <skillUpkeepScaling>0.4</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Shooting</skill><weight>0.5</weight></li>
+      <li><skill>Melee</skill><weight>0.5</weight></li>
+    </skillWeights>
+    <modExtensions>
+      <li Class="FactionColonies.Specialists.RoleBehaviorExt_Defense">
+        <behaviorClass>FactionColonies.Specialists.RoleBehavior_Defense</behaviorClass>
+        <baseReductionPerSkillPoint>0.002</baseReductionPerSkillPoint>
+        <minimumDeathChance>0.01</minimumDeathChance>
+      </li>
+    </modExtensions>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+  <!-- ==================== Quartermaster ==================== -->
+  <FactionColonies.Specialists.SpecialistRoleDef>
+    <defName>Quartermaster</defName>
+    <label>quartermaster</label>
+    <description>A logistics officer who optimizes supply chains, increasing the silver value of tithes collected.</description>
+    <maxPerSettlement>1</maxPerSettlement>
+    <baseUpkeepSilver>6</baseUpkeepSilver>
+    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <skillWeights>
+      <li><skill>Social</skill><weight>0.8</weight></li>
+      <li><skill>Intellectual</skill><weight>0.4</weight></li>
+    </skillWeights>
+    <statModifiers>
+      <li><stat>titheValueMultiplier</stat><value>0.01</value></li>
+    </statModifiers>
+  </FactionColonies.Specialists.SpecialistRoleDef>
+
+</Defs>

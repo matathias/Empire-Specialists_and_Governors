@@ -15,11 +15,6 @@ namespace FactionColonies.Specialists
         private static bool isRoutesResourcesActive = false;
         public static bool RoutesResourcesActive => isRoutesResourcesActive;
 
-        // Skill floor: skills below this level contribute 0 (Governor Social exempt)
-        public static int skillFloorSpecialist = 0;
-        public static int skillFloorDefense = 0;
-        public static int skillFloorGovernor = 0;
-
         // Specialist capacity
         public static int specialistBaseMax = 5;
         public static int specialistPerLevels = 3;
@@ -33,7 +28,6 @@ namespace FactionColonies.Specialists
         public static float scalingFactor = 1f;
 
         // Healing
-        public static float healRatePerLevelSpecialist = 0.02f;
         public static float healRatePerLevelGovernor = 0.02f;
 
         // XP
@@ -46,29 +40,18 @@ namespace FactionColonies.Specialists
         public static float foodPenaltyPerUnit = 0.8f;
         public static float medicinePenaltyPerUnit = 0.3f;
 
-        // Death chances on battle loss
-        public static float civilianDeathChance = 0.15f;
-        public static float governorDeathChance = 0.30f;
-        public static float defenseDeathChance = 0.10f;
-        public static float residentDeathChance = 0.15f;
-        public static float deathReductionPerDefender = 0.02f;
-
         private static Vector2 scrollPos;
 
         public override void ExposeData()
         {
             base.ExposeData();
             Scribe_Values.Look(ref printDebug, "printDebug", false);
-            Scribe_Values.Look(ref skillFloorSpecialist, "skillFloorSpecialist", 0);
-            Scribe_Values.Look(ref skillFloorDefense, "skillFloorDefense", 0);
-            Scribe_Values.Look(ref skillFloorGovernor, "skillFloorGovernor", 0);
             Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", 5);
             Scribe_Values.Look(ref specialistPerLevels, "specialistPerLevels", 3);
             Scribe_Values.Look(ref residentsPerWorker, "residentsPerWorker", 5);
             Scribe_Values.Look(ref specialistBaseCost, "specialistBaseCost", 3f);
             Scribe_Values.Look(ref skillDivisor, "skillDivisor", 20f);
             Scribe_Values.Look(ref scalingFactor, "scalingFactor", 1f);
-            Scribe_Values.Look(ref healRatePerLevelSpecialist, "healRatePerLevelSpecialist", 0.02f);
             Scribe_Values.Look(ref healRatePerLevelGovernor, "healRatePerLevelGovernor", 0.02f);
             Scribe_Values.Look(ref xpPerDay, "xpPerDay", 500f);
             Scribe_Values.Look(ref foodPerSpecialist, "foodPerSpecialist", 0.3f);
@@ -76,29 +59,16 @@ namespace FactionColonies.Specialists
             Scribe_Values.Look(ref medicinePerSpecialist, "medicinePerSpecialist", 0.1f);
             Scribe_Values.Look(ref foodPenaltyPerUnit, "foodPenaltyPerUnit", 0.8f);
             Scribe_Values.Look(ref medicinePenaltyPerUnit, "medicinePenaltyPerUnit", 0.3f);
-            Scribe_Values.Look(ref civilianDeathChance, "civilianDeathChance", 0.15f);
-            Scribe_Values.Look(ref governorDeathChance, "governorDeathChance", 0.30f);
-            Scribe_Values.Look(ref defenseDeathChance, "defenseDeathChance", 0.10f);
-            Scribe_Values.Look(ref residentDeathChance, "residentDeathChance", 0.15f);
-            Scribe_Values.Look(ref deathReductionPerDefender, "deathReductionPerDefender", 0.02f);
         }
 
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 1100f : 900f);
+            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 900f : 700f);
             Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
             ls.Begin(viewRect);
 
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
-            ls.GapLine();
-
-            // Skill floor
-            ls.Label("FCS_Header_SkillFloor".Translate());
-            ls.Gap(4f);
-            skillFloorSpecialist = (int)SliderLabeled(ls, "FCS_SettingSkillFloorSpecialist".Translate(), skillFloorSpecialist, 0f, 15f);
-            skillFloorDefense = (int)SliderLabeled(ls, "FCS_SettingSkillFloorDefense".Translate(), skillFloorDefense, 0f, 15f);
-            skillFloorGovernor = (int)SliderLabeled(ls, "FCS_SettingSkillFloorGovernor".Translate(), skillFloorGovernor, 0f, 15f);
             ls.GapLine();
 
             // Specialist capacity
@@ -125,7 +95,6 @@ namespace FactionColonies.Specialists
             // Healing
             ls.Label("FCS_Header_Healing".Translate());
             ls.Gap(4f);
-            healRatePerLevelSpecialist = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingHealRateSpec".Translate(), healRatePerLevelSpecialist, 0f, 0.1f), 3);
             healRatePerLevelGovernor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingHealRateGov".Translate(), healRatePerLevelGovernor, 0f, 0.1f), 3);
             ls.GapLine();
 
@@ -133,16 +102,6 @@ namespace FactionColonies.Specialists
             ls.Label("FCS_Header_XP".Translate());
             ls.Gap(4f);
             xpPerDay = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingXpPerDay".Translate(), xpPerDay, 0f, 2000f), 0);
-            ls.GapLine();
-
-            // Death chances
-            ls.Label("FCS_Header_Death".Translate());
-            ls.Gap(4f);
-            civilianDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingCivilianDeathChance".Translate(), civilianDeathChance, 0f, 1f), 2);
-            governorDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingGovernorDeathChance".Translate(), governorDeathChance, 0f, 1f), 2);
-            defenseDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingDefenseDeathChance".Translate(), defenseDeathChance, 0f, 1f), 2);
-            residentDeathChance = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingResidentDeathChance".Translate(), residentDeathChance, 0f, 1f), 2);
-            deathReductionPerDefender = (float)System.Math.Round(SliderLabeledPct(ls, "FCS_SettingDeathReduction".Translate(), deathReductionPerDefender, 0f, 0.1f), 2);
             ls.GapLine();
 
             // Supply chain needs (only show if Supply Chain submod is active)
@@ -212,7 +171,7 @@ namespace FactionColonies.Specialists
         {
             settings = GetSettings<FCSSettings>();
             FCSSettings.CheckForRoutesAndResources();
-            
+
             string modVersion = content?.ModMetaData?.ModVersion;
             if (modVersion.NullOrEmpty())
             {

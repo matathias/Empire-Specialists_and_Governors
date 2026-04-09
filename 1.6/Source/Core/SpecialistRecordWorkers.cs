@@ -6,49 +6,71 @@ namespace FactionColonies.Specialists
 {
     public static class SpecialistRoster
     {
-        private static Dictionary<int, SpecialistRole> assignments = new Dictionary<int, SpecialistRole>();
+        private static Dictionary<int, SpecialistRoleDef> assignments = new Dictionary<int, SpecialistRoleDef>();
+        private static HashSet<int> governors = new HashSet<int>();
 
-        public static void Assign(Pawn pawn, SpecialistRole role)
+        public static void Assign(Pawn pawn, SpecialistRoleDef role)
         {
-            if (pawn != null)
+            if (pawn is object)
                 assignments[pawn.thingIDNumber] = role;
+        }
+
+        public static void AssignGovernor(Pawn pawn)
+        {
+            if (pawn is object)
+                governors.Add(pawn.thingIDNumber);
         }
 
         public static void Recall(Pawn pawn)
         {
-            if (pawn != null)
-                assignments.Remove(pawn.thingIDNumber);
+            if (pawn is null) return;
+            assignments.Remove(pawn.thingIDNumber);
+            governors.Remove(pawn.thingIDNumber);
         }
 
-        public static SpecialistRole? GetRole(Pawn pawn)
+        public static SpecialistRoleDef GetRole(Pawn pawn)
         {
-            if (pawn != null && assignments.TryGetValue(pawn.thingIDNumber, out SpecialistRole role))
+            if (pawn is object && assignments.TryGetValue(pawn.thingIDNumber, out SpecialistRoleDef role))
                 return role;
             return null;
         }
 
-        public static bool IsAssigned(Pawn pawn)
+        public static bool IsGovernor(Pawn pawn)
         {
-            return pawn != null && assignments.ContainsKey(pawn.thingIDNumber);
+            return pawn is object && governors.Contains(pawn.thingIDNumber);
         }
 
-        /// <summary>
-        /// Clears and rebuilds the dictionary from all settlement specialist comps.
-        /// Called from GameComponent_SpecialistRoster.FinalizeInit after all cross-refs are resolved.
-        /// </summary>
+        public static bool IsAssigned(Pawn pawn)
+        {
+            if (pawn is null) return false;
+            return assignments.ContainsKey(pawn.thingIDNumber) || governors.Contains(pawn.thingIDNumber);
+        }
+
         public static void Rebuild()
         {
             assignments.Clear();
+            governors.Clear();
             List<WorldSettlementFC> settlements = FactionCache.FactionComp?.settlements;
             if (settlements is null) return;
             foreach (WorldSettlementFC settlement in settlements)
             {
-                List<SpecialistFC> pawns = settlement.GetComponent<WorldObjectComp_SettlementSpecialists>()?.AllPawnsInternal;
-                if (pawns is null) continue;
-                foreach (SpecialistFC s in pawns)
+                WorldObjectComp_SettlementSpecialists comp =
+                    settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
+                if (comp is null) continue;
+
+                foreach (SettlementSpecialist s in comp.Specialists)
                 {
                     if (s.IsAlive)
                         assignments[s.pawn.thingIDNumber] = s.role;
+                }
+                foreach (SettlementSpecialist r in comp.Residents)
+                {
+                    if (r.IsAlive)
+                        assignments[r.pawn.thingIDNumber] = null;
+                }
+                if (comp.HasGovernor)
+                {
+                    governors.Add(comp.Governor.pawn.thingIDNumber);
                 }
             }
         }
@@ -56,17 +78,13 @@ namespace FactionColonies.Specialists
 
     public abstract class RecordWorker_SpecialistBase : RecordWorker
     {
-        protected static SpecialistRole? GetRole(Pawn pawn)
-        {
-            return SpecialistRoster.GetRole(pawn);
-        }
     }
 
     public class RecordWorker_FCS_TimeAssigned : RecordWorker_SpecialistBase
     {
         public override bool ShouldMeasureTimeNow(Pawn pawn)
         {
-            return GetRole(pawn).HasValue;
+            return SpecialistRoster.IsAssigned(pawn);
         }
     }
 
@@ -74,7 +92,7 @@ namespace FactionColonies.Specialists
     {
         public override bool ShouldMeasureTimeNow(Pawn pawn)
         {
-            return GetRole(pawn) == SpecialistRole.Resident;
+            return SpecialistRoster.GetRole(pawn) is null && SpecialistRoster.IsAssigned(pawn) && !SpecialistRoster.IsGovernor(pawn);
         }
     }
 
@@ -82,7 +100,8 @@ namespace FactionColonies.Specialists
     {
         public override bool ShouldMeasureTimeNow(Pawn pawn)
         {
-            return GetRole(pawn) == SpecialistRole.Specialist;
+            SpecialistRoleDef role = SpecialistRoster.GetRole(pawn);
+            return role is object && !SpecialistRoster.IsGovernor(pawn);
         }
     }
 
@@ -90,7 +109,7 @@ namespace FactionColonies.Specialists
     {
         public override bool ShouldMeasureTimeNow(Pawn pawn)
         {
-            return GetRole(pawn) == SpecialistRole.Defense;
+            return SpecialistRoster.GetRole(pawn) == SpecialistRoleDefOf.Defense;
         }
     }
 
@@ -98,7 +117,7 @@ namespace FactionColonies.Specialists
     {
         public override bool ShouldMeasureTimeNow(Pawn pawn)
         {
-            return GetRole(pawn) == SpecialistRole.Governor;
+            return SpecialistRoster.IsGovernor(pawn);
         }
     }
 }

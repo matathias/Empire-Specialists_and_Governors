@@ -1,76 +1,84 @@
-﻿using RimWorld;
 using System;
 using System.Collections.Generic;
+using RimWorld;
 using Verse;
 
 namespace FactionColonies.Specialists
 {
     public static class SpecUtil
     {
-        /// <summary>
-        /// Returns 0 if the skill level is below the configured skill floor for the given role, otherwise returns the level unchanged.
-        /// </summary>
-        public static int EffectiveLevel(int level, SpecialistRole role)
+        public static double SpecialistAdditiveForResource(SettlementSpecialist s, ResourceTypeDef resourceDef)
         {
-            int floor;
-            switch (role)
+            if (s is null || s.role is null || !s.HasUsableSkills) return 0;
+            float score = s.SkillScore;
+            double bonus = 0;
+
+            if (s.role.resourceBonuses is object)
             {
-                case SpecialistRole.Governor: floor = FCSSettings.skillFloorGovernor; break;
-                case SpecialistRole.Defense:  floor = FCSSettings.skillFloorDefense; break;
-                default:                      floor = FCSSettings.skillFloorSpecialist; break;
+                foreach (ResourceProductionBonus rpb in s.role.resourceBonuses)
+                {
+                    if (rpb.resource == resourceDef)
+                        bonus += rpb.baseValue * score;
+                }
             }
-            return level >= floor ? level : 0;
-        }
-        public static float XPPerDay()
-        {
-            float xp = FCSSettings.xpPerDay;
-            if (HasTrait(SpecPolicyDefOf.FCSspecialistCorps)) xp *= 2f;
-            if (HasTrait(SpecPolicyDefOf.FCSmeritocratic)) xp *= 1.5f;
 
-            return xp;
+            if (s.role.providesBaselineProduction)
+                bonus += s.role.baselineProductionValue * score;
+
+            return bonus;
         }
 
-        public static double GetMilBonus(int meleeLevel, int shootingLevel)
+        public static double GovernorMultiplierForResource(SettlementGovernor g, ResourceTypeDef resourceDef)
         {
-            return Math.Max(EffectiveLevel(meleeLevel, SpecialistRole.Defense), EffectiveLevel(shootingLevel, SpecialistRole.Defense)) * 0.05;
+            if (g is null || g.focus is null || !g.HasUsableSkills) return 1.0;
+            float score = g.SkillScore;
+            double multiplier = 1.0;
+
+            if (g.focus.resourceBonuses is object)
+            {
+                foreach (ResourceProductionBonus rpb in g.focus.resourceBonuses)
+                {
+                    if (rpb.resource == resourceDef)
+                        multiplier += rpb.baseValue * score;
+                }
+            }
+
+            if (g.focus.providesBaselineProduction)
+                multiplier *= (1.0 + g.focus.baselineProductionValue * score);
+
+            return multiplier;
         }
 
-        public static double GetMilBonus(Pawn pawn)
+        public static double SpecialistStatBonus(SettlementSpecialist s, FCStatDef stat)
         {
-            SkillRecord melee = pawn?.skills?.GetSkill(SkillDefOf.Melee);
-            SkillRecord shooting = pawn?.skills?.GetSkill(SkillDefOf.Shooting);
-            return GetMilBonus(melee?.Level ?? 0, shooting?.Level ?? 0);
+            if (s is null || s.role is null || s.role.statModifiers is null || !s.HasUsableSkills) return 0;
+            float score = s.SkillScore;
+            double bonus = 0;
+            foreach (FCStatModifier mod in s.role.statModifiers)
+            {
+                if (mod.stat == stat)
+                    bonus += mod.value * score;
+            }
+            return bonus;
         }
 
-        public static double GetMilBonus(SpecialistFC s)
+        public static double GovernorStatMultiplier(SettlementGovernor g, FCStatDef stat)
         {
-            return GetMilBonus(s?.pawn);
+            if (g is null || g.focus is null || g.focus.statModifiers is null || !g.HasUsableSkills) return 1.0;
+            float score = g.SkillScore;
+            double mult = 1.0;
+            foreach (FCStatModifier mod in g.focus.statModifiers)
+            {
+                if (mod.stat == stat)
+                    mult += mod.value * score;
+            }
+            return mult;
         }
 
-        public static bool HasTrait(FCPolicyDef def)
+        public static double SpecialistUpkeep(SettlementSpecialist s)
         {
-            return def != null && FactionCache.FactionComp.HasTrait(def);
-        }
-
-        public static double GovSocialFactor(int socialLevel)
-        {
-            bool meritocratic = HasTrait(SpecPolicyDefOf.FCSmeritocratic);
-            double socialFactor = meritocratic
-                ? 0.75 + (socialLevel / 16.0)
-                : 0.5 + (socialLevel / 20.0);
-            return socialFactor;
-        }
-
-        public static double FocusBonusMultiplier()
-        {
-            return HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 2.0 : 1.5;
-        }
-
-        public static string GovSocialFactorDesc(int socialLevel)
-        {
-            bool meritocratic = HasTrait(SpecPolicyDefOf.FCSmeritocratic);
-            return meritocratic ? $"0.75 + ({socialLevel} / 16)"
-                                : $"0.5 + ({socialLevel} / 20)";
+            if (s is null || s.role is null) return 0;
+            return s.role.baseUpkeepSilver + (s.SkillScore * s.role.skillUpkeepScaling);
         }
 
         public static int WorkerBonusFromResidents(int liveResidentCount)
@@ -79,94 +87,44 @@ namespace FactionColonies.Specialists
             return (int)Math.Floor(liveResidentCount / (double)FCSSettings.residentsPerWorker);
         }
 
-        public static double SpecialistAdditiveForResource(Pawn pawn, ResourceFC resource)
+        public static bool HasTrait(FCPolicyDef def)
         {
-            if (pawn?.skills is null || resource.def.associatedSkills is null) return 0;
-            double bonus = 0;
-            foreach (SkillDef skillDef in resource.def.associatedSkills)
-            {
-                SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                if (weight is null) continue;
-                SkillRecord skill = pawn.skills.GetSkill(skillDef);
-                if (skill != null)
-                    bonus += EffectiveLevel(skill.Level, SpecialistRole.Specialist) * weight.specialistAdditivePerLevel;
-            }
-            return bonus;
+            return def is object && FactionCache.FactionComp.HasTrait(def);
         }
 
-        public static double GovernorRawMultiplierForResource(Pawn pawn, ResourceFC resource)
+        public static float XPPerDay()
         {
-            if (pawn?.skills is null || resource.def.associatedSkills is null) return 0;
-            double raw = 0;
-            foreach (SkillDef skillDef in resource.def.associatedSkills)
-            {
-                SpecialistSkillWeightDef weight = SpecialistsCache.SkillWeight(skillDef);
-                if (weight is null) continue;
-                SkillRecord skill = pawn.skills.GetSkill(skillDef);
-                if (skill != null)
-                    raw += EffectiveLevel(skill.Level, SpecialistRole.Governor) * weight.governorMultiplierPerLevel;
-            }
-            return raw;
+            float xp = FCSSettings.xpPerDay;
+            if (HasTrait(SpecPolicyDefOf.FCSspecialistCorps)) xp *= 2f;
+            if (HasTrait(SpecPolicyDefOf.FCSmeritocratic)) xp *= 1.5f;
+            return xp;
         }
 
-        public static double PawnSkillSum(Pawn pawn)
-        {
-            if (pawn?.skills?.skills is null) return 0;
-            double sum = 0;
-            foreach (SkillRecord sk in pawn.skills.skills)
-                sum += sk.Level;
-            return sum;
-        }
-
-        public static double BaseUpkeep(double skillSum)
-        {
-            return FCSSettings.specialistBaseCost + (skillSum / FCSSettings.skillDivisor) * FCSSettings.scalingFactor;
-        }
-
-        public static double GovernorUpkeepMultiplier()
-        {
-            return HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
-        }
-
-        /// <summary>
-        /// Computes the total heal rate bonus from specialists' and governor's Medicine skill.
-        /// Returns the value to add to 1.0 for the mercHealRateMultiplier stat.
-        /// </summary>
-        public static double MedicalHealRateBonus(List<SpecialistFC> allPawns, SpecialistFC governor)
+        public static double MedicalHealRateBonus(List<SettlementSpecialist> specialists, SettlementGovernor governor)
         {
             double bonus = 0;
 
-            foreach (SpecialistFC s in allPawns)
+            foreach (SettlementSpecialist s in specialists)
             {
-                if (s.role != SpecialistRole.Specialist) continue;
-                if (!s.HasUsableSkills) continue;
-                SkillRecord med = s.pawn.skills.GetSkill(SkillDefOf.Medicine);
-                if (med != null)
-                {
-                    int level = EffectiveLevel(med.Level, SpecialistRole.Specialist);
-                    bonus += level * FCSSettings.healRatePerLevelSpecialist;
-                }
+                if (s.role is null || !s.HasUsableSkills) continue;
+                RoleBehaviorExt_Apothecary ext = s.role.GetModExtension<RoleBehaviorExt_Apothecary>();
+                if (ext is null) continue;
+                bonus += s.SkillScore * ext.healRatePerSkillPoint;
             }
 
-            if (governor != null && governor.HasUsableSkills)
+            if (governor is object && governor.HasUsableSkills)
             {
                 SkillRecord govMed = governor.pawn.skills.GetSkill(SkillDefOf.Medicine);
-                if (govMed != null)
-                {
-                    int level = EffectiveLevel(govMed.Level, SpecialistRole.Governor);
-                    SkillRecord social = governor.pawn.skills.GetSkill(SkillDefOf.Social);
-                    double socialFactor = GovSocialFactor(social?.Level ?? 0);
-                    bonus += level * FCSSettings.healRatePerLevelGovernor * socialFactor;
-                }
+                if (govMed is object && govMed.Level > 0)
+                    bonus += govMed.Level * FCSSettings.healRatePerLevelGovernor;
             }
 
             return bonus;
         }
 
-        public static void SendDeathLetter(SpecialistRole role, string bodyText)
+        public static void SendDeathLetter(string roleLabel, string bodyText)
         {
-            string label = role == SpecialistRole.Governor
-                ? "FCS_LetterGovernorKilled".Translate() : "FCS_LetterSpecialistKilled".Translate();
+            string label = "FCS_LetterSpecialistKilled".Translate();
             Find.LetterStack.ReceiveLetter(label, bodyText, LetterDefOf.Death);
         }
     }

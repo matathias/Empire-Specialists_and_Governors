@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_3_0</defName>
+		<label>Major reworking</label>
+		<description>Substantial rework to make roles def-definable.</description>
+		<releaseDate>2026-04-08</releaseDate>
+		<patchNoteType>Major</patchNoteType>
+		<patchNoteLines>
+		<li>Substantial rework. Still WIP</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
+</Defs>

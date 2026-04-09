@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using RimWorld;
 using RimWorld.Planet;
@@ -13,54 +12,58 @@ namespace FactionColonies.Specialists
     public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         ISettlementWindowOverview, IStatModifierProvider, IResourceProductionModifier, IProfitContributor
     {
-        private List<SpecialistFC> allPawns = new List<SpecialistFC>();
+        // ── Roster ──
+        private List<SettlementSpecialist> specialists = new List<SettlementSpecialist>();
+        private List<SettlementSpecialist> residents = new List<SettlementSpecialist>();
+        private SettlementGovernor governor;
 
-        // Supply chain integration: satisfaction from resource needs.
-        // Defaults to 1.0 (full satisfaction) when supply chain submod is not loaded.
-        // Written by the compat bridge comp (WorldObjectComp_SpecialistNeeds).
+        // ── Supply chain satisfaction ──
+        private float foodSatisfaction = 1f;
+        private float medicineSatisfaction = 1f;
 
-        public float FoodSatisfaction { get; set; } = 1f;
-
-        public float MedicineSatisfaction { get; set; } = 1f;
-
-        public IEnumerable<SpecialistFC> Residents
+        public float FoodSatisfaction
         {
-            get { return allPawns.Where(s => s.role == SpecialistRole.Resident); }
+            get { return foodSatisfaction; }
+            set { foodSatisfaction = Mathf.Clamp01(value); }
         }
 
-        public IEnumerable<SpecialistFC> CivilianSpecialists
+        public float MedicineSatisfaction
         {
-            get { return allPawns.Where(s => s.role == SpecialistRole.Specialist); }
+            get { return medicineSatisfaction; }
+            set { medicineSatisfaction = Mathf.Clamp01(value); }
         }
 
-        public IEnumerable<SpecialistFC> DefenseSpecialists
-        {
-            get { return allPawns.Where(s => s.role == SpecialistRole.Defense); }
-        }
+        // ── Battle state ──
+        private bool pawnsDeployedToBattle = false;
+        public bool PawnsDeployedToBattle => pawnsDeployedToBattle;
+        private List<Pawn> deployedPawns = new List<Pawn>();
 
-        public SpecialistFC Governor
-        {
-            get { return allPawns.FirstOrDefault(s => s.role == SpecialistRole.Governor); }
-        }
+        // ── Properties shortcut ──
+        public WorldObjectCompProperties_SettlementSpecialists Props =>
+            (WorldObjectCompProperties_SettlementSpecialists)props;
 
-        public int SpecialistCount
-        {
-            get { return allPawns.Count(s => s.role.IsRegularSpecialist()); }
-        }
+        // ── Settlement accessor ──
+        public WorldSettlementFC Settlement => (WorldSettlementFC)parent;
 
-        public int CivilianSpecialistCount
-        {
-            get { return allPawns.Count(s => s.role == SpecialistRole.Specialist); }
-        }
+        // ── Roster accessors ──
+        public IReadOnlyList<SettlementSpecialist> Specialists => specialists;
+        public IReadOnlyList<SettlementSpecialist> Residents => residents;
+        public SettlementGovernor Governor => governor;
+        public bool HasGovernor => governor is object && governor.IsAlive;
+        public int SpecialistCount => specialists.Count;
+        public int ResidentCount => residents.Count;
+        public int TotalCount => specialists.Count + residents.Count + (governor is object ? 1 : 0);
 
-        public int DefenseSpecialistCount
+        public int MaxSpecialists
         {
-            get { return allPawns.Count(s => s.role == SpecialistRole.Defense); }
-        }
-
-        public int ResidentCount
-        {
-            get { return allPawns.Count(s => s.role == SpecialistRole.Resident); }
+            get
+            {
+                int max = FCSSettings.specialistBaseMax
+                    + (int)Math.Floor(Settlement.settlementLevel / (double)FCSSettings.specialistPerLevels);
+                if (SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps))
+                    max += 2;
+                return max;
+            }
         }
 
         public int LiveResidentCount
@@ -68,174 +71,201 @@ namespace FactionColonies.Specialists
             get
             {
                 int count = 0;
-                foreach (SpecialistFC s in allPawns)
-                    if (s.role == SpecialistRole.Resident && s.IsAlive)
-                        count++;
+                foreach (SettlementSpecialist r in residents)
+                    if (r.IsAlive) count++;
                 return count;
             }
         }
 
-        public bool HasGovernor
+        // ── Core roster operations ──
+
+        public void AssignSpecialist(Pawn pawn, SpecialistRoleDef role)
         {
-            get { return allPawns.Any(s => s.role == SpecialistRole.Governor); }
-        }
+            if (pawn is null) return;
 
-        public int TotalCount => allPawns.Count;
-
-        public WorldSettlementFC Settlement => (WorldSettlementFC)parent;
-
-        // --- Trait/Policy helpers ---
-
-        public int MaxSpecialists
-        {
-            get
-            {
-                int baseMax = FCSSettings.specialistBaseMax + (int)Math.Floor(Settlement.settlementLevel / (double)FCSSettings.specialistPerLevels);
-                if (SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps)) baseMax += 2;
-                return baseMax;
-            }
-        }
-
-        internal List<SpecialistFC> AllPawnsInternal => allPawns;
-
-        // --- Core roster operations ---
-
-        public void AssignPawn(Pawn pawn, SpecialistRole role)
-        {
-            if (pawn == null) return;
-
-            if (role.IsRegularSpecialist() && SpecialistCount >= MaxSpecialists)
+            if (role is object && SpecialistCount >= MaxSpecialists)
             {
                 LogSG.Message($"Cannot assign {pawn.LabelShort}: max specialists reached at {Settlement.Name}");
-                Messages.Message("FCS_CannotAssignSpecialistRole".Translate(pawn.LabelShort, role.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
+                Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
+                    pawn.LabelShort, role.LabelCap, Settlement.Name, MaxSpecialists),
+                    MessageTypeDefOf.RejectInput);
                 return;
             }
 
-            if (role == SpecialistRole.Governor && Governor != null)
+            if (role is object && role.maxPerSettlement > 0)
             {
-                LogSG.Message("Settlement already has a governor. Demoting existing governor to Specialist.");
-                ChangeRole(Governor, SpecialistRole.Specialist);
+                int existing = 0;
+                foreach (SettlementSpecialist s in specialists)
+                    if (s.role == role) existing++;
+                if (existing >= role.maxPerSettlement)
+                {
+                    LogSG.Message($"Cannot assign {role.defName}: max per settlement reached");
+                    Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
+                        pawn.LabelShort, role.LabelCap, Settlement.Name, role.maxPerSettlement),
+                        MessageTypeDefOf.RejectInput);
+                    return;
+                }
             }
 
-            SpecialistFC specialist = new SpecialistFC(pawn, role);
-            allPawns.Add(specialist);
+            SettlementSpecialist entry = new SettlementSpecialist(pawn, role);
+            if (role is null)
+                residents.Add(entry);
+            else
+                specialists.Add(entry);
+
             SpecialistRoster.Assign(pawn, role);
+            pawn.SetFaction(FactionCache.PlayerColonyFaction);
+            if (!pawn.IsWorldPawn())
+                Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+
+            LogSG.Message($"Assigned {pawn.LabelShort} as {role?.LabelCap ?? "Resident"} to {Settlement.Name}");
+            InvalidateAll();
+        }
+
+        public void AssignGovernor(Pawn pawn, GovernorFocusDef focus)
+        {
+            if (pawn is null || focus is null) return;
+
+            if (governor is object)
+            {
+                LogSG.Warning("Settlement already has a governor");
+                return;
+            }
+
+            governor = new SettlementGovernor(pawn, focus);
+            SpecialistRoster.AssignGovernor(pawn);
 
             pawn.SetFaction(FactionCache.PlayerColonyFaction);
             if (!pawn.IsWorldPawn())
-            {
                 Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
-            }
 
-            LogSG.Message($"Assigned {pawn.LabelShort} as {role} to {Settlement.Name}");
-            Settlement.InvalidateStatCache();
+            if (governor.Behavior is object)
+                governor.Behavior.OnFocusActivated(Settlement);
+
+            LogSG.Message($"Assigned {pawn.LabelShort} as Governor ({focus.LabelCap}) to {Settlement.Name}");
+            InvalidateAll();
         }
 
-        public void RecallPawn(SpecialistFC specialist)
+        public void RecallSpecialist(SettlementSpecialist entry)
         {
-            if (specialist?.pawn is null) return;
-
-            Pawn pawn = specialist.pawn;
-            allPawns.Remove(specialist);
+            if (entry?.pawn is null) return;
+            Pawn pawn = entry.pawn;
+            specialists.Remove(entry);
+            residents.Remove(entry);
             SpecialistRoster.Recall(pawn);
+            SpawnPawnInCaravan(pawn);
+            LogSG.Message($"Recalled {pawn.LabelShort} from {Settlement.Name}");
+            InvalidateAll();
+        }
 
-            pawn.SetFaction(Faction.OfPlayer);
+        public void RecallGovernor()
+        {
+            if (governor is null) return;
+            Pawn pawn = governor.pawn;
+            if (governor.Behavior is object)
+                governor.Behavior.OnFocusDeactivated(Settlement);
+            SpecialistRoster.Recall(pawn);
+            governor = null;
+            if (pawn is object)
+                SpawnPawnInCaravan(pawn);
+            LogSG.Message($"Recalled governor from {Settlement.Name}");
+            InvalidateAll();
+        }
 
-            if (pawn.IsWorldPawn())
+        public void ChangeRole(SettlementSpecialist entry, SpecialistRoleDef newRole)
+        {
+            if (entry is null) return;
+
+            // Check capacity when moving to a specialist role
+            if (newRole is object && entry.role is null && SpecialistCount >= MaxSpecialists)
             {
-                Find.WorldPawns.RemovePawn(pawn);
+                Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
+                    entry.pawn.LabelShort, newRole.LabelCap, Settlement.Name, MaxSpecialists),
+                    MessageTypeDefOf.RejectInput);
+                return;
             }
 
+            // Moving between specialist and resident lists
+            if (entry.role is null && newRole is object)
+            {
+                residents.Remove(entry);
+                specialists.Add(entry);
+            }
+            else if (entry.role is object && newRole is null)
+            {
+                specialists.Remove(entry);
+                residents.Add(entry);
+            }
+
+            entry.role = newRole;
+            entry.DirtySkillScore();
+            SpecialistRoster.Assign(entry.pawn, newRole);
+            InvalidateAll();
+        }
+
+        public void RemoveSpecialist(SettlementSpecialist entry)
+        {
+            if (entry is null) return;
+            specialists.Remove(entry);
+            residents.Remove(entry);
+            if (entry.pawn is object)
+                SpecialistRoster.Recall(entry.pawn);
+            InvalidateAll();
+        }
+
+        public List<Pawn> AllPawnsSnapshot()
+        {
+            List<Pawn> result = new List<Pawn>();
+            foreach (SettlementSpecialist s in specialists)
+                if (s.IsAlive) result.Add(s.pawn);
+            foreach (SettlementSpecialist r in residents)
+                if (r.IsAlive) result.Add(r.pawn);
+            if (governor is object && governor.IsAlive)
+                result.Add(governor.pawn);
+            return result;
+        }
+
+        private void SpawnPawnInCaravan(Pawn pawn)
+        {
+            if (pawn is null) return;
+            pawn.SetFaction(Faction.OfPlayer);
+            if (pawn.IsWorldPawn())
+                Find.WorldPawns.RemovePawn(pawn);
             CaravanMaker.MakeCaravan(
                 new List<Pawn> { pawn },
                 Faction.OfPlayer,
                 Settlement.Tile,
-                false
-            );
+                false);
+        }
 
-            LogSG.Message($"Recalled {pawn.LabelShort} from {Settlement.Name}");
+        private void InvalidateAll()
+        {
+            foreach (SettlementSpecialist s in specialists) s.DirtySkillScore();
+            foreach (SettlementSpecialist r in residents) r.DirtySkillScore();
+            if (governor is object) governor.DirtySkillScore();
             Settlement.InvalidateStatCache();
         }
 
-        public void ChangeRole(SpecialistFC specialist, SpecialistRole newRole, bool ignoreLimit = false)
-        {
-            if (specialist is null) return;
-
-            // If the specialist's current role isn't max limited, but its target role is, and we're at the max, then reject the role change
-            if (!ignoreLimit && newRole.IsRegularSpecialist() && !specialist.role.IsRegularSpecialist() && SpecialistCount >= MaxSpecialists)
-            {
-                LogSG.Message($"Cannot assign {specialist.pawn.LabelShort}: max specialists reached at {Settlement.Name}");
-                Messages.Message("FCS_CannotAssignSpecialistRole".Translate(specialist.pawn.LabelShort, newRole.Translate(), Settlement.Name, MaxSpecialists), MessageTypeDefOf.RejectInput);
-                return;
-            }
-
-            if (newRole == SpecialistRole.Governor && Governor != null && Governor != specialist)
-            {
-                LogSG.Message("Settlement already has a governor. Demoting existing governor to Specialist.");
-                // When we demote the old governor, we haven't yet promoted the new governor, so we might technically go over the max limit of specialists
-                //   This is only a temporary result of the state change, though, so in this specific instant, we want to ignore the max limit
-                ChangeRole(Governor, SpecialistRole.Specialist, true);
-            }
-
-            if (specialist.role == SpecialistRole.Governor && newRole != SpecialistRole.Governor)
-            {
-                specialist.governorFocuses.Clear();
-            }
-
-            specialist.role = newRole;
-            SpecialistRoster.Assign(specialist.pawn, newRole);
-            Settlement.InvalidateStatCache();
-        }
-
-        public void RemoveDeadPawns()
-        {
-            int removed = allPawns.RemoveAll(s =>
-            {
-                if (!s.IsAlive)
-                {
-                    SpecialistRoster.Recall(s.pawn);
-                    return true;
-                }
-                return false;
-            });
-            if (removed > 0)
-            {
-                Settlement.InvalidateStatCache();
-            }
-        }
-
-        // --- Manual Battle Integration ---
-
-        private bool pawnsDeployedToBattle = false;
-        public bool PawnsDeployedToBattle => pawnsDeployedToBattle;
-        private List<Pawn> deployedPawns = new List<Pawn>();
+        // ── Manual Battle Integration ──
 
         public void DeployToBattle(Map map, List<Pawn> defenders, Lord defenseLord)
         {
             if (pawnsDeployedToBattle) return;
             deployedPawns.Clear();
 
-            foreach (SpecialistFC s in allPawns)
+            List<Pawn> allPawns = AllPawnsSnapshot();
+            foreach (Pawn pawn in allPawns)
             {
-                Pawn pawn = s.pawn;
-                if (!s.IsAlive) continue;
-
                 if (pawn.IsWorldPawn())
-                {
                     Find.WorldPawns.RemovePawn(pawn);
-                }
 
                 if (pawn.Faction != FactionCache.PlayerColonyFaction)
-                {
                     pawn.SetFaction(FactionCache.PlayerColonyFaction);
-                }
 
                 IntVec3 loc = CellFinder.RandomClosewalkCellNear(map.Center, map, 15);
                 GenSpawn.Spawn(pawn, loc, map);
-                if (pawn.drafter == null)
-                {
+                if (pawn.drafter is null)
                     pawn.drafter = new Pawn_DraftController(pawn);
-                }
                 map.mapPawns.RegisterPawn(pawn);
 
                 defenders.Add(pawn);
@@ -251,140 +281,142 @@ namespace FactionColonies.Specialists
         {
             if (!pawnsDeployedToBattle) return;
 
-            List<SpecialistFC> dead = new List<SpecialistFC>();
-
-            foreach (SpecialistFC s in allPawns)
+            // Collect dead specialists
+            List<SettlementSpecialist> deadSpecs = new List<SettlementSpecialist>();
+            foreach (SettlementSpecialist s in specialists)
             {
-                Pawn pawn = s.pawn;
-                if (pawn == null) continue;
+                if (s.pawn is null || s.pawn.Dead)
+                    deadSpecs.Add(s);
+            }
+            List<SettlementSpecialist> deadResidents = new List<SettlementSpecialist>();
+            foreach (SettlementSpecialist r in residents)
+            {
+                if (r.pawn is null || r.pawn.Dead)
+                    deadResidents.Add(r);
+            }
+            bool governorDead = governor is object && (governor.pawn is null || governor.pawn.Dead);
 
-                if (pawn.Dead)
-                {
-                    dead.Add(s);
-                    continue;
-                }
-
-                if (pawn.Spawned)
-                {
-                    pawn.DeSpawn();
-                }
-
-                pawn.SetFaction(FactionCache.PlayerColonyFaction);
-                Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+            // Despawn surviving pawns back to world
+            foreach (SettlementSpecialist s in specialists)
+            {
+                if (s.pawn is null || s.pawn.Dead) continue;
+                if (s.pawn.Spawned) s.pawn.DeSpawn();
+                s.pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                Find.WorldPawns.PassToWorld(s.pawn, PawnDiscardDecideMode.KeepForever);
+            }
+            foreach (SettlementSpecialist r in residents)
+            {
+                if (r.pawn is null || r.pawn.Dead) continue;
+                if (r.pawn.Spawned) r.pawn.DeSpawn();
+                r.pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                Find.WorldPawns.PassToWorld(r.pawn, PawnDiscardDecideMode.KeepForever);
+            }
+            if (governor is object && !governorDead)
+            {
+                if (governor.pawn.Spawned) governor.pawn.DeSpawn();
+                governor.pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                Find.WorldPawns.PassToWorld(governor.pawn, PawnDiscardDecideMode.KeepForever);
             }
 
-            foreach (SpecialistFC s in dead)
+            // Process deaths
+            foreach (SettlementSpecialist s in deadSpecs)
             {
-                SpecialistRole role = s.role;
                 Pawn pawn = s.pawn;
-                allPawns.Remove(s);
+                string roleLabel = s.role?.LabelCap ?? "Specialist";
+                RemoveSpecialist(s);
+                SpecUtil.SendDeathLetter(roleLabel,
+                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, roleLabel, Settlement.Name));
+            }
+            foreach (SettlementSpecialist r in deadResidents)
+            {
+                Pawn pawn = r.pawn;
+                RemoveSpecialist(r);
+                SpecUtil.SendDeathLetter("FCS_RoleResident".Translate(),
+                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleResident".Translate(), Settlement.Name));
+            }
+            if (governorDead && governor is object)
+            {
+                Pawn pawn = governor.pawn;
                 SpecialistRoster.Recall(pawn);
-
-                SpecUtil.SendDeathLetter(role,
-                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, role.Translate(), Settlement.Name));
+                governor = null;
+                SpecUtil.SendDeathLetter("FCS_RoleGovernor".Translate(),
+                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleGovernor".Translate(), Settlement.Name));
             }
 
+            // Clean up military comp
             WorldObjectComp_SettlementMilitary milComp =
                 Settlement.GetComponent<WorldObjectComp_SettlementMilitary>();
-            if (milComp != null)
+            if (milComp is object)
             {
                 foreach (Pawn p in deployedPawns)
-                {
                     milComp.defenders.Remove(p);
-                }
             }
 
             deployedPawns.Clear();
             pawnsDeployedToBattle = false;
-            Settlement.InvalidateStatCache();
+            InvalidateAll();
             LogSG.Message("Recovered specialists from battle at " + Settlement.Name);
         }
 
-        // --- Serialization ---
+        // ── Serialization ──
 
         public override void PostExposeData()
         {
             base.PostExposeData();
-            Scribe_Collections.Look(ref allPawns, "allPawns", LookMode.Deep);
-            if (allPawns == null)
-            {
-                allPawns = new List<SpecialistFC>();
-            }
+            Scribe_Collections.Look(ref specialists, "specialists", LookMode.Deep);
+            Scribe_Collections.Look(ref residents, "residents", LookMode.Deep);
+            Scribe_Deep.Look(ref governor, "governor");
+            Scribe_Values.Look(ref foodSatisfaction, "foodSatisfaction", 1f);
+            Scribe_Values.Look(ref medicineSatisfaction, "medicineSatisfaction", 1f);
             Scribe_Values.Look(ref pawnsDeployedToBattle, "pawnsDeployedToBattle", false);
             Scribe_Collections.Look(ref deployedPawns, "deployedPawns", LookMode.Reference);
-            if (deployedPawns == null)
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                deployedPawns = new List<Pawn>();
+                if (specialists is null) specialists = new List<SettlementSpecialist>();
+                if (residents is null) residents = new List<SettlementSpecialist>();
+                if (deployedPawns is null) deployedPawns = new List<Pawn>();
             }
         }
 
-        // --- XP Ticking ---
+        // ── XP Ticking ──
 
         public override void CompTick()
         {
             base.CompTick();
             if (Find.TickManager.TicksGame % GenDate.TicksPerDay != 0) return;
 
-            foreach (SpecialistFC s in allPawns)
-            {
-                if (s.role == SpecialistRole.Resident) continue;
-                if (!s.HasUsableSkills) continue;
+            float xp = SpecUtil.XPPerDay();
 
-                float xp = SpecUtil.XPPerDay();
-                foreach (SkillDef skill in GetRelevantSkills(s))
+            foreach (SettlementSpecialist s in specialists)
+            {
+                if (!s.HasUsableSkills || s.role is null || s.role.skillWeights is null) continue;
+                foreach (SkillWeight sw in s.role.skillWeights)
                 {
-                    SkillRecord rec = s.pawn.skills.GetSkill(skill);
-                    if (rec != null && !rec.TotallyDisabled)
-                    {
-                        rec.Learn(xp, true);
-                    }
-                }
-            }
-        }
-
-        private IEnumerable<SkillDef> GetRelevantSkills(SpecialistFC s)
-        {
-            if (s.role == SpecialistRole.Defense)
-            {
-                yield return SkillDefOf.Melee;
-                yield return SkillDefOf.Shooting;
-                yield break;
-            }
-
-            HashSet<SkillDef> seen = new HashSet<SkillDef>();
-            foreach (ResourceFC resource in Settlement.Resources)
-            {
-                if (resource.def.associatedSkills is null) continue;
-                foreach (SkillDef skill in resource.def.associatedSkills)
-                {
-                    if (SpecialistsCache.SkillWeight(skill) != null && seen.Add(skill))
-                    {
-                        yield return skill;
-                    }
+                    if (sw.skill is null) continue;
+                    SkillRecord rec = s.pawn.skills.GetSkill(sw.skill);
+                    if (rec is object && !rec.TotallyDisabled)
+                        rec.Learn(xp * sw.weight, true);
                 }
             }
 
-            if (s.role == SpecialistRole.Governor && seen.Add(SkillDefOf.Social))
+            if (governor is object && governor.HasUsableSkills && governor.focus?.skillWeights is object)
             {
-                yield return SkillDefOf.Social;
+                foreach (SkillWeight sw in governor.focus.skillWeights)
+                {
+                    if (sw.skill is null) continue;
+                    SkillRecord rec = governor.pawn.skills.GetSkill(sw.skill);
+                    if (rec is object && !rec.TotallyDisabled)
+                        rec.Learn(xp * sw.weight, true);
+                }
+                // Governor always gets Social XP
+                SkillRecord social = governor.pawn.skills.GetSkill(SkillDefOf.Social);
+                if (social is object && !social.TotallyDisabled)
+                    social.Learn(xp, true);
             }
         }
 
-        // --- Roster helpers ---
-
-        public List<SpecialistFC> AllPawnsSnapshot()
-        {
-            return new List<SpecialistFC>(allPawns);
-        }
-
-        public void RemoveSpecialist(SpecialistFC s)
-        {
-            allPawns.Remove(s);
-            SpecialistRoster.Recall(s.pawn);
-            Settlement.InvalidateStatCache();
-        }
-
-        // --- Caravan gizmos ---
+        // ── Caravan gizmos ──
 
         public override IEnumerable<Gizmo> GetCaravanGizmos(Caravan caravan)
         {
@@ -400,154 +432,98 @@ namespace FactionColonies.Specialists
             };
         }
 
-        // --- ISettlementWindowOverview ---
+        // ── ISettlementWindowOverview ──
 
         private SpecialistsTabRenderer tabRenderer;
 
-        private SpecialistsTabRenderer TabRenderer => tabRenderer ?? (tabRenderer = new SpecialistsTabRenderer(this));
+        private SpecialistsTabRenderer TabRenderer =>
+            tabRenderer ?? (tabRenderer = new SpecialistsTabRenderer(this));
 
         public void PreOpenWindow(WorldSettlementFC settlement) { TabRenderer.PreOpenWindow(settlement); }
         public void OnTabSwitch() { TabRenderer.OnTabSwitch(); }
 
         public void DrawOverviewTab(Rect boundingBox)
         {
-            SpecialistFC toRecall = TabRenderer.DrawOverviewTab(boundingBox);
-            if (toRecall != null)
-                RecallPawn(toRecall);
+            TabRenderer.DrawOverviewTab(boundingBox);
         }
 
         public void PostCloseWindow() { TabRenderer.PostCloseWindow(); }
         public string OverviewTabName() => TabRenderer.OverviewTabName();
 
-        public void SetGovernorFocus(SpecialistFC gov, ResourceTypeDef def, int slot = 0)
-        {
-            if (gov is null || gov.role != SpecialistRole.Governor) return;
-            while (gov.governorFocuses.Count <= slot)
-            {
-                gov.governorFocuses.Add(null);
-            }
-            gov.governorFocuses[slot] = def;
-            Settlement.InvalidateStatCache();
-        }
+        // ── IResourceProductionModifier ──
 
-        // --- Upkeep ---
-
-        public double CalculateTotalUpkeep()
+        public double GetResourceAdditiveModifier(ResourceFC resource)
         {
             double total = 0;
-            foreach (SpecialistFC s in allPawns)
+            foreach (SettlementSpecialist s in specialists)
             {
-                total += CalculatePawnUpkeep(s);
+                total += SpecUtil.SpecialistAdditiveForResource(s, resource.def);
             }
-            return total;
+
+            if (total > 0 && SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps))
+                total *= 1.2;
+
+            float satisfaction = foodSatisfaction * medicineSatisfaction;
+            return total * satisfaction;
         }
-        /// <summary>
-        /// Calculates the upkeep of regular Specialists only, excluding Governors. Includes Defense Specialists.
-        /// </summary>
-        /// <returns></returns>
-        public double CalculateSpecialistUpkeep()
+
+        public double GetResourceMultiplierModifier(ResourceFC resource)
         {
-            double total = 0;
-            foreach (SpecialistFC s in allPawns)
+            if (governor is null || !governor.HasUsableSkills) return 1.0;
+            float satisfaction = foodSatisfaction * medicineSatisfaction;
+            double rawMult = SpecUtil.GovernorMultiplierForResource(governor, resource.def);
+            return 1.0 + (rawMult - 1.0) * satisfaction;
+        }
+
+        public string GetResourceAdditiveDesc(ResourceFC resource)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (SettlementSpecialist s in specialists)
             {
-                if (s.role.IsRegularSpecialist())
-                    total += CalculatePawnUpkeep(s);
+                double bonus = SpecUtil.SpecialistAdditiveForResource(s, resource.def);
+                if (Math.Abs(bonus) > 0.001)
+                    sb.AppendLine($"  {s.pawn.LabelShort} ({s.role.LabelCap}): +{bonus:F2}");
             }
-            return total;
+            string result = sb.ToString().TrimEnd();
+            return result.Length > 0 ? result : null;
         }
 
-        public double CalculatePawnUpkeep(SpecialistFC s)
+        public string GetResourceMultiplierDesc(ResourceFC resource)
         {
-            if (s.pawn is null || s.role == SpecialistRole.Resident) return 0;
-            double skillSum = SpecUtil.PawnSkillSum(s.pawn);
-            double upkeep = SpecUtil.BaseUpkeep(skillSum);
-            if (s.role == SpecialistRole.Governor)
-            {
-                upkeep *= SpecUtil.GovernorUpkeepMultiplier();
-            }
-            return upkeep;
+            if (governor is null || !governor.HasUsableSkills) return null;
+            double mult = SpecUtil.GovernorMultiplierForResource(governor, resource.def);
+            if (Math.Abs(mult - 1.0) < 0.001) return null;
+            return $"  {governor.pawn.LabelShort} ({governor.focus.LabelCap}): x{mult:F2}";
         }
 
-        // --- IUpkeepContributor ---
-
-        public double GetUpkeepContribution()
-        {
-            return CalculateTotalUpkeep();
-        }
-
-        public string GetUpkeepContributionDesc()
-        {
-            double total = CalculateTotalUpkeep();
-            if (total <= 0) return null;
-            return $"+{Math.Round(total, 2)} - {"FCS_UpkeepSettlementLine".Translate()}";
-        }
-        // stub for the interface
-        public double GetIncomeContribution()
-        {
-            return 0;
-        }
-        // stub for the interface
-        public string GetIncomeContributionDesc()
-        {
-            return null;
-        }
-
-        // --- IStatModifierProvider ---
+        // ── IStatModifierProvider ──
 
         public double GetStatModifier(FCStatDef stat)
         {
             double value = stat.IdentityValue;
 
-            // Residents contribute bonus workers
+            // Worker bonus from residents
             if (stat == FCStatDefOf.workerBaseMax)
-            {
                 value += SpecUtil.WorkerBonusFromResidents(LiveResidentCount);
-            }
 
-            // SpecialistStatEffectDefs: skill -> stat contributions
-            bool profArmy = SpecUtil.HasTrait(SpecPolicyDefOf.FCSprofessionalArmy);
-            bool garrison = SpecUtil.HasTrait(SpecPolicyDefOf.FCSgarrisonDoctrine);
-            List<SpecialistStatEffectDef> effects = SpecialistsCache.StatEffectsForStat(stat);
-            if (effects?.Count > 0)
+            // Specialist stat bonuses (additive, skill-scaled)
+            float satisfaction = foodSatisfaction * medicineSatisfaction;
+            foreach (SettlementSpecialist s in specialists)
             {
-                foreach (SpecialistStatEffectDef def in effects)
-                {
-                    foreach (SpecialistFC s in allPawns)
-                    {
-                        if (!s.HasUsableSkills) continue;
-                        if (s.role != def.roleFilter) continue;
-                        SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
-                        if (skill != null)
-                        {
-                            double contribution = SpecUtil.EffectiveLevel(skill.Level, def.roleFilter) * def.specialistValuePerLevel;
-                            // Professional Army: defense specialists contribute 2x military level
-                            if (profArmy && s.role == SpecialistRole.Defense && stat == FCStatDefOf.militaryBaseLevel)
-                            {
-                                contribution *= 2.0;
-                            }
-                            value += contribution;
-                        }
-                    }
-                }
+                value += SpecUtil.SpecialistStatBonus(s, stat) * satisfaction;
             }
 
-            // Garrison Doctrine: defense specialists contribute to happiness
-            if (garrison && stat == FCStatDefOf.happinessGainedBase)
+            // Governor stat multiplier
+            if (governor is object && governor.HasUsableSkills)
             {
-                foreach (SpecialistFC s in allPawns)
-                {
-                    if (s.role != SpecialistRole.Defense) continue;
-                    if (!s.HasUsableSkills) continue;
-                    double bonus = SpecUtil.GetMilBonus(s);
-                    value += bonus;
-                }
+                double govMult = SpecUtil.GovernorStatMultiplier(governor, stat);
+                if (Math.Abs(govMult - 1.0) > 0.001)
+                    value += (govMult - 1.0) * satisfaction;
             }
 
-            // Medicine skill -> merc heal rate multiplier
+            // Heal rate from Apothecary behavior
             if (stat == FCStatDefOf.mercHealRateMultiplier)
-            {
-                value += SpecUtil.MedicalHealRateBonus(allPawns, Governor);
-            }
+                value += SpecUtil.MedicalHealRateBonus(specialists, governor) * satisfaction;
 
             return value;
         }
@@ -556,195 +532,57 @@ namespace FactionColonies.Specialists
         {
             StringBuilder sb = new StringBuilder();
 
-            // Worker bonus from residents
             if (stat == FCStatDefOf.workerBaseMax)
             {
                 int residentCount = LiveResidentCount;
                 int bonus = SpecUtil.WorkerBonusFromResidents(residentCount);
                 if (bonus > 0)
-                {
                     sb.Append("FCS_StatWorkerBonus".Translate(bonus, residentCount));
-                }
             }
 
-            // Stat effect contributions
-            List<SpecialistStatEffectDef> effects = SpecialistsCache.StatEffectsForStat(stat);
-            if (effects != null)
+            foreach (SettlementSpecialist s in specialists)
             {
-                foreach (SpecialistStatEffectDef def in effects)
+                double statBonus = SpecUtil.SpecialistStatBonus(s, stat);
+                if (Math.Abs(statBonus) > 0.001)
                 {
-                    double total = 0;
-                    List<string> parts = new List<string>();
-                    foreach (SpecialistFC s in allPawns)
-                    {
-                        if (!s.HasUsableSkills) continue;
-                        if (s.role != def.roleFilter) continue;
-                        SkillRecord skill = s.pawn.skills.GetSkill(def.skill);
-                        if (skill != null && SpecUtil.EffectiveLevel(skill.Level, def.roleFilter) > 0)
-                        {
-                            double contribution = SpecUtil.EffectiveLevel(skill.Level, def.roleFilter) * def.specialistValuePerLevel;
-                            total += contribution;
-                            parts.Add(s.pawn.LabelShort + " " + skill.Level);
-                        }
-                    }
-                    if (total > 0)
-                    {
-                        total = Math.Round(total, 2);
-                        if (sb.Length > 0) sb.Append("\n");
-                        sb.Append("FCS_StatEffectLine".Translate(total, def.skill.skillLabel.CapitalizeFirst(), string.Join(", ", parts)));
-                    }
+                    if (sb.Length > 0) sb.Append("\n");
+                    sb.Append($"+{Math.Round(statBonus, 2)} - {s.pawn.LabelShort} ({s.role.LabelCap})");
                 }
             }
 
-            // Heal rate multiplier description
             if (stat == FCStatDefOf.mercHealRateMultiplier)
             {
-                List<string> healParts = new List<string>();
-                double healTotal = 0;
-
-                foreach (SpecialistFC s in allPawns)
+                double healBonus = SpecUtil.MedicalHealRateBonus(specialists, governor);
+                if (healBonus > 0)
                 {
-                    if (s.role != SpecialistRole.Specialist) continue;
-                    if (!s.HasUsableSkills) continue;
-                    SkillRecord med = s.pawn.skills.GetSkill(SkillDefOf.Medicine);
-                    if (med != null)
-                    {
-                        int level = SpecUtil.EffectiveLevel(med.Level, SpecialistRole.Specialist);
-                        if (level > 0)
-                        {
-                            double contribution = level * FCSSettings.healRatePerLevelSpecialist;
-                            healTotal += contribution;
-                            healParts.Add(s.pawn.LabelShort + " " + med.Level);
-                        }
-                    }
-                }
-
-                SpecialistFC gov = Governor;
-                if (gov != null && gov.HasUsableSkills)
-                {
-                    SkillRecord govMed = gov.pawn.skills.GetSkill(SkillDefOf.Medicine);
-                    if (govMed != null)
-                    {
-                        int level = SpecUtil.EffectiveLevel(govMed.Level, SpecialistRole.Governor);
-                        if (level > 0)
-                        {
-                            SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-                            double socialFactor = SpecUtil.GovSocialFactor(social?.Level ?? 0);
-                            double contribution = level * FCSSettings.healRatePerLevelGovernor * socialFactor;
-                            healTotal += contribution;
-                            healParts.Add(gov.pawn.LabelShort + " " + govMed.Level + " (Gov)");
-                        }
-                    }
-                }
-
-                if (healTotal > 0)
-                {
-                    healTotal = Math.Round(healTotal, 2);
                     if (sb.Length > 0) sb.Append("\n");
-                    sb.Append("FCS_HealRateLine".Translate(healTotal, string.Join(", ", healParts)));
+                    sb.Append("FCS_HealRateLine".Translate(Math.Round(healBonus, 2)));
                 }
             }
 
             return sb.Length > 0 ? sb.ToString() : null;
         }
 
-        // --- IResourceProductionModifier ---
+        // ── IProfitContributor ──
 
-        public double GetResourceAdditiveModifier(ResourceFC resource)
+        public double GetUpkeepContribution()
         {
-            if (resource.def.associatedSkills is null) return 0;
-
-            double bonus = 0;
-            foreach (SpecialistFC s in allPawns)
-            {
-                if (s.role != SpecialistRole.Specialist) continue;
-                if (!s.HasUsableSkills) continue;
-                bonus += SpecUtil.SpecialistAdditiveForResource(s.pawn, resource);
-            }
-
-            if (bonus > 0 && SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps))
-            {
-                bonus *= 1.2;
-            }
-
-            return bonus * FoodSatisfaction;
+            double total = 0;
+            foreach (SettlementSpecialist s in specialists)
+                total += SpecUtil.SpecialistUpkeep(s);
+            if (governor is object)
+                total += FCSSettings.specialistBaseCost * 2.0;
+            return total;
         }
 
-        public double GetResourceMultiplierModifier(ResourceFC resource)
+        public string GetUpkeepContributionDesc()
         {
-            SpecialistFC gov = Governor;
-            if (gov == null || !gov.HasUsableSkills)
-                return 1.0;
-
-            if (resource.def.associatedSkills is null)
-                return 1.0;
-
-            SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            double socialFactor = SpecUtil.GovSocialFactor(social?.Level ?? 0);
-
-            double raw = SpecUtil.GovernorRawMultiplierForResource(gov.pawn, resource);
-
-            bool isFocused = gov.HasFocus(resource.def);
-            double focusBonus = isFocused ? SpecUtil.FocusBonusMultiplier() : 1.0;
-
-            double multiplier = raw * socialFactor * focusBonus;
-            return 1.0 + (multiplier * FoodSatisfaction);
+            double total = GetUpkeepContribution();
+            if (total <= 0) return null;
+            return $"+{Math.Round(total, 2)} - {"FCS_UpkeepSettlementLine".Translate()}";
         }
 
-        public string GetResourceAdditiveDesc(ResourceFC resource)
-        {
-            if (resource.def.associatedSkills is null) return null;
-
-            double addTotal = 0;
-            List<string> addParts = new List<string>();
-            foreach (SpecialistFC s in allPawns)
-            {
-                if (s.role != SpecialistRole.Specialist) continue;
-                if (!s.HasUsableSkills) continue;
-
-                double pawnBonus = SpecUtil.SpecialistAdditiveForResource(s.pawn, resource);
-                if (pawnBonus > 0)
-                {
-                    addTotal += pawnBonus;
-                    // Find the best skill for the label
-                    string bestSkillName = null;
-                    int bestSkillLevel = 0;
-                    foreach (SkillDef skillDef in resource.def.associatedSkills)
-                    {
-                        SkillRecord skill = s.pawn.skills.GetSkill(skillDef);
-                        if (skill != null && skill.Level > bestSkillLevel)
-                        {
-                            bestSkillLevel = skill.Level;
-                            bestSkillName = skillDef.skillLabel;
-                        }
-                    }
-                    addParts.Add(s.pawn.LabelShort + " " + bestSkillName + " " + bestSkillLevel);
-                }
-            }
-            if (addTotal > 0)
-            {
-                return $"{TextUtil.ColorizeAdditiveBonus(Math.Round(addTotal,2))} - {"FCS_ResSpecialists".Translate(string.Join(", ", addParts))}";
-            }
-            return null;
-        }
-
-        public string GetResourceMultiplierDesc(ResourceFC resource)
-        {
-            if (resource.def.associatedSkills is null) return null;
-
-            SpecialistFC gov = Governor;
-            if (gov is null || !gov.HasUsableSkills)
-                return null;
-
-            double mult = GetResourceMultiplierModifier(resource);
-            if (Math.Abs(mult - 1.0) <= 0.001)
-                return null;
-
-            bool isFocused = gov.HasFocus(resource.def);
-            string focusTag = isFocused ? "FCS_ResFocusTag".Translate().ToString() : "";
-            SkillRecord social = gov.pawn.skills.GetSkill(SkillDefOf.Social);
-            int socialLevel = social?.Level ?? 0;
-            return $"{TextUtil.ColorizeMultiplierBonus(Math.Round(mult, 2))} - {"FCS_ResGovernor".Translate(gov.pawn.LabelShort, socialLevel, focusTag)}";
-        }
+        public double GetIncomeContribution() { return 0; }
+        public string GetIncomeContributionDesc() { return null; }
     }
 }

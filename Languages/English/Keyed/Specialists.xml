@@ -84,6 +84,7 @@
 
 	<!-- Specialist Section -->
 	<FCS_SpecDefHeader>Specialists ({0})  |  Defense ({1})  | Total ({2}/{3})</FCS_SpecDefHeader>
+	<FCS_SpecHeader>Specialists ({0}/{1})</FCS_SpecHeader>
 	
 	<FCS_CannotAssignSpecialistRole>Cannot assign {0} to role {1} at {2}: Max {3} Specialists are already assigned.</FCS_CannotAssignSpecialistRole>
 
@@ -160,6 +161,18 @@
 	<FCS_TooltipUpkeep>Base: {0}s + (Skills: {1} / {2}) × {3}\n= {4}s/period{5}</FCS_TooltipUpkeep>
 	<FCS_TooltipUpkeepGovMult>\n× {0} (Governor)</FCS_TooltipUpkeepGovMult>
 	<FCS_UpkeepSettlementLine>Specialists</FCS_UpkeepSettlementLine>
+
+	<!-- Governor Dashboard -->
+	<FCS_GovSkillScore>Skill score: {0}</FCS_GovSkillScore>
+	<FCS_TooltipUpkeepGovFlat>Base upkeep: {0}s × 2.0 (Governor) = {1}s/period</FCS_TooltipUpkeepGovFlat>
+	<FCS_GovResTooltipSkillScore>Skill score: {0}</FCS_GovResTooltipSkillScore>
+	<FCS_TooltipFocusCurrent>Current focus: {0}\nClick to change the governor's area of expertise.</FCS_TooltipFocusCurrent>
+
+	<!-- Specialist Upkeep Tooltip -->
+	<FCS_TooltipUpkeepSpec>Base: {0}s + (score: {1} × {2}) = {3}s/period</FCS_TooltipUpkeepSpec>
+
+	<!-- Stat Contribution -->
+	<FCS_ContribStatScore>{0}: skill score {1}</FCS_ContribStatScore>
 
 	<!-- Assignment Dialog -->
 	<FCS_PreviewNoBonus>No production bonus</FCS_PreviewNoBonus>

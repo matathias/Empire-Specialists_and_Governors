@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using RimWorld;
 using Verse;
 
 namespace FactionColonies.Specialists
@@ -11,66 +9,76 @@ namespace FactionColonies.Specialists
         public override void OnBattleResolved(WorldSettlementFC settlement,
             MilitaryJobDef job, bool victory, BattleResult result)
         {
-            if (victory) return;
-
             WorldObjectComp_SettlementSpecialists comp =
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
             if (comp is null || comp.TotalCount == 0) return;
-
-            // Skip if specialists were deployed to a manual battle — deaths handled by RecoverFromBattle
             if (comp.PawnsDeployedToBattle) return;
 
-            int defenseCount = comp.DefenseSpecialists.Count();
-            FCPolicyDef garrisonDef = SpecialistsCache.TraitDef("garrisonDoctrine");
-            FCPolicyDef profArmyDef = SpecialistsCache.TraitDef("professionalArmy");
-            bool garrison = garrisonDef != null && FactionCache.FactionComp.HasTrait(garrisonDef);
-            bool profArmy = profArmyDef != null && FactionCache.FactionComp.HasTrait(profArmyDef);
-            List<SpecialistFC> toKill = new List<SpecialistFC>();
+            WorldObjectCompProperties_SettlementSpecialists props = comp.Props;
 
-            foreach (SpecialistFC s in comp.AllPawnsSnapshot())
+            float govChance = victory ? props.governorDeathChanceVictory : props.governorDeathChanceDefeat;
+            float specChance = victory ? props.specialistDeathChanceVictory : props.specialistDeathChanceDefeat;
+            float residentChance = victory ? props.residentDeathChanceVictory : props.residentDeathChanceDefeat;
+
+            // Let Defense specialist behaviors modify chances
+            foreach (SettlementSpecialist s in comp.Specialists)
+            {
+                if (s.role is null || !s.HasUsableSkills) continue;
+                SpecialistRoleBehaviorExtension ext = s.role.GetModExtension<SpecialistRoleBehaviorExtension>();
+                if (ext is null) continue;
+                SpecialistRoleBehavior behavior = ext.CreateBehavior();
+                behavior.ModifyDeathChances(settlement, s.SkillScore,
+                    ref govChance, ref specChance, ref residentChance);
+            }
+
+            // Snapshot lists before mutation
+            List<SettlementSpecialist> specToKill = new List<SettlementSpecialist>();
+            foreach (SettlementSpecialist s in comp.Specialists)
             {
                 if (!s.IsAlive) continue;
-                float deathChance = GetDeathChance(s.role, defenseCount, garrison, profArmy);
-                if (Rand.Chance(deathChance))
-                {
-                    toKill.Add(s);
-                }
+                if (Rand.Chance(specChance))
+                    specToKill.Add(s);
             }
 
-            foreach (SpecialistFC s in toKill)
+            List<SettlementSpecialist> residentsToKill = new List<SettlementSpecialist>();
+            foreach (SettlementSpecialist r in comp.Residents)
+            {
+                if (!r.IsAlive) continue;
+                if (Rand.Chance(residentChance))
+                    residentsToKill.Add(r);
+            }
+
+            bool governorDied = comp.HasGovernor && Rand.Chance(govChance);
+
+            // Process specialist deaths
+            foreach (SettlementSpecialist s in specToKill)
             {
                 Pawn pawn = s.pawn;
-                SpecialistRole role = s.role;
+                string roleLabel = s.role?.LabelCap ?? "Specialist";
                 comp.RemoveSpecialist(s);
                 pawn.Kill(null);
-
-                //TODO: figure out if this letter actually needs to be sent. pawn.Kill might take care of that for us...
-                SpecUtil.SendDeathLetter(role,
-                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, role.Translate(), settlement.Name));
+                SpecUtil.SendDeathLetter(roleLabel,
+                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, roleLabel, settlement.Name));
             }
-        }
 
-        private float GetDeathChance(SpecialistRole role, int defenseCount, bool garrison, bool profArmy)
-        {
-            float reductionPerDefender = FCSSettings.deathReductionPerDefender;
-            if (profArmy) reductionPerDefender *= 2f;
-            float reduction = defenseCount * reductionPerDefender;
-
-            switch (role)
+            // Process resident deaths
+            foreach (SettlementSpecialist r in residentsToKill)
             {
-                case SpecialistRole.Specialist:
-                    return Math.Max(0f, FCSSettings.civilianDeathChance - reduction);
-                case SpecialistRole.Governor:
-                    return Math.Max(0f, FCSSettings.governorDeathChance - reduction);
-                case SpecialistRole.Defense:
-                    float defChance = FCSSettings.defenseDeathChance;
-                    if (garrison) defChance *= 0.5f;
-                    float defReduction = Math.Max(0, defenseCount - 1) * reductionPerDefender;
-                    return Math.Max(0f, defChance - defReduction);
-                case SpecialistRole.Resident:
-                    return Math.Max(0f, FCSSettings.residentDeathChance - reduction);
-                default:
-                    return 0f;
+                Pawn pawn = r.pawn;
+                comp.RemoveSpecialist(r);
+                pawn.Kill(null);
+                SpecUtil.SendDeathLetter("FCS_RoleResident".Translate(),
+                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, "FCS_RoleResident".Translate(), settlement.Name));
+            }
+
+            // Process governor death
+            if (governorDied)
+            {
+                Pawn pawn = comp.Governor.pawn;
+                comp.RecallGovernor();
+                pawn.Kill(null);
+                SpecUtil.SendDeathLetter("FCS_RoleGovernor".Translate(),
+                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, "FCS_RoleGovernor".Translate(), settlement.Name));
             }
         }
     }
