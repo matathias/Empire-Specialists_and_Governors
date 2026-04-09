@@ -230,14 +230,15 @@ namespace FactionColonies.Specialists
             lineY += 24f;
 
             // Upkeep
-            double upkeep = hasGov ? FCSSettings.specialistBaseCost * 2.0 : 0;
+            double upkeep = hasGov ? SpecUtil.GovernorUpkeep() : 0;
             string upkeepText = "FCS_UpkeepDisplay".Translate(hasGov ? upkeep.ToString("F1") : "\u2014");
             Rect upkeepRect = new Rect(textX, lineY, textW, 22f);
             Widgets.Label(upkeepRect, upkeepText);
             if (hasGov)
             {
+                double mult = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
                 string upkeepTip = "FCS_TooltipUpkeepGovFlat".Translate(
-                    FCSSettings.specialistBaseCost.ToString("F1"), upkeep.ToString("F1"));
+                    FCSSettings.specialistBaseCost.ToString("F1"), mult.ToString("F1"), upkeep.ToString("F1"));
                 TooltipHandler.TipRegion(upkeepRect, upkeepTip);
             }
             lineY += 24f;

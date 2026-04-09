@@ -24,10 +24,9 @@ namespace FactionColonies.Specialists
             foreach (SettlementSpecialist s in comp.Specialists)
             {
                 if (s.role is null || !s.HasUsableSkills) continue;
-                SpecialistRoleBehaviorExtension ext = s.role.GetModExtension<SpecialistRoleBehaviorExtension>();
-                if (ext is null) continue;
-                SpecialistRoleBehavior behavior = ext.CreateBehavior();
-                behavior.ModifyDeathChances(settlement, s.SkillScore,
+                SpecialistRoleBehavior roleBehavior = s.Behavior;
+                if (roleBehavior is null) continue;
+                roleBehavior.ModifyDeathChances(settlement, s.SkillScore,
                     ref govChance, ref specChance, ref residentChance);
             }
 

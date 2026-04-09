@@ -324,6 +324,7 @@ namespace FactionColonies.Specialists
                 Pawn pawn = s.pawn;
                 string roleLabel = s.role?.LabelCap ?? "Specialist";
                 RemoveSpecialist(s);
+                if (pawn is null) continue;
                 SpecUtil.SendDeathLetter(roleLabel,
                     "FCS_LetterDeathDefending".Translate(pawn.LabelShort, roleLabel, Settlement.Name));
             }
@@ -331,16 +332,18 @@ namespace FactionColonies.Specialists
             {
                 Pawn pawn = r.pawn;
                 RemoveSpecialist(r);
+                if (pawn is null) continue;
                 SpecUtil.SendDeathLetter("FCS_RoleResident".Translate(),
                     "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleResident".Translate(), Settlement.Name));
             }
-            if (governorDead && governor is object)
+            if (governorDead)
             {
                 Pawn pawn = governor.pawn;
                 SpecialistRoster.Recall(pawn);
                 governor = null;
-                SpecUtil.SendDeathLetter("FCS_RoleGovernor".Translate(),
-                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleGovernor".Translate(), Settlement.Name));
+                if (pawn is object)
+                    SpecUtil.SendDeathLetter("FCS_RoleGovernor".Translate(),
+                        "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleGovernor".Translate(), Settlement.Name));
             }
 
             // Clean up military comp
@@ -376,6 +379,10 @@ namespace FactionColonies.Specialists
                 if (specialists is null) specialists = new List<SettlementSpecialist>();
                 if (residents is null) residents = new List<SettlementSpecialist>();
                 if (deployedPawns is null) deployedPawns = new List<Pawn>();
+                specialists.RemoveAll(s => s?.pawn is null);
+                residents.RemoveAll(r => r?.pawn is null);
+                deployedPawns.RemoveAll(p => p is null);
+                if (governor is object && governor.pawn is null) governor = null;
             }
         }
 
@@ -571,7 +578,7 @@ namespace FactionColonies.Specialists
             foreach (SettlementSpecialist s in specialists)
                 total += SpecUtil.SpecialistUpkeep(s);
             if (governor is object)
-                total += FCSSettings.specialistBaseCost * 2.0;
+                total += SpecUtil.GovernorUpkeep();
             return total;
         }
 

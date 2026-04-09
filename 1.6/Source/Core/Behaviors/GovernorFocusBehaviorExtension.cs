@@ -20,9 +20,17 @@ namespace FactionColonies.Specialists
 
         public GovernorFocusBehavior CreateBehavior()
         {
-            GovernorFocusBehavior b = (GovernorFocusBehavior)Activator.CreateInstance(behaviorClass);
-            b.extension = this;
-            return b;
+            try
+            {
+                GovernorFocusBehavior b = (GovernorFocusBehavior)Activator.CreateInstance(behaviorClass);
+                b.extension = this;
+                return b;
+            }
+            catch (Exception e)
+            {
+                LogSG.Error($"Failed to create GovernorFocusBehavior of type {behaviorClass}: {e}");
+                return null;
+            }
         }
     }
 

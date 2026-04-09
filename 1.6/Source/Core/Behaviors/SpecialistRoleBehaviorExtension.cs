@@ -20,9 +20,17 @@ namespace FactionColonies.Specialists
 
         public SpecialistRoleBehavior CreateBehavior()
         {
-            SpecialistRoleBehavior b = (SpecialistRoleBehavior)Activator.CreateInstance(behaviorClass);
-            b.extension = this;
-            return b;
+            try
+            {
+                SpecialistRoleBehavior b = (SpecialistRoleBehavior)Activator.CreateInstance(behaviorClass);
+                b.extension = this;
+                return b;
+            }
+            catch (Exception e)
+            {
+                LogSG.Error($"Failed to create SpecialistRoleBehavior of type {behaviorClass}: {e}");
+                return null;
+            }
         }
     }
 

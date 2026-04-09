@@ -164,7 +164,7 @@
 
 	<!-- Governor Dashboard -->
 	<FCS_GovSkillScore>Skill score: {0}</FCS_GovSkillScore>
-	<FCS_TooltipUpkeepGovFlat>Base upkeep: {0}s × 2.0 (Governor) = {1}s/period</FCS_TooltipUpkeepGovFlat>
+	<FCS_TooltipUpkeepGovFlat>Base upkeep: {0}s × {1} (Governor) = {2}s/period</FCS_TooltipUpkeepGovFlat>
 	<FCS_GovResTooltipSkillScore>Skill score: {0}</FCS_GovResTooltipSkillScore>
 	<FCS_TooltipFocusCurrent>Current focus: {0}\nClick to change the governor's area of expertise.</FCS_TooltipFocusCurrent>
 

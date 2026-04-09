@@ -10,6 +10,8 @@ namespace FactionColonies.Specialists
         public int assignedTick;
 
         [Unsaved] private float cachedSkillScore = -1f;
+        [Unsaved] private SpecialistRoleBehavior behavior;
+        [Unsaved] private bool behaviorResolved = false;
 
         public SettlementSpecialist() { }
 
@@ -24,6 +26,21 @@ namespace FactionColonies.Specialists
         public bool HasUsableSkills => pawn?.skills is object && !pawn.Dead;
         public bool IsResident => role is null;
 
+        public SpecialistRoleBehavior Behavior
+        {
+            get
+            {
+                if (!behaviorResolved)
+                {
+                    behaviorResolved = true;
+                    SpecialistRoleBehaviorExtension ext =
+                        role?.GetModExtension<SpecialistRoleBehaviorExtension>();
+                    behavior = ext?.CreateBehavior();
+                }
+                return behavior;
+            }
+        }
+
         public float SkillScore
         {
             get
@@ -34,7 +51,12 @@ namespace FactionColonies.Specialists
             }
         }
 
-        public void DirtySkillScore() { cachedSkillScore = -1f; }
+        public void DirtySkillScore()
+        {
+            cachedSkillScore = -1f;
+            behaviorResolved = false;
+            behavior = null;
+        }
 
         private float ComputeSkillScore()
         {

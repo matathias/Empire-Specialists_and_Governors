@@ -122,6 +122,12 @@ namespace FactionColonies.Specialists
             return bonus;
         }
 
+        public static double GovernorUpkeep()
+        {
+            double mult = HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
+            return FCSSettings.specialistBaseCost * mult;
+        }
+
         public static void SendDeathLetter(string roleLabel, string bodyText)
         {
             string label = "FCS_LetterSpecialistKilled".Translate();
