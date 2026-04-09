@@ -58,8 +58,7 @@ namespace FactionColonies.Specialists.SC
             var spec = Specialists;
             if (spec == null) return;
 
-            int activeCount = spec.CivilianSpecialistCount + spec.DefenseSpecialistCount
-                              + (spec.HasGovernor ? 1 : 0);
+            int activeCount = spec.SpecialistCount + (spec.HasGovernor ? 1 : 0);
             int residentCount = spec.ResidentCount;
 
             if (activeCount + residentCount <= 0) return;
