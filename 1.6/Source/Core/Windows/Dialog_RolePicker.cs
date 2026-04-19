@@ -26,7 +26,8 @@ namespace FactionColonies.Specialists
         private List<RoleEntry> governorEntries;
 
         private const float TitleHeight = 35f;
-        private const float TabHeight = 24f;
+        private const float TabHeight = 28f;
+        private const float TabMarginRight = 2f;
         private const float SeparatorHeight = 1f;
         private const float AccentBarWidth = 4f;
         private const float RowPadding = 8f;
@@ -258,7 +259,8 @@ namespace FactionColonies.Specialists
             // Tab bar (skip if governorFocusOnly)
             if (!governorFocusOnly)
             {
-                float tabW = inRect.width / 2f;
+                float tabAreaW = inRect.width - TabMarginRight;
+                float tabW = tabAreaW / 2f;
                 Rect chosenRect = new Rect();
                 for (int i = 0; i < 2; i++)
                 {
@@ -275,7 +277,7 @@ namespace FactionColonies.Specialists
                         chosenRect = tabRect;
                 }
                 UIUtil.DrawColoredHighlight(chosenRect, tabColors[selectedTab]);
-                UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, 0f, inRect.width, tabColors[selectedTab]);
+                UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, 0f, tabAreaW, tabColors[selectedTab]);
                 listTop += TabHeight;
             }
 
@@ -552,6 +554,20 @@ namespace FactionColonies.Specialists
 
                         if (Math.Abs(val) > entry.bestBonusMagnitude)
                             entry.bestBonusMagnitude = (float)Math.Abs(val);
+                    }
+                }
+
+                // Death reduction from defense behavior
+                RoleBehaviorExt_Defense defExt = entry.roleDef.GetModExtension<RoleBehaviorExt_Defense>();
+                if (defExt is object)
+                {
+                    double reduction = score * defExt.baseReductionPerSkillPoint * 100.0;
+                    if (reduction >= 0.01)
+                    {
+                        lines.Add(TextUtil.ColorizeAdditiveBonus(-reduction, invert: true)
+                            + " " + "FCS_PickerDeathReduction".Translate());
+                        if (reduction > entry.bestBonusMagnitude)
+                            entry.bestBonusMagnitude = (float)reduction;
                     }
                 }
 

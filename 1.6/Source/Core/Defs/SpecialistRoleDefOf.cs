@@ -6,7 +6,6 @@ namespace FactionColonies.Specialists
     public static class SpecialistRoleDefOf
     {
         public static SpecialistRoleDef Generalist;
-        public static SpecialistRoleDef Defense;
         public static SpecialistRoleDef Apothecary;
         public static SpecialistRoleDef Commander;
 

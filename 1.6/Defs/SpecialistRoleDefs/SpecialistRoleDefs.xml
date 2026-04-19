@@ -224,7 +224,7 @@
   <FactionColonies.Specialists.SpecialistRoleDef>
     <defName>Commander</defName>
     <label>commander</label>
-    <description>A military leader who drills troops and improves the combat effectiveness of the settlement's forces.</description>
+    <description>A military leader who drills troops and improves the combat effectiveness of the settlement's forces, while also reducing casualties during attacks.</description>
     <maxPerSettlement>2</maxPerSettlement>
     <baseUpkeepSilver>8</baseUpkeepSilver>
     <skillUpkeepScaling>0.4</skillUpkeepScaling>
@@ -236,20 +236,6 @@
       <li><stat>militaryCombatEfficiency</stat><value>0.01</value></li>
       <li><stat>militaryBaseLevel</stat><value>0.05</value></li>
     </statModifiers>
-  </FactionColonies.Specialists.SpecialistRoleDef>
-
-  <!-- ==================== Defense ==================== -->
-  <FactionColonies.Specialists.SpecialistRoleDef>
-    <defName>Defense</defName>
-    <label>defense</label>
-    <description>A defensive specialist who protects the settlement's inhabitants, reducing casualties during attacks.</description>
-    <maxPerSettlement>3</maxPerSettlement>
-    <baseUpkeepSilver>8</baseUpkeepSilver>
-    <skillUpkeepScaling>0.4</skillUpkeepScaling>
-    <skillWeights>
-      <li><skill>Shooting</skill><weight>0.5</weight></li>
-      <li><skill>Melee</skill><weight>0.5</weight></li>
-    </skillWeights>
     <modExtensions>
       <li Class="FactionColonies.Specialists.RoleBehaviorExt_Defense">
         <behaviorClass>FactionColonies.Specialists.RoleBehavior_Defense</behaviorClass>

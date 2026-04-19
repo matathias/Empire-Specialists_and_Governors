@@ -109,7 +109,7 @@ namespace FactionColonies.Specialists
     {
         public override bool ShouldMeasureTimeNow(Pawn pawn)
         {
-            return SpecialistRoster.GetRole(pawn) == SpecialistRoleDefOf.Defense;
+            return SpecialistRoster.GetRole(pawn) == SpecialistRoleDefOf.Commander;
         }
     }
 

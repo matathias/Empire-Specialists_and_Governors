@@ -17,6 +17,7 @@ namespace FactionColonies.Specialists
         private int subTab;
         private Vector2 scrollPosSpec;
         private Vector2 scrollPosRes;
+        private Vector2 scrollPosFocus;
 
         // --- UI constants ---
         private const float SubTabHeight = 24f;
@@ -37,7 +38,7 @@ namespace FactionColonies.Specialists
         // Governor dashboard layout constants
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
-        private const float GovTopRowHeight = 210f;
+        private const float GovTopRowHeight = 145f;
         private const float GovPortraitW = 100f;
         private const float GovPortraitH = 133f;
         private const float GovResCardW = 90f;
@@ -295,7 +296,7 @@ namespace FactionColonies.Specialists
 
             GUI.color = hasGov ? Color.white : GovGreyedOut;
 
-            // Focus selector button — single GovernorFocusDef dropdown
+            // Focus selector button
             if (hasGov)
             {
                 string focusLabel = gov.focus is object ? gov.focus.LabelCap : "FCS_FocusNoFocus".Translate();
@@ -313,44 +314,75 @@ namespace FactionColonies.Specialists
                 Widgets.Label(new Rect(ix, iy, iw, BtnHeight), "\u2014");
                 GUI.color = GovGreyedOut;
             }
-            iy += BtnHeight + 8f;
+            iy += BtnHeight + 4f;
 
-            // Skill score info
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleLeft;
-            string scoreText = hasGov
-                ? "FCS_GovSkillScore".Translate(gov.SkillScore.ToString("F1"))
-                : "FCS_GovSkillScore".Translate("\u2014");
-            Widgets.Label(new Rect(ix, iy, iw, 22f), scoreText);
-            iy += 24f;
+            // Reserve space for food satisfaction at bottom
+            float reservedBottom = FCSSettings.RoutesResourcesActive ? 24f : 0f;
+            float scrollAreaH = rect.yMax - iy - GovPanelPad - reservedBottom;
 
-            // Focus description
-            if (hasGov && gov.focus is object)
+            // Scrollable description + bonus lines area
+            if (hasGov && gov.focus is object && scrollAreaH > 0f)
             {
+                // Compute inner content height
+                float innerH = 0f;
                 Text.Font = GameFont.Tiny;
-                GUI.color = new Color(0.7f, 0.7f, 0.7f);
                 string desc = gov.focus.description ?? "";
                 if (desc.Length > 0)
                 {
-                    float descH = Text.CalcHeight(desc, iw);
-                    Widgets.Label(new Rect(ix, iy, iw, descH), desc);
-                    iy += descH + 4f;
+                    innerH += Text.CalcHeight(desc, iw - 16f) + 4f;
                 }
-                GUI.color = Color.white;
-            }
-            else
-            {
-                iy += 24f;
-            }
 
-            // Focus bonus lines
-            if (hasGov && gov.focus is object)
-            {
                 float score = gov.SkillScore;
+                int bonusLineCount = 0;
+                if (gov.focus.resourceBonuses is object)
+                {
+                    foreach (ResourceProductionBonus rpb in gov.focus.resourceBonuses)
+                    {
+                        if (rpb.resource is null) continue;
+                        double mult = SpecUtil.GovernorMultiplierForResource(gov, rpb.resource);
+                        if (Math.Abs(mult - 1.0) > 0.001) bonusLineCount++;
+                    }
+                }
+                if (gov.focus.providesBaselineProduction
+                    && (gov.focus.resourceBonuses is null || gov.focus.resourceBonuses.Count == 0))
+                {
+                    double baseMult = 1.0 + gov.focus.baselineProductionValue * score;
+                    if (Math.Abs(baseMult - 1.0) > 0.001) bonusLineCount++;
+                }
+                if (gov.focus.statModifiers is object)
+                {
+                    foreach (FCStatModifier mod in gov.focus.statModifiers)
+                    {
+                        if (mod.stat is null) continue;
+                        double val = mod.value * score;
+                        if (Math.Abs(val) >= 0.0001) bonusLineCount++;
+                    }
+                }
+                innerH += bonusLineCount * 16f;
+
+                Rect scrollOuter = new Rect(ix, iy, iw, scrollAreaH);
+                float scrollContentW = iw - (innerH > scrollAreaH ? 16f : 0f);
+                Rect scrollInner = new Rect(0f, 0f, scrollContentW, Mathf.Max(innerH, scrollAreaH));
+
+                Widgets.BeginScrollView(scrollOuter, ref scrollPosFocus, scrollInner);
+                float sy = 0f;
+
+                // Description
+                if (desc.Length > 0)
+                {
+                    Text.Font = GameFont.Tiny;
+                    Text.Anchor = TextAnchor.UpperLeft;
+                    GUI.color = new Color(0.7f, 0.7f, 0.7f);
+                    float descH = Text.CalcHeight(desc, scrollContentW);
+                    Widgets.Label(new Rect(0f, sy, scrollContentW, descH), desc);
+                    sy += descH + 4f;
+                    GUI.color = Color.white;
+                }
+
+                // Bonus lines
                 Text.Font = GameFont.Tiny;
                 Text.Anchor = TextAnchor.MiddleLeft;
 
-                // Resource multipliers
                 if (gov.focus.resourceBonuses is object)
                 {
                     foreach (ResourceProductionBonus rpb in gov.focus.resourceBonuses)
@@ -359,27 +391,25 @@ namespace FactionColonies.Specialists
                         double mult = SpecUtil.GovernorMultiplierForResource(gov, rpb.resource);
                         if (Math.Abs(mult - 1.0) > 0.001)
                         {
-                            Widgets.Label(new Rect(ix, iy, iw, 16f),
+                            Widgets.Label(new Rect(0f, sy, scrollContentW, 16f),
                                 TextUtil.ColorizeMultiplierBonus(mult) + " " + rpb.resource.LabelCap);
-                            iy += 16f;
+                            sy += 16f;
                         }
                     }
                 }
 
-                // Baseline production
                 if (gov.focus.providesBaselineProduction
                     && (gov.focus.resourceBonuses is null || gov.focus.resourceBonuses.Count == 0))
                 {
                     double baseMult = 1.0 + gov.focus.baselineProductionValue * score;
                     if (Math.Abs(baseMult - 1.0) > 0.001)
                     {
-                        Widgets.Label(new Rect(ix, iy, iw, 16f),
+                        Widgets.Label(new Rect(0f, sy, scrollContentW, 16f),
                             TextUtil.ColorizeMultiplierBonus(baseMult) + " " + "FCS_PickerAllResources".Translate());
-                        iy += 16f;
+                        sy += 16f;
                     }
                 }
 
-                // Stat modifiers
                 if (gov.focus.statModifiers is object)
                 {
                     foreach (FCStatModifier mod in gov.focus.statModifiers)
@@ -394,15 +424,21 @@ namespace FactionColonies.Specialists
                         else
                             bonusText = TextUtil.ColorizeAdditiveBonus(val) + " " + mod.stat.LabelCap;
 
-                        Widgets.Label(new Rect(ix, iy, iw, 16f), bonusText);
-                        iy += 16f;
+                        Widgets.Label(new Rect(0f, sy, scrollContentW, 16f), bonusText);
+                        sy += 16f;
                     }
                 }
+
+                Widgets.EndScrollView();
+                iy += scrollAreaH;
+            }
+            else
+            {
+                iy += scrollAreaH;
             }
 
             if (FCSSettings.RoutesResourcesActive)
             {
-                // Food satisfaction. Only show when Routes & Resources is active
                 Color satColor;
                 if (!hasGov)
                     satColor = new Color(0.5f, 0.5f, 0.5f, 0.35f);
@@ -1003,10 +1039,30 @@ namespace FactionColonies.Specialists
                     else
                         statSb.Append(TextUtil.ColorizeAdditiveBonus(val) + " " + mod.stat.LabelCap);
                 }
+                // Append death reduction if role has defense behavior
+                AppendDeathReduction(statSb, s.role, score);
                 if (statSb.Length > 0) return statSb.ToString();
             }
 
+            // Check for death reduction even without stat modifiers
+            {
+                float score = s.SkillScore;
+                StringBuilder defSb = new StringBuilder();
+                AppendDeathReduction(defSb, s.role, score);
+                if (defSb.Length > 0) return defSb.ToString();
+            }
+
             return "";
+        }
+
+        private static void AppendDeathReduction(StringBuilder sb, SpecialistRoleDef role, float skillScore)
+        {
+            RoleBehaviorExt_Defense defExt = role.GetModExtension<RoleBehaviorExt_Defense>();
+            if (defExt is null) return;
+            double reduction = skillScore * defExt.baseReductionPerSkillPoint * 100.0;
+            if (reduction < 0.01) return;
+            if (sb.Length > 0) sb.Append(", ");
+            sb.Append(TextUtil.ColorizeAdditiveBonus(-reduction, invert: true) + " " + "FCS_PickerDeathReduction".Translate());
         }
     }
 }
