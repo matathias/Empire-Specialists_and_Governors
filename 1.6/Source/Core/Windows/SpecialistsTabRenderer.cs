@@ -37,7 +37,7 @@ namespace FactionColonies.Specialists
         // Governor dashboard layout constants
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
-        private const float GovTopRowHeight = 145f;
+        private const float GovTopRowHeight = 165f;
         private const float GovPortraitW = 100f;
         private const float GovPortraitH = 133f;
         private const float GovResCardW = 90f;
@@ -215,12 +215,13 @@ namespace FactionColonies.Specialists
             }
             lineY += 28f;
 
-            // Identity line (title, age, xenotype)
+            // Identity line (title, age, xenotype) — dynamic height
             Text.Font = GameFont.Small;
             GUI.color = hasGov ? Color.gray : GovGreyedOutText;
             string identity = hasGov ? BuildIdentityLine(gov.pawn) : "\u2014";
-            Widgets.Label(new Rect(textX, lineY, textW, 22f), identity);
-            lineY += 24f;
+            float identityH = Text.CalcHeight(identity, textW);
+            Widgets.Label(new Rect(textX, lineY, textW, identityH), identity);
+            lineY += identityH + 2f;
 
             // Skill score
             GUI.color = hasGov ? Color.white : GovGreyedOut;
@@ -323,7 +324,7 @@ namespace FactionColonies.Specialists
             Widgets.Label(new Rect(ix, iy, iw, 22f), scoreText);
             iy += 24f;
 
-            // Focus description
+            // Focus description — use remaining vertical space
             if (hasGov && gov.focus is object)
             {
                 Text.Font = GameFont.Tiny;
@@ -331,11 +332,20 @@ namespace FactionColonies.Specialists
                 string desc = gov.focus.description ?? "";
                 if (desc.Length > 0)
                 {
-                    Widgets.Label(new Rect(ix, iy, iw, 22f), desc);
+                    float reservedBottom = FCSSettings.RoutesResourcesActive ? 24f : 0f;
+                    float descH = rect.yMax - iy - GovPanelPad - reservedBottom;
+                    if (descH > 0f)
+                    {
+                        Widgets.Label(new Rect(ix, iy, iw, descH), desc);
+                    }
+                    iy += descH;
                 }
                 GUI.color = Color.white;
             }
-            iy += 24f;
+            else
+            {
+                iy += 24f;
+            }
 
             if (FCSSettings.RoutesResourcesActive)
             {
@@ -529,7 +539,8 @@ namespace FactionColonies.Specialists
             Widgets.BeginScrollView(scrollOuter, ref scrollPosSpec, scrollInner);
             float sy = 0f;
             int rowIdx = 0;
-            foreach (SettlementSpecialist s in comp.Specialists)
+            List<SettlementSpecialist> specSnapshot = new List<SettlementSpecialist>(comp.Specialists);
+            foreach (SettlementSpecialist s in specSnapshot)
             {
                 if (s.pawn is null) continue;
 
@@ -582,7 +593,8 @@ namespace FactionColonies.Specialists
             Widgets.BeginScrollView(scrollOuter, ref scrollPosRes, scrollInner);
             float sy = 0f;
             int rowIdx = 0;
-            foreach (SettlementSpecialist s in comp.Residents)
+            List<SettlementSpecialist> resSnapshot = new List<SettlementSpecialist>(comp.Residents);
+            foreach (SettlementSpecialist s in resSnapshot)
             {
                 if (s.pawn is null) continue;
 
@@ -821,52 +833,23 @@ namespace FactionColonies.Specialists
         {
             if (gov?.pawn is null) return;
 
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
-            foreach (GovernorFocusDef focusDef in DefDatabase<GovernorFocusDef>.AllDefs)
-            {
-                GovernorFocusDef localFocus = focusDef;
-                string label = focusDef.LabelCap;
-                if (gov.focus == focusDef) label += " *";
-
-                options.Add(new FloatMenuOption(label, delegate
-                {
-                    gov.SetFocus(localFocus, comp.Settlement);
-                }));
-            }
-
-            if (options.Count > 0)
-            {
-                Find.WindowStack.Add(new FloatMenu(options));
-            }
+            Find.WindowStack.Add(new Dialog_RolePicker(
+                gov.pawn,
+                comp,
+                onSelectGovernor: focus => gov.SetFocus(focus, comp.Settlement),
+                currentFocus: gov.focus));
         }
 
         private void ShowRoleChangeMenu(SettlementSpecialist specialist)
         {
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
-
-            // Resident option (null role)
-            if (specialist.role is object)
-            {
-                options.Add(new FloatMenuOption("FCS_RoleResident".Translate(), delegate
-                {
-                    comp.ChangeRole(specialist, null);
-                }));
-            }
-
-            // All specialist role defs
-            foreach (SpecialistRoleDef roleDef in DefDatabase<SpecialistRoleDef>.AllDefs)
-            {
-                if (roleDef == specialist.role) continue;
-                SpecialistRoleDef localRole = roleDef;
-                string label = roleDef.LabelCap;
-
-                options.Add(new FloatMenuOption(label, delegate
-                {
-                    comp.ChangeRole(specialist, localRole);
-                }));
-            }
-
-            Find.WindowStack.Add(new FloatMenu(options));
+            Find.WindowStack.Add(new Dialog_RolePicker(
+                specialist.pawn,
+                comp,
+                onSelectRole: role => comp.ChangeRole(specialist, role),
+                onSelectGovernor: focus => comp.PromoteToGovernor(specialist, focus),
+                allowGovernor: true,
+                currentRole: specialist.role,
+                isCurrentlyGovernor: false));
         }
 
         private string GetTopSkillLabel(SettlementSpecialist s)

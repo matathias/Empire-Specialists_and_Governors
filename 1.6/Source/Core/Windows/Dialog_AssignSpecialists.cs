@@ -195,126 +195,34 @@ namespace FactionColonies.Specialists
 
         private void ShowRoleMenu(PawnEntry entry, bool hasGovernor, bool capReached)
         {
-            List<FloatMenuOption> options = new List<FloatMenuOption>();
-
-            // Resident option (role = null, not governor)
-            {
-                string label = "FCS_RoleResident".Translate();
-                if (!entry.isGovernor && entry.role is null)
+            Find.WindowStack.Add(new Dialog_RolePicker(
+                entry.pawn,
+                comp,
+                onSelectRole: role =>
                 {
-                    label += " *";
-                }
-                options.Add(new FloatMenuOption(label, delegate
-                {
-                    entry.role = null;
+                    entry.role = role;
                     entry.isGovernor = false;
                     entry.governorFocus = null;
-                }));
-            }
-
-            // Specialist role options from DefDatabase
-            foreach (SpecialistRoleDef roleDef in DefDatabase<SpecialistRoleDef>.AllDefs)
-            {
-                SpecialistRoleDef localRole = roleDef;
-                bool disabled = false;
-                string label = roleDef.LabelCap;
-
-                // Mark current selection
-                if (!entry.isGovernor && entry.role == roleDef)
+                },
+                onSelectGovernor: focus =>
                 {
-                    label += " *";
-                }
-
-                // Cap check: if switching to a specialist role from resident/governor, check capacity
-                if (entry.role != roleDef && capReached)
-                {
-                    // Allow if entry is already a non-resident specialist (swapping roles doesn't change count)
-                    if (entry.isGovernor || entry.role is null)
-                    {
-                        label = "FCS_RoleCapReached".Translate(label);
-                        disabled = true;
-                    }
-                }
-
-                if (disabled)
-                {
-                    options.Add(new FloatMenuOption(label, null));
-                }
-                else
-                {
-                    options.Add(new FloatMenuOption(label, delegate
-                    {
-                        entry.role = localRole;
-                        entry.isGovernor = false;
-                        entry.governorFocus = null;
-                    }));
-                }
-            }
-
-            // Governor option — opens sub-menu for GovernorFocusDef selection
-            {
-                bool govDisabled = false;
-                string govLabel = "FCS_RoleGovernor".Translate();
-
-                if (entry.isGovernor)
-                {
-                    govLabel += " *";
-                }
-
-                if (hasGovernor && !IsAnyEntryGovernor())
-                {
-                    govLabel = "FCS_RoleOccupied".Translate(govLabel);
-                    govDisabled = true;
-                }
-
-                if (govDisabled)
-                {
-                    options.Add(new FloatMenuOption(govLabel, null));
-                }
-                else
-                {
-                    options.Add(new FloatMenuOption(govLabel, delegate
-                    {
-                        ShowGovernorFocusSubMenu(entry);
-                    }));
-                }
-            }
-
-            Find.WindowStack.Add(new FloatMenu(options));
-        }
-
-        private void ShowGovernorFocusSubMenu(PawnEntry entry)
-        {
-            List<FloatMenuOption> focusOptions = new List<FloatMenuOption>();
-            foreach (GovernorFocusDef focusDef in DefDatabase<GovernorFocusDef>.AllDefs)
-            {
-                GovernorFocusDef localFocus = focusDef;
-                string label = focusDef.LabelCap;
-                if (entry.isGovernor && entry.governorFocus == focusDef)
-                {
-                    label += " *";
-                }
-                focusOptions.Add(new FloatMenuOption(label, delegate
-                {
-                    // Demote any other entry currently set as governor
                     foreach (PawnEntry other in entries)
                     {
                         if (other != entry && other.isGovernor)
                         {
                             other.isGovernor = false;
                             other.governorFocus = null;
-                            other.role = null; // demote to resident
+                            other.role = null;
                         }
                     }
                     entry.isGovernor = true;
-                    entry.governorFocus = localFocus;
+                    entry.governorFocus = focus;
                     entry.role = null;
-                }));
-            }
-            if (focusOptions.Count > 0)
-            {
-                Find.WindowStack.Add(new FloatMenu(focusOptions));
-            }
+                },
+                allowGovernor: !hasGovernor || IsAnyEntryGovernor() || entry.isGovernor,
+                currentRole: entry.isGovernor ? null : entry.role,
+                isCurrentlyGovernor: entry.isGovernor,
+                currentGovernorFocus: entry.governorFocus));
         }
 
         private void PreviewContribution(PawnEntry entry, out string text, out Color color)

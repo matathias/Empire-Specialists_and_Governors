@@ -172,6 +172,41 @@ namespace FactionColonies.Specialists
             InvalidateAll();
         }
 
+        public void PromoteToGovernor(SettlementSpecialist entry, GovernorFocusDef focus)
+        {
+            if (entry?.pawn is null || focus is null) return;
+            Pawn pawn = entry.pawn;
+
+            // Remove from specialist/resident lists
+            specialists.Remove(entry);
+            residents.Remove(entry);
+
+            // Demote existing governor to resident (if any)
+            if (governor is object)
+            {
+                Pawn oldGovPawn = governor.pawn;
+                if (governor.Behavior is object)
+                    governor.Behavior.OnFocusDeactivated(Settlement);
+                SpecialistRoster.Recall(oldGovPawn);
+
+                SettlementSpecialist demoted = new SettlementSpecialist(oldGovPawn, null);
+                residents.Add(demoted);
+                SpecialistRoster.Assign(oldGovPawn, null);
+            }
+
+            // Update roster tracking
+            SpecialistRoster.Recall(pawn);
+            SpecialistRoster.AssignGovernor(pawn);
+
+            // Create new governor
+            governor = new SettlementGovernor(pawn, focus);
+            if (governor.Behavior is object)
+                governor.Behavior.OnFocusActivated(Settlement);
+
+            LogSG.Message($"Promoted {pawn.LabelShort} to Governor ({focus.LabelCap}) at {Settlement.Name}");
+            InvalidateAll();
+        }
+
         public void ChangeRole(SettlementSpecialist entry, SpecialistRoleDef newRole)
         {
             if (entry is null) return;
