@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -20,15 +21,18 @@ namespace FactionColonies.Specialists
         private readonly bool governorFocusOnly;
 
         private Vector2 scrollPos;
-        private List<RoleEntry> entries;
+        private int selectedTab;
+        private List<RoleEntry> specialistEntries;
+        private List<RoleEntry> governorEntries;
 
         private const float TitleHeight = 35f;
+        private const float TabHeight = 24f;
         private const float SeparatorHeight = 1f;
         private const float AccentBarWidth = 4f;
         private const float RowPadding = 8f;
         private const float NameHeight = 22f;
+        private const float BonusLineHeight = 16f;
         private const float DescHeight = 18f;
-        private const float PreviewHeight = 18f;
         private const float MinRowHeight = 60f;
 
         private static readonly Color ResidentAccent = new Color(0.35f, 0.50f, 0.80f);
@@ -37,6 +41,17 @@ namespace FactionColonies.Specialists
         private static readonly Color DisabledColor = new Color(0.5f, 0.5f, 0.5f);
         private static readonly Color SeparatorColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
         private static readonly Color CurrentHighlight = new Color(1f, 1f, 1f, 0.08f);
+
+        private static readonly string[] tabLabels =
+        {
+            "FCS_SubSpecialists".Translate(),
+            "FCS_SubGovernor".Translate()
+        };
+        private static readonly Color[] tabColors =
+        {
+            SpecialistAccent,
+            GovernorAccent
+        };
 
         public override Vector2 InitialSize
         {
@@ -65,6 +80,7 @@ namespace FactionColonies.Specialists
             this.isCurrentlyGovernor = isCurrentlyGovernor;
             this.currentGovernorFocus = currentGovernorFocus;
             this.governorFocusOnly = false;
+            this.selectedTab = isCurrentlyGovernor ? 1 : 0;
 
             draggable = true;
             doCloseX = true;
@@ -92,6 +108,7 @@ namespace FactionColonies.Specialists
             this.isCurrentlyGovernor = true;
             this.currentGovernorFocus = currentFocus;
             this.governorFocusOnly = true;
+            this.selectedTab = 0;
 
             draggable = true;
             doCloseX = true;
@@ -103,25 +120,28 @@ namespace FactionColonies.Specialists
 
         private void BuildEntries()
         {
-            entries = new List<RoleEntry>();
+            specialistEntries = new List<RoleEntry>();
+            governorEntries = new List<RoleEntry>();
 
             if (!governorFocusOnly)
             {
                 // Resident entry
                 bool isResidentCurrent = !isCurrentlyGovernor && currentRole is null;
-                entries.Add(new RoleEntry
+                RoleEntry residentEntry = new RoleEntry
                 {
                     type = RoleEntryType.Resident,
                     label = "FCS_RoleResident".Translate(),
                     description = "FCS_PickerResidentDesc".Translate(),
                     accent = ResidentAccent,
                     isCurrent = isResidentCurrent,
-                    enabled = true
-                });
+                    enabled = true,
+                    sortKey = -2f
+                };
+                residentEntry.bonusLines = GetBonusLines(residentEntry);
+                specialistEntries.Add(residentEntry);
 
                 // Specialist roles
-                foreach (SpecialistRoleDef roleDef in DefDatabase<SpecialistRoleDef>.AllDefs
-                    .OrderBy(d => d.LabelCap.ToString()))
+                foreach (SpecialistRoleDef roleDef in DefDatabase<SpecialistRoleDef>.AllDefs)
                 {
                     bool isCurrent = !isCurrentlyGovernor && currentRole == roleDef;
                     string disabledReason = null;
@@ -148,7 +168,7 @@ namespace FactionColonies.Specialists
                         }
                     }
 
-                    entries.Add(new RoleEntry
+                    RoleEntry specEntry = new RoleEntry
                     {
                         type = RoleEntryType.Specialist,
                         roleDef = roleDef,
@@ -158,29 +178,43 @@ namespace FactionColonies.Specialists
                         isCurrent = isCurrent,
                         enabled = disabledReason is null,
                         disabledReason = disabledReason
-                    });
+                    };
+                    specEntry.bonusLines = GetBonusLines(specEntry);
+
+                    // Sort key: Generalist always second, then by best bonus descending, no-bonus at bottom
+                    if (roleDef.isGeneralist)
+                    {
+                        specEntry.sortKey = -1f;
+                    }
+                    else if (specEntry.bonusLines.Count > 0)
+                    {
+                        specEntry.sortKey = -specEntry.bestBonusMagnitude;
+                    }
+                    else
+                    {
+                        specEntry.sortKey = 1000f;
+                    }
+
+                    specialistEntries.Add(specEntry);
                 }
 
-                // Governor section separator
-                if (allowGovernor)
+                // Sort specialist entries (Resident stays first via sortKey=-2)
+                specialistEntries.Sort((a, b) =>
                 {
-                    entries.Add(new RoleEntry
-                    {
-                        type = RoleEntryType.SectionHeader,
-                        label = "FCS_RoleGovernor".Translate(),
-                        accent = GovernorAccent
-                    });
-                }
+                    int cmp = a.sortKey.CompareTo(b.sortKey);
+                    if (cmp != 0) return cmp;
+                    return string.Compare(a.label, b.label, StringComparison.Ordinal);
+                });
             }
 
             // Governor focus entries
-            if (allowGovernor)
+            if (allowGovernor || governorFocusOnly)
             {
                 foreach (GovernorFocusDef focusDef in DefDatabase<GovernorFocusDef>.AllDefs)
                 {
                     bool isCurrent = isCurrentlyGovernor && currentGovernorFocus == focusDef;
 
-                    entries.Add(new RoleEntry
+                    RoleEntry govEntry = new RoleEntry
                     {
                         type = RoleEntryType.GovernorFocus,
                         focusDef = focusDef,
@@ -189,8 +223,19 @@ namespace FactionColonies.Specialists
                         accent = GovernorAccent,
                         isCurrent = isCurrent,
                         enabled = true
-                    });
+                    };
+                    govEntry.bonusLines = GetBonusLines(govEntry);
+                    governorEntries.Add(govEntry);
                 }
+            }
+        }
+
+        private List<RoleEntry> ActiveEntries
+        {
+            get
+            {
+                if (governorFocusOnly) return governorEntries;
+                return selectedTab == 0 ? specialistEntries : governorEntries;
             }
         }
 
@@ -208,8 +253,33 @@ namespace FactionColonies.Specialists
                 : "FCS_PickerRoleTitle".Translate(pawn.LabelShort);
             Widgets.Label(new Rect(0, 0, inRect.width, TitleHeight), title);
 
-            // Scroll view
             float listTop = TitleHeight + 4f;
+
+            // Tab bar (skip if governorFocusOnly)
+            if (!governorFocusOnly)
+            {
+                float tabW = inRect.width / 2f;
+                Rect chosenRect = new Rect();
+                for (int i = 0; i < 2; i++)
+                {
+                    Rect tabRect = new Rect(tabW * i, listTop, tabW, TabHeight);
+                    if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: selectedTab == i))
+                    {
+                        if (selectedTab != i)
+                        {
+                            selectedTab = i;
+                            scrollPos = Vector2.zero;
+                        }
+                    }
+                    if (selectedTab == i)
+                        chosenRect = tabRect;
+                }
+                UIUtil.DrawColoredHighlight(chosenRect, tabColors[selectedTab]);
+                listTop += TabHeight;
+            }
+
+            // Scroll view
+            List<RoleEntry> entries = ActiveEntries;
             float listHeight = inRect.height - listTop;
             Rect scrollOutRect = new Rect(0, listTop, inRect.width, listHeight);
 
@@ -239,7 +309,7 @@ namespace FactionColonies.Specialists
                 curY += rowHeight;
 
                 // Separator
-                if (i < entries.Count - 1 && entry.type != RoleEntryType.SectionHeader)
+                if (i < entries.Count - 1)
                 {
                     GUI.color = SeparatorColor;
                     Widgets.DrawLineHorizontal(AccentBarWidth + RowPadding, curY, contentWidth - AccentBarWidth - RowPadding * 2);
@@ -257,9 +327,6 @@ namespace FactionColonies.Specialists
 
         private float GetRowHeight(RoleEntry entry, float contentWidth)
         {
-            if (entry.type == RoleEntryType.SectionHeader)
-                return 28f;
-
             float textWidth = contentWidth - AccentBarWidth - RowPadding * 3;
 
             // Name line
@@ -275,8 +342,16 @@ namespace FactionColonies.Specialists
                 height += descH + 2f;
             }
 
-            // Preview line
-            height += PreviewHeight + 2f;
+            // Bonus lines
+            int lineCount = entry.bonusLines is object ? entry.bonusLines.Count : 0;
+            if (lineCount > 0)
+            {
+                height += lineCount * BonusLineHeight + 2f;
+            }
+            else
+            {
+                height += BonusLineHeight + 2f; // "No production bonus" line
+            }
 
             // Disabled reason
             if (!entry.enabled && entry.disabledReason is object)
@@ -291,12 +366,6 @@ namespace FactionColonies.Specialists
 
         private void DrawRow(Rect rect, RoleEntry entry, int index)
         {
-            if (entry.type == RoleEntryType.SectionHeader)
-            {
-                DrawSectionHeader(rect, entry);
-                return;
-            }
-
             // Background
             if (entry.isCurrent)
             {
@@ -360,16 +429,26 @@ namespace FactionColonies.Specialists
                 curY += descH + 2f;
             }
 
-            // Preview
-            GUI.color = entry.enabled ? Color.white : DisabledColor;
+            // Bonus lines
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
-            string preview;
-            Color previewColor;
-            GetPreview(entry, out preview, out previewColor);
-            GUI.color = entry.enabled ? previewColor : DisabledColor;
-            Widgets.Label(new Rect(textX, curY, textW, PreviewHeight), preview);
-            curY += PreviewHeight + 2f;
+            if (entry.bonusLines is object && entry.bonusLines.Count > 0)
+            {
+                GUI.color = entry.enabled ? Color.white : DisabledColor;
+                foreach (TaggedString line in entry.bonusLines)
+                {
+                    Widgets.Label(new Rect(textX, curY, textW, BonusLineHeight), line);
+                    curY += BonusLineHeight;
+                }
+                curY += 2f;
+            }
+            else
+            {
+                GUI.color = entry.enabled ? Color.gray : DisabledColor;
+                Widgets.Label(new Rect(textX, curY, textW, BonusLineHeight),
+                    (string)"FCS_PreviewNoBonus".Translate());
+                curY += BonusLineHeight + 2f;
+            }
 
             // Disabled reason
             if (!entry.enabled && entry.disabledReason is object)
@@ -391,17 +470,6 @@ namespace FactionColonies.Specialists
             }
         }
 
-        private void DrawSectionHeader(Rect rect, RoleEntry entry)
-        {
-            GUI.color = entry.accent;
-            Text.Font = GameFont.Small;
-            Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.DrawBoxSolid(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), entry.accent);
-            Widgets.Label(new Rect(rect.x + RowPadding, rect.y, rect.width - RowPadding * 2, rect.height), entry.label);
-            GUI.color = Color.white;
-            Text.Anchor = TextAnchor.UpperLeft;
-        }
-
         private void SelectEntry(RoleEntry entry)
         {
             switch (entry.type)
@@ -418,107 +486,138 @@ namespace FactionColonies.Specialists
             }
         }
 
-        private void GetPreview(RoleEntry entry, out string text, out Color color)
+        private List<TaggedString> GetBonusLines(RoleEntry entry)
         {
+            List<TaggedString> lines = new List<TaggedString>();
             WorldSettlementFC settlement = comp.Settlement;
 
             if (entry.type == RoleEntryType.Resident)
             {
-                text = "FCS_PickerResidentPreview".Translate();
-                color = ResidentAccent;
-                return;
+                lines.Add("FCS_PickerResidentPreview".Translate());
+                return lines;
             }
 
             if (entry.type == RoleEntryType.Specialist && entry.roleDef is object)
             {
                 SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.roleDef);
-                double bestBonus = 0;
-                string bestLabel = "";
-                Color bestColor = Color.white;
+                float score = tempSpec.SkillScore;
 
-                if (settlement is object)
+                // Resource bonuses
+                if (settlement is object && entry.roleDef.resourceBonuses is object)
                 {
-                    foreach (ResourceFC resource in settlement.Resources)
+                    foreach (ResourceProductionBonus rpb in entry.roleDef.resourceBonuses)
                     {
-                        double bonus = SpecUtil.SpecialistAdditiveForResource(tempSpec, resource.def);
-                        if (bonus > bestBonus)
+                        if (rpb.resource is null) continue;
+                        double bonus = SpecUtil.SpecialistAdditiveForResource(tempSpec, rpb.resource);
+                        if (Math.Abs(bonus) > 0.001)
                         {
-                            bestBonus = bonus;
-                            bestLabel = resource.def.LabelCap;
-                            bestColor = resource.def.color;
+                            lines.Add(TextUtil.ColorizeAdditiveBonus(bonus) + " " + rpb.resource.LabelCap);
+                            if (bonus > entry.bestBonusMagnitude)
+                                entry.bestBonusMagnitude = (float)bonus;
                         }
                     }
                 }
 
-                if (bestBonus > 0)
+                // Generalist baseline (shows for all resources)
+                if (entry.roleDef.providesBaselineProduction && settlement is object
+                    && (entry.roleDef.resourceBonuses is null || entry.roleDef.resourceBonuses.Count == 0))
                 {
-                    text = "FCS_ContribProduction".Translate(bestBonus.ToString("F2"), bestLabel);
-                    color = bestColor;
-                    return;
+                    double baseline = entry.roleDef.baselineProductionValue * score;
+                    if (Math.Abs(baseline) > 0.001)
+                    {
+                        lines.Add(TextUtil.ColorizeAdditiveBonus(baseline) + " " + "FCS_PickerAllResources".Translate());
+                        if (baseline > entry.bestBonusMagnitude)
+                            entry.bestBonusMagnitude = (float)baseline;
+                    }
                 }
 
-                // Check stat modifiers
-                if (entry.roleDef.statModifiers is object && entry.roleDef.statModifiers.Count > 0)
+                // Stat modifiers
+                if (entry.roleDef.statModifiers is object)
                 {
-                    float score = tempSpec.SkillScore;
-                    FCStatModifier best = entry.roleDef.statModifiers[0];
-                    double bestVal = best.value * score;
-                    text = "FCS_PickerStatPreview".Translate(
-                        best.stat.LabelCap, (bestVal * 100).ToString("F1"));
-                    color = SpecialistAccent;
-                    return;
+                    foreach (FCStatModifier mod in entry.roleDef.statModifiers)
+                    {
+                        if (mod.stat is null) continue;
+                        double val = mod.value * score;
+                        if (Math.Abs(val) < 0.0001) continue;
+
+                        if (mod.stat.aggregation == FCStatAggregation.Multiplicative)
+                        {
+                            lines.Add(TextUtil.ColorizeMultiplierBonus(1.0 + val) + " " + mod.stat.LabelCap);
+                        }
+                        else
+                        {
+                            lines.Add(TextUtil.ColorizeAdditiveBonus(val) + " " + mod.stat.LabelCap);
+                        }
+
+                        if (Math.Abs(val) > entry.bestBonusMagnitude)
+                            entry.bestBonusMagnitude = (float)Math.Abs(val);
+                    }
                 }
 
-                text = "FCS_PreviewNoBonus".Translate();
-                color = Color.gray;
-                return;
+                return lines;
             }
 
             if (entry.type == RoleEntryType.GovernorFocus && entry.focusDef is object)
             {
                 SettlementGovernor tempGov = new SettlementGovernor(pawn, entry.focusDef);
-                double bestMult = 0;
-                string bestLabel = "";
+                float score = tempGov.SkillScore;
 
-                if (settlement is object)
+                // Resource multipliers
+                if (settlement is object && entry.focusDef.resourceBonuses is object)
                 {
-                    foreach (ResourceFC resource in settlement.Resources)
+                    foreach (ResourceProductionBonus rpb in entry.focusDef.resourceBonuses)
                     {
-                        double mult = SpecUtil.GovernorMultiplierForResource(tempGov, resource.def);
-                        if (mult > bestMult)
+                        if (rpb.resource is null) continue;
+                        double mult = SpecUtil.GovernorMultiplierForResource(tempGov, rpb.resource);
+                        if (Math.Abs(mult - 1.0) > 0.001)
                         {
-                            bestMult = mult;
-                            bestLabel = resource.def.LabelCap;
+                            lines.Add(TextUtil.ColorizeMultiplierBonus(mult) + " " + rpb.resource.LabelCap);
+                            if (Math.Abs(mult - 1.0) > entry.bestBonusMagnitude)
+                                entry.bestBonusMagnitude = (float)Math.Abs(mult - 1.0);
                         }
                     }
                 }
 
-                if (bestMult > 1.001)
+                // Baseline production (shows for all resources)
+                if (entry.focusDef.providesBaselineProduction
+                    && (entry.focusDef.resourceBonuses is null || entry.focusDef.resourceBonuses.Count == 0))
                 {
-                    text = "FCS_PreviewGovMult".Translate(bestMult.ToString("F2"), bestLabel);
-                    color = GovernorAccent;
-                    return;
+                    double baseMult = 1.0 + entry.focusDef.baselineProductionValue * score;
+                    if (Math.Abs(baseMult - 1.0) > 0.001)
+                    {
+                        lines.Add(TextUtil.ColorizeMultiplierBonus(baseMult) + " " + "FCS_PickerAllResources".Translate());
+                        if (Math.Abs(baseMult - 1.0) > entry.bestBonusMagnitude)
+                            entry.bestBonusMagnitude = (float)Math.Abs(baseMult - 1.0);
+                    }
                 }
 
-                // Check stat modifiers
-                if (entry.focusDef.statModifiers is object && entry.focusDef.statModifiers.Count > 0)
+                // Stat modifiers
+                if (entry.focusDef.statModifiers is object)
                 {
-                    float score = tempGov.SkillScore;
-                    FCStatModifier best = entry.focusDef.statModifiers[0];
-                    double bestVal = best.value * score;
-                    text = "FCS_PickerStatPreview".Translate(
-                        best.stat.LabelCap, (bestVal * 100).ToString("F1"));
-                    color = GovernorAccent;
-                    return;
+                    foreach (FCStatModifier mod in entry.focusDef.statModifiers)
+                    {
+                        if (mod.stat is null) continue;
+                        double val = mod.value * score;
+                        if (Math.Abs(val) < 0.0001) continue;
+
+                        if (mod.stat.aggregation == FCStatAggregation.Multiplicative)
+                        {
+                            lines.Add(TextUtil.ColorizeMultiplierBonus(1.0 + val) + " " + mod.stat.LabelCap);
+                        }
+                        else
+                        {
+                            lines.Add(TextUtil.ColorizeAdditiveBonus(val) + " " + mod.stat.LabelCap);
+                        }
+
+                        if (Math.Abs(val) > entry.bestBonusMagnitude)
+                            entry.bestBonusMagnitude = (float)Math.Abs(val);
+                    }
                 }
 
-                text = "FCS_PreviewNoBonus".Translate();
-                color = Color.gray;
-                return;
+                return lines;
             }
 
-            text = "FCS_PreviewNoBonus".Translate();
-            color = Color.gray;
+            return lines;
         }
 
         private string GetUpkeepText(RoleEntry entry)
@@ -546,8 +645,7 @@ namespace FactionColonies.Specialists
         {
             Resident,
             Specialist,
-            GovernorFocus,
-            SectionHeader
+            GovernorFocus
         }
 
         private class RoleEntry
@@ -561,6 +659,9 @@ namespace FactionColonies.Specialists
             public bool isCurrent;
             public bool enabled = true;
             public string disabledReason;
+            public float sortKey;
+            public float bestBonusMagnitude;
+            public List<TaggedString> bonusLines;
         }
     }
 }

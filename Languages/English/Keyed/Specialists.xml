@@ -186,6 +186,7 @@
 	<FCS_PickerUpkeep>{0}s/period</FCS_PickerUpkeep>
 	<FCS_PickerStatPreview>{0}: +{1}%</FCS_PickerStatPreview>
 	<FCS_PickerPerSettlementCap>{0}: max {1} per settlement</FCS_PickerPerSettlementCap>
+	<FCS_PickerAllResources>all resources</FCS_PickerAllResources>
 
 	<!-- Death Letters -->
 	<FCS_LetterGovernorKilled>Governor killed</FCS_LetterGovernorKilled>
