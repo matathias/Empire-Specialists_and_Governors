@@ -27,4 +27,19 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_3_2</defName>
+		<label>UI &amp; Role Updates</label>
+		<description>Consolidate the Defense and Commander specialists, and show the actual chances of specialist death on the specialist tab.</description>
+		<releaseDate>2026-04-19</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Folds the Defense Specialist mechanics into the Commander specialist</li>
+		<li>Add the death on defeat chances to the specialist tab</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

@@ -587,7 +587,7 @@ namespace FactionColonies.Specialists
             float w = contentRect.width;
             float y = contentRect.y + 4f;
 
-            // Header
+            // Header line 1: Count + Upkeep
             int specCount = comp.SpecialistCount;
             int totalCards = specCount;
 
@@ -596,7 +596,6 @@ namespace FactionColonies.Specialists
             string specHeader = "FCS_SpecHeader".Translate(specCount, comp.MaxSpecialists);
             Widgets.Label(new Rect(x, y, w * 0.6f, SectionHeaderHeight), specHeader);
 
-            // Calculate total upkeep for specialists
             double totalUpkeep = 0;
             foreach (SettlementSpecialist s in comp.Specialists)
             {
@@ -605,7 +604,68 @@ namespace FactionColonies.Specialists
             Text.Anchor = TextAnchor.MiddleRight;
             Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), "FCS_UpkeepDisplay".Translate(totalUpkeep.ToString("F1")));
             Text.Anchor = TextAnchor.UpperLeft;
-            y += SectionHeaderHeight + 2f;
+            y += SectionHeaderHeight;
+
+            // Header line 2: Death chances on defeat
+            {
+                WorldObjectCompProperties_SettlementSpecialists props = comp.Props;
+                float govChance = props.governorDeathChanceDefeat;
+                float specChance = props.specialistDeathChanceDefeat;
+                float resChance = props.residentDeathChanceDefeat;
+
+                float baseGov = govChance;
+                float baseSpec = specChance;
+                float baseRes = resChance;
+
+                // Apply commander reductions
+                StringBuilder tipReductions = new StringBuilder();
+                foreach (SettlementSpecialist s in comp.Specialists)
+                {
+                    if (s.role is null || !s.HasUsableSkills) continue;
+                    SpecialistRoleBehavior behavior = s.Behavior;
+                    if (behavior is null) continue;
+                    float prevSpec = specChance;
+                    behavior.ModifyDeathChances(uiSettlement, s.SkillScore,
+                        ref govChance, ref specChance, ref resChance);
+                    float reduction = prevSpec - specChance;
+                    if (reduction > 0.0001f)
+                    {
+                        tipReductions.Append("FCS_DeathChanceTipReduction".Translate(
+                            s.pawn.LabelShort,
+                            Math.Round(reduction * 100, 1).ToString("F1")));
+                    }
+                }
+
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
+                GUI.color = Color.gray;
+                string deathLabel = "FCS_DeathChanceHeader".Translate(
+                    Math.Round(specChance * 100, 1).ToString("F1"),
+                    Math.Round(resChance * 100, 1).ToString("F1"),
+                    Math.Round(govChance * 100, 1).ToString("F1"));
+                Rect deathRect = new Rect(x, y, w, 18f);
+                Widgets.Label(deathRect, deathLabel);
+
+                // Tooltip with breakdown
+                string tip = "FCS_DeathChanceTipBase".Translate(
+                    Math.Round(baseSpec * 100, 1).ToString("F1"),
+                    Math.Round(baseRes * 100, 1).ToString("F1"),
+                    Math.Round(baseGov * 100, 1).ToString("F1"));
+                if (tipReductions.Length > 0)
+                    tip += tipReductions.ToString();
+                if (Math.Abs(specChance - baseSpec) > 0.0001f)
+                {
+                    tip += "FCS_DeathChanceTipFinal".Translate(
+                        Math.Round(specChance * 100, 1).ToString("F1"),
+                        Math.Round(resChance * 100, 1).ToString("F1"),
+                        Math.Round(govChance * 100, 1).ToString("F1"));
+                }
+                TooltipHandler.TipRegion(deathRect, tip);
+
+                GUI.color = Color.white;
+                Text.Anchor = TextAnchor.UpperLeft;
+                y += 20f;
+            }
 
             if (totalCards == 0)
             {
@@ -725,11 +785,14 @@ namespace FactionColonies.Specialists
             float textW = rowRect.width - (textX - rowRect.x) - btnAreaW - InfoCardBtnSize - 4f;
             float textFullW = rowRect.width - (textX - rowRect.x) - 4f;
 
-            // Line 1: Name
+            // Line 1: Name + Role
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
             Rect nameRect = new Rect(textX, rowRect.y + 2f, textW, 22f);
-            Widgets.Label(nameRect, s.pawn.LabelShort);
+            string nameText = s.pawn.LabelShort;
+            if (s.role is object)
+                nameText += " \u2014 " + s.role.LabelCap;
+            Widgets.Label(nameRect, nameText);
 
             // Line 2: Identity (title, age, xenotype)
             Text.Font = GameFont.Tiny;
