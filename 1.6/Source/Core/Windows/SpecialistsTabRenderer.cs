@@ -37,7 +37,7 @@ namespace FactionColonies.Specialists
         // Governor dashboard layout constants
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
-        private const float GovTopRowHeight = 165f;
+        private const float GovTopRowHeight = 210f;
         private const float GovPortraitW = 100f;
         private const float GovPortraitH = 133f;
         private const float GovResCardW = 90f;
@@ -324,7 +324,7 @@ namespace FactionColonies.Specialists
             Widgets.Label(new Rect(ix, iy, iw, 22f), scoreText);
             iy += 24f;
 
-            // Focus description — use remaining vertical space
+            // Focus description
             if (hasGov && gov.focus is object)
             {
                 Text.Font = GameFont.Tiny;
@@ -332,19 +332,72 @@ namespace FactionColonies.Specialists
                 string desc = gov.focus.description ?? "";
                 if (desc.Length > 0)
                 {
-                    float reservedBottom = FCSSettings.RoutesResourcesActive ? 24f : 0f;
-                    float descH = rect.yMax - iy - GovPanelPad - reservedBottom;
-                    if (descH > 0f)
-                    {
-                        Widgets.Label(new Rect(ix, iy, iw, descH), desc);
-                    }
-                    iy += descH;
+                    float descH = Text.CalcHeight(desc, iw);
+                    Widgets.Label(new Rect(ix, iy, iw, descH), desc);
+                    iy += descH + 4f;
                 }
                 GUI.color = Color.white;
             }
             else
             {
                 iy += 24f;
+            }
+
+            // Focus bonus lines
+            if (hasGov && gov.focus is object)
+            {
+                float score = gov.SkillScore;
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
+
+                // Resource multipliers
+                if (gov.focus.resourceBonuses is object)
+                {
+                    foreach (ResourceProductionBonus rpb in gov.focus.resourceBonuses)
+                    {
+                        if (rpb.resource is null) continue;
+                        double mult = SpecUtil.GovernorMultiplierForResource(gov, rpb.resource);
+                        if (Math.Abs(mult - 1.0) > 0.001)
+                        {
+                            Widgets.Label(new Rect(ix, iy, iw, 16f),
+                                TextUtil.ColorizeMultiplierBonus(mult) + " " + rpb.resource.LabelCap);
+                            iy += 16f;
+                        }
+                    }
+                }
+
+                // Baseline production
+                if (gov.focus.providesBaselineProduction
+                    && (gov.focus.resourceBonuses is null || gov.focus.resourceBonuses.Count == 0))
+                {
+                    double baseMult = 1.0 + gov.focus.baselineProductionValue * score;
+                    if (Math.Abs(baseMult - 1.0) > 0.001)
+                    {
+                        Widgets.Label(new Rect(ix, iy, iw, 16f),
+                            TextUtil.ColorizeMultiplierBonus(baseMult) + " " + "FCS_PickerAllResources".Translate());
+                        iy += 16f;
+                    }
+                }
+
+                // Stat modifiers
+                if (gov.focus.statModifiers is object)
+                {
+                    foreach (FCStatModifier mod in gov.focus.statModifiers)
+                    {
+                        if (mod.stat is null) continue;
+                        double val = mod.value * score;
+                        if (Math.Abs(val) < 0.0001) continue;
+
+                        TaggedString bonusText;
+                        if (mod.stat.aggregation == FCStatAggregation.Multiplicative)
+                            bonusText = TextUtil.ColorizeMultiplierBonus(1.0 + val) + " " + mod.stat.LabelCap;
+                        else
+                            bonusText = TextUtil.ColorizeAdditiveBonus(val) + " " + mod.stat.LabelCap;
+
+                        Widgets.Label(new Rect(ix, iy, iw, 16f), bonusText);
+                        iy += 16f;
+                    }
+                }
             }
 
             if (FCSSettings.RoutesResourcesActive)
@@ -934,14 +987,23 @@ namespace FactionColonies.Specialists
                 return sb.ToString();
             }
 
-            // If no resource bonuses but has stat modifiers, show stat contribution
+            // If no resource bonuses but has stat modifiers, show actual stat values
             if (s.role.statModifiers is object && s.role.statModifiers.Count > 0)
             {
-                double score = s.SkillScore;
-                if (score > 0)
+                float score = s.SkillScore;
+                StringBuilder statSb = new StringBuilder();
+                foreach (FCStatModifier mod in s.role.statModifiers)
                 {
-                    return "FCS_ContribStatScore".Translate(s.role.LabelCap, score.ToString("F1"));
+                    if (mod.stat is null) continue;
+                    double val = mod.value * score;
+                    if (Math.Abs(val) < 0.0001) continue;
+                    if (statSb.Length > 0) statSb.Append(", ");
+                    if (mod.stat.aggregation == FCStatAggregation.Multiplicative)
+                        statSb.Append(TextUtil.ColorizeMultiplierBonus(1.0 + val) + " " + mod.stat.LabelCap);
+                    else
+                        statSb.Append(TextUtil.ColorizeAdditiveBonus(val) + " " + mod.stat.LabelCap);
                 }
+                if (statSb.Length > 0) return statSb.ToString();
             }
 
             return "";

@@ -275,6 +275,7 @@ namespace FactionColonies.Specialists
                         chosenRect = tabRect;
                 }
                 UIUtil.DrawColoredHighlight(chosenRect, tabColors[selectedTab]);
+                UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, 0f, inRect.width, tabColors[selectedTab]);
                 listTop += TabHeight;
             }
 
