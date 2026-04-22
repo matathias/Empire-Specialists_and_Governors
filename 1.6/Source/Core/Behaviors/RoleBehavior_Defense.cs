@@ -5,8 +5,8 @@ namespace FactionColonies.Specialists
 {
     public class RoleBehaviorExt_Defense : SpecialistRoleBehaviorExtension
     {
-        public float baseReductionPerSkillPoint = 0.002f;
-        public float minimumDeathChance = 0.01f;
+        public float baseReductionPerSkillPoint = 0.02f;
+        public float minimumDeathChance = 0f;
     }
 
     public class RoleBehavior_Defense : SpecialistRoleBehavior

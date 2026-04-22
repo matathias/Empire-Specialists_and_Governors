@@ -239,8 +239,6 @@
     <modExtensions>
       <li Class="FactionColonies.Specialists.RoleBehaviorExt_Defense">
         <behaviorClass>FactionColonies.Specialists.RoleBehavior_Defense</behaviorClass>
-        <baseReductionPerSkillPoint>0.002</baseReductionPerSkillPoint>
-        <minimumDeathChance>0.01</minimumDeathChance>
       </li>
     </modExtensions>
   </FactionColonies.Specialists.SpecialistRoleDef>

@@ -56,4 +56,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_3_4</defName>
+		<label>Commander Buff</label>
+		<description>Buff the commander role to actually do a decent job of preventing death.</description>
+		<releaseDate>2026-04-21</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Commander buffs: baseReductionPerSkillPoint 0.002 -&gt; 0.02, minimumDeathChance 0.01 -&gt; 0</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
