@@ -80,14 +80,12 @@ namespace FactionColonies.Specialists
 
             Rect listOuterRect = new Rect(inRect.x, headerY, inRect.width, listHeight);
             float totalHeight = entries.Count * (CardRowHeight + CardGap);
-            float scrollBarW = totalHeight > listHeight ? 16f : 0f;
-            Rect listInnerRect = new Rect(0f, 0f, listOuterRect.width - scrollBarW, totalHeight);
 
             bool hasGovernor = comp.HasGovernor;
             int pendingNonResident = entries.Count(e => e.selected && e.role is object && !e.isGovernor);
             bool capReached = (comp.SpecialistCount + pendingNonResident) >= comp.MaxSpecialists;
 
-            Widgets.BeginScrollView(listOuterRect, ref scrollPos, listInnerRect);
+            Rect listInnerRect = ScrollUtil.BeginScrollView(listOuterRect, ref scrollPos, totalHeight);
 
             float curY = 0f;
             for (int i = 0; i < entries.Count; i++)
@@ -100,7 +98,7 @@ namespace FactionColonies.Specialists
                 curY += CardRowHeight + CardGap;
             }
 
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
 
             // Confirm button
             Rect confirmRect = new Rect(inRect.x + inRect.width - 150f, inRect.yMax - buttonHeight, 150f, buttonHeight);

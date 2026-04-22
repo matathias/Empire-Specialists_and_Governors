@@ -286,15 +286,15 @@ namespace FactionColonies.Specialists
             float listHeight = inRect.height - listTop;
             Rect scrollOutRect = new Rect(0, listTop, inRect.width, listHeight);
 
-            float contentWidth = scrollOutRect.width - 16f;
+            float contentWidth = scrollOutRect.width - (ScrollUtil.ScrollbarWidth + 1f);
             float totalHeight = 0f;
             foreach (RoleEntry entry in entries)
             {
                 totalHeight += GetRowHeight(entry, contentWidth) + SeparatorHeight;
             }
 
-            Rect scrollViewRect = new Rect(0f, 0f, contentWidth, Mathf.Max(totalHeight, listHeight));
-            Widgets.BeginScrollView(scrollOutRect, ref scrollPos, scrollViewRect);
+            Rect scrollViewRect = ScrollUtil.BeginScrollView(scrollOutRect, ref scrollPos, totalHeight);
+            contentWidth = scrollViewRect.width;
 
             float curY = 0f;
             for (int i = 0; i < entries.Count; i++)
@@ -321,7 +321,7 @@ namespace FactionColonies.Specialists
                 }
             }
 
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
 
             Text.Font = prevFont;
             Text.Anchor = prevAnchor;

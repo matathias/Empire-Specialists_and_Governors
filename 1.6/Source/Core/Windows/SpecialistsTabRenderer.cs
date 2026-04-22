@@ -253,6 +253,17 @@ namespace FactionColonies.Specialists
                 ? (string)"FCS_GovXpRate".Translate(((int)xpPerDay).ToString())
                 : "\u2014";
             Widgets.Label(new Rect(textX, lineY, textW, 16f), xpText);
+            lineY += 18f;
+
+            // Death chance on defeat
+            if (hasGov)
+            {
+                float govC, specC, resC, baseGov, baseSpec, baseRes;
+                string reductionTip;
+                ComputeDeathChances(out govC, out specC, out resC, out baseGov, out baseSpec, out baseRes, out reductionTip);
+                Rect deathRect = new Rect(textX, lineY, textW, 16f);
+                DrawDeathChanceLine(deathRect, baseGov, govC, reductionTip);
+            }
 
             GUI.color = hasGov ? Color.white : GovGreyedOut;
 
@@ -361,10 +372,8 @@ namespace FactionColonies.Specialists
                 innerH += bonusLineCount * 16f;
 
                 Rect scrollOuter = new Rect(ix, iy, iw, scrollAreaH);
-                float scrollContentW = iw - (innerH > scrollAreaH ? 16f : 0f);
-                Rect scrollInner = new Rect(0f, 0f, scrollContentW, Mathf.Max(innerH, scrollAreaH));
-
-                Widgets.BeginScrollView(scrollOuter, ref scrollPosFocus, scrollInner);
+                Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosFocus, innerH);
+                float scrollContentW = scrollView.width;
                 float sy = 0f;
 
                 // Description
@@ -429,7 +438,7 @@ namespace FactionColonies.Specialists
                     }
                 }
 
-                Widgets.EndScrollView();
+                ScrollUtil.EndScrollView();
                 iy += scrollAreaH;
             }
             else
@@ -606,64 +615,12 @@ namespace FactionColonies.Specialists
             Text.Anchor = TextAnchor.UpperLeft;
             y += SectionHeaderHeight;
 
-            // Header line 2: Death chances on defeat
+            // Header line 2: Specialist death chance on defeat
             {
-                WorldObjectCompProperties_SettlementSpecialists props = comp.Props;
-                float govChance = props.governorDeathChanceDefeat;
-                float specChance = props.specialistDeathChanceDefeat;
-                float resChance = props.residentDeathChanceDefeat;
-
-                float baseGov = govChance;
-                float baseSpec = specChance;
-                float baseRes = resChance;
-
-                // Apply commander reductions
-                StringBuilder tipReductions = new StringBuilder();
-                foreach (SettlementSpecialist s in comp.Specialists)
-                {
-                    if (s.role is null || !s.HasUsableSkills) continue;
-                    SpecialistRoleBehavior behavior = s.Behavior;
-                    if (behavior is null) continue;
-                    float prevSpec = specChance;
-                    behavior.ModifyDeathChances(uiSettlement, s.SkillScore,
-                        ref govChance, ref specChance, ref resChance);
-                    float reduction = prevSpec - specChance;
-                    if (reduction > 0.0001f)
-                    {
-                        tipReductions.Append("FCS_DeathChanceTipReduction".Translate(
-                            s.pawn.LabelShort,
-                            Math.Round(reduction * 100, 1).ToString("F1")));
-                    }
-                }
-
-                Text.Font = GameFont.Tiny;
-                Text.Anchor = TextAnchor.MiddleLeft;
-                GUI.color = Color.gray;
-                string deathLabel = "FCS_DeathChanceHeader".Translate(
-                    Math.Round(specChance * 100, 1).ToString("F1"),
-                    Math.Round(resChance * 100, 1).ToString("F1"),
-                    Math.Round(govChance * 100, 1).ToString("F1"));
-                Rect deathRect = new Rect(x, y, w, 18f);
-                Widgets.Label(deathRect, deathLabel);
-
-                // Tooltip with breakdown
-                string tip = "FCS_DeathChanceTipBase".Translate(
-                    Math.Round(baseSpec * 100, 1).ToString("F1"),
-                    Math.Round(baseRes * 100, 1).ToString("F1"),
-                    Math.Round(baseGov * 100, 1).ToString("F1"));
-                if (tipReductions.Length > 0)
-                    tip += tipReductions.ToString();
-                if (Math.Abs(specChance - baseSpec) > 0.0001f)
-                {
-                    tip += "FCS_DeathChanceTipFinal".Translate(
-                        Math.Round(specChance * 100, 1).ToString("F1"),
-                        Math.Round(resChance * 100, 1).ToString("F1"),
-                        Math.Round(govChance * 100, 1).ToString("F1"));
-                }
-                TooltipHandler.TipRegion(deathRect, tip);
-
-                GUI.color = Color.white;
-                Text.Anchor = TextAnchor.UpperLeft;
+                float govC, specC, resC, baseGov, baseSpec, baseRes;
+                string reductionTip;
+                ComputeDeathChances(out govC, out specC, out resC, out baseGov, out baseSpec, out baseRes, out reductionTip);
+                DrawDeathChanceLine(new Rect(x, y, w, 18f), baseSpec, specC, reductionTip);
                 y += 20f;
             }
 
@@ -682,10 +639,8 @@ namespace FactionColonies.Specialists
             float scrollH = contentRect.yMax - y;
             Rect scrollOuter = new Rect(x, y, w, scrollH);
             float innerH = totalCards * (CardHeight + CardGap);
-            float scrollBarW = innerH > scrollH ? 16f : 0f;
-            Rect scrollInner = new Rect(0f, 0f, w - scrollBarW, innerH);
 
-            Widgets.BeginScrollView(scrollOuter, ref scrollPosSpec, scrollInner);
+            Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosSpec, innerH);
             float sy = 0f;
             int rowIdx = 0;
             List<SettlementSpecialist> specSnapshot = new List<SettlementSpecialist>(comp.Specialists);
@@ -693,12 +648,12 @@ namespace FactionColonies.Specialists
             {
                 if (s.pawn is null) continue;
 
-                Rect rowRect = new Rect(0f, sy, scrollInner.width, CardHeight);
+                Rect rowRect = new Rect(0f, sy, scrollView.width, CardHeight);
                 DrawSpecialistCard(rowRect, s, true, rowIdx);
                 sy += CardHeight + CardGap;
                 rowIdx++;
             }
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
         }
 
         // --- Residents sub-tab ---
@@ -719,7 +674,16 @@ namespace FactionColonies.Specialists
             if (workerBonus > 0) resHeader += "FCS_WorkerBonusSuffix".Translate(workerBonus);
             Widgets.Label(new Rect(x, y, w, SectionHeaderHeight), resHeader);
             Text.Anchor = TextAnchor.UpperLeft;
-            y += SectionHeaderHeight + 2f;
+            y += SectionHeaderHeight;
+
+            // Resident death chance
+            {
+                float govC, specC, resC, baseGov, baseSpec, baseRes;
+                string reductionTip;
+                ComputeDeathChances(out govC, out specC, out resC, out baseGov, out baseSpec, out baseRes, out reductionTip);
+                DrawDeathChanceLine(new Rect(x, y, w, 18f), baseRes, resC, reductionTip);
+                y += 20f;
+            }
 
             if (resCount == 0)
             {
@@ -736,10 +700,8 @@ namespace FactionColonies.Specialists
             float scrollH = contentRect.yMax - y;
             Rect scrollOuter = new Rect(x, y, w, scrollH);
             float innerH = resCount * (CardHeight + CardGap);
-            float scrollBarW = innerH > scrollH ? 16f : 0f;
-            Rect scrollInner = new Rect(0f, 0f, w - scrollBarW, innerH);
 
-            Widgets.BeginScrollView(scrollOuter, ref scrollPosRes, scrollInner);
+            Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosRes, innerH);
             float sy = 0f;
             int rowIdx = 0;
             List<SettlementSpecialist> resSnapshot = new List<SettlementSpecialist>(comp.Residents);
@@ -747,12 +709,12 @@ namespace FactionColonies.Specialists
             {
                 if (s.pawn is null) continue;
 
-                Rect rowRect = new Rect(0f, sy, scrollInner.width, CardHeight);
+                Rect rowRect = new Rect(0f, sy, scrollView.width, CardHeight);
                 DrawSpecialistCard(rowRect, s, false, rowIdx);
                 sy += CardHeight + CardGap;
                 rowIdx++;
             }
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
         }
 
         // --- Shared pawn card drawing ---
@@ -1126,6 +1088,56 @@ namespace FactionColonies.Specialists
             if (reduction < 0.01) return;
             if (sb.Length > 0) sb.Append(", ");
             sb.Append(TextUtil.ColorizeAdditiveBonus(-reduction, invert: true) + " " + "FCS_PickerDeathReduction".Translate());
+        }
+
+        private void ComputeDeathChances(out float govChance, out float specChance, out float resChance,
+            out float baseGov, out float baseSpec, out float baseRes, out string reductionTip)
+        {
+            WorldObjectCompProperties_SettlementSpecialists props = comp.Props;
+            govChance = props.governorDeathChanceDefeat;
+            specChance = props.specialistDeathChanceDefeat;
+            resChance = props.residentDeathChanceDefeat;
+            baseGov = govChance;
+            baseSpec = specChance;
+            baseRes = resChance;
+
+            StringBuilder tipSb = new StringBuilder();
+            foreach (SettlementSpecialist s in comp.Specialists)
+            {
+                if (s.role is null || !s.HasUsableSkills) continue;
+                SpecialistRoleBehavior behavior = s.Behavior;
+                if (behavior is null) continue;
+                float prevSpec = specChance;
+                behavior.ModifyDeathChances(uiSettlement, s.SkillScore,
+                    ref govChance, ref specChance, ref resChance);
+                float reduction = prevSpec - specChance;
+                if (reduction > 0.0001f)
+                {
+                    tipSb.Append("FCS_DeathChanceTipReduction".Translate(
+                        s.pawn.LabelShort,
+                        Math.Round(reduction * 100, 1).ToString("F1")));
+                }
+            }
+            reductionTip = tipSb.ToString();
+        }
+
+        private void DrawDeathChanceLine(Rect lineRect, float baseChance, float finalChance, string reductionTip)
+        {
+            Text.Font = GameFont.Tiny;
+            Text.Anchor = TextAnchor.MiddleLeft;
+            GUI.color = Color.gray;
+            string label = "FCS_DeathChanceLine".Translate(Math.Round(finalChance * 100, 1).ToString("F1"));
+            Widgets.Label(lineRect, label);
+
+            string tip = "FCS_DeathChanceTipBase".Translate(Math.Round(baseChance * 100, 1).ToString("F1"));
+            if (reductionTip.Length > 0)
+                tip += reductionTip;
+            if (Math.Abs(finalChance - baseChance) > 0.0001f)
+                tip += "FCS_DeathChanceTipFinal".Translate(Math.Round(finalChance * 100, 1).ToString("F1"));
+            TooltipHandler.TipRegion(lineRect, tip);
+
+            GUI.color = Color.white;
+            Text.Anchor = TextAnchor.UpperLeft;
         }
     }
 }

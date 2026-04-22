@@ -64,8 +64,7 @@ namespace FactionColonies.Specialists
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, isRoutesResourcesActive ? 900f : 700f);
-            Widgets.BeginScrollView(inRect, ref scrollPos, viewRect);
+            Rect viewRect = ScrollUtil.BeginScrollView(inRect, ref scrollPos, isRoutesResourcesActive ? 900f : 700f);
             ls.Begin(viewRect);
 
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
@@ -122,7 +121,7 @@ namespace FactionColonies.Specialists
                 Find.WindowStack.Add(new PatchNotesDisplayWindow("matathias.empire.specialists", "SP_PatchTitle".Translate()));
 
             ls.End();
-            Widgets.EndScrollView();
+            ScrollUtil.EndScrollView();
         }
 
         private static float SliderLabeled(Listing_Standard ls, string label, float val, float min, float max)

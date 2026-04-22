@@ -188,10 +188,10 @@
 	<FCS_PickerPerSettlementCap>{0}: max {1} per settlement</FCS_PickerPerSettlementCap>
 	<FCS_PickerAllResources>all resources</FCS_PickerAllResources>
 	<FCS_PickerDeathReduction>death chance (all pawns)</FCS_PickerDeathReduction>
-	<FCS_DeathChanceHeader>Death chance on battle loss:  Specialist {0}%,  Resident {1}%,  Governor {2}%</FCS_DeathChanceHeader>
-	<FCS_DeathChanceTipBase>Base chances on defeat:\n  Specialist: {0}%\n  Resident: {1}%\n  Governor: {2}%</FCS_DeathChanceTipBase>
-	<FCS_DeathChanceTipReduction>\n\n{0} (Commander): -{1}%</FCS_DeathChanceTipReduction>
-	<FCS_DeathChanceTipFinal>\n\nFinal:\n  Specialist: {0}%\n  Resident: {1}%\n  Governor: {2}%</FCS_DeathChanceTipFinal>
+	<FCS_DeathChanceLine>Death chance on battle loss: {0}%</FCS_DeathChanceLine>
+	<FCS_DeathChanceTipBase>Base chance on defeat: {0}%</FCS_DeathChanceTipBase>
+	<FCS_DeathChanceTipReduction>\n{0} (Commander): -{1}%</FCS_DeathChanceTipReduction>
+	<FCS_DeathChanceTipFinal>\nFinal: {0}%</FCS_DeathChanceTipFinal>
 
 	<!-- Death Letters -->
 	<FCS_LetterGovernorKilled>Governor killed</FCS_LetterGovernorKilled>
