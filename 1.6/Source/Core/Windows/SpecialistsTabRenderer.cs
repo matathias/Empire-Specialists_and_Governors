@@ -38,15 +38,14 @@ namespace FactionColonies.Specialists
         // Governor dashboard layout constants
         private const float GovPanelPad = 6f;
         private const float GovPanelGap = 6f;
-        private const float GovTopRowHeight = 145f;
+        private const float GovTopRowHeight = 190f;
         private const float GovPortraitW = 100f;
-        private const float GovPortraitH = 133f;
-        private const float GovResCardW = 90f;
-        private const float GovResCardH = 95f;
-        private const float GovResCardGap = 4f;
-        private const float GovResBarH = 10f;
-        private const float GovResIconSize = 24f;
-        private const float GovGridHeaderH = 22f;
+        private const float GovPortraitH = 140f;
+        private const float GovResBarH = 6f;
+        private const float GovResIconSize = 22f;
+        private const float GovGridHeaderH = 30f;
+        private const float GovResRowH = 26f;
+        private const float GovResNameW = 80f;
         private static readonly Color GovFocusTint = new Color(0.4f, 0.35f, 0.15f, 0.3f);
         private static readonly Color GovBarBg = new Color(0.15f, 0.15f, 0.15f);
         private static readonly Color GovEmptyOverlay = new Color(0f, 0f, 0f, 0.45f);
@@ -499,7 +498,7 @@ namespace FactionColonies.Specialists
             y += GovGridHeaderH + 2f;
 
             // Gather resource data and cache multipliers
-            if (uiSettlement == null) return;
+            if (uiSettlement is null) return;
 
             List<ResourceFC> resources = uiSettlement.Resources.ToList();
             double[] multipliers = new double[resources.Count];
@@ -510,82 +509,87 @@ namespace FactionColonies.Specialists
                 double bonus = Math.Abs(multipliers[i] - 1.0);
                 if (bonus > maxBonus) maxBonus = bonus;
             }
-            if (maxBonus < 0.001) maxBonus = 1.0; // avoid division by zero
+            if (maxBonus < 0.001) maxBonus = 1.0;
 
-            // Calculate grid layout
-            int cardsPerRow = Math.Max(1, (int)((w + GovResCardGap) / (GovResCardW + GovResCardGap)));
-            float totalCardW = cardsPerRow * GovResCardW + (cardsPerRow - 1) * GovResCardGap;
-            float gridOffsetX = x + (w - totalCardW) / 2f; // center the grid
+            // Two-column row layout inside a scroll view
+            int totalRows = (resources.Count + 1) / 2;
+            float contentH = totalRows * GovResRowH;
+            float scrollAreaH = rect.yMax - y;
+
+            Rect scrollOuter = new Rect(x, y, w, scrollAreaH);
+            Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosRes, contentH);
+            float colW = scrollView.width / 2f;
+            int leftCount = (resources.Count + 1) / 2;
 
             for (int i = 0; i < resources.Count; i++)
             {
                 ResourceFC res = resources[i];
-                int col = i % cardsPerRow;
-                int row = i / cardsPerRow;
-                float cx = gridOffsetX + col * (GovResCardW + GovResCardGap);
-                float cy = y + row * (GovResCardH + GovResCardGap);
+                bool isLeft = i < leftCount;
+                int row = isLeft ? i : i - leftCount;
+                float rowX = isLeft ? 0f : colW;
+                float rowY = row * GovResRowH;
 
-                Rect cardRect = new Rect(cx, cy, GovResCardW, GovResCardH);
+                Rect rowRect = new Rect(rowX, rowY, colW, GovResRowH);
 
-                // Card background — highlight if this resource has a bonus from the focus
-                bool hasFocusBonus = hasGov && multipliers[i] > 1.001;
-                Widgets.DrawMenuSection(cardRect);
-                if (hasFocusBonus)
+                // Alternating row tint
+                if (row % 2 == 1)
                 {
-                    Widgets.DrawBoxSolid(cardRect, GovFocusTint);
+                    Widgets.DrawHighlight(rowRect);
                 }
 
-                float innerX = cx + GovPanelPad;
-                float innerW = GovResCardW - GovPanelPad * 2f;
-                float innerY = cy + GovPanelPad;
+                bool hasFocusBonus = hasGov && multipliers[i] > 1.001;
+                float cx = rowX + 2f;
+                float cw = colW - 4f;
 
-                // Resource icon (centered)
-                float iconX = cx + (GovResCardW - GovResIconSize) / 2f;
+                // Resource icon
                 GUI.color = hasGov ? Color.white : GovGreyedOut;
-                GUI.DrawTexture(new Rect(iconX, innerY, GovResIconSize, GovResIconSize), res.def.Icon);
-                innerY += GovResIconSize + 2f;
+                GUI.DrawTexture(new Rect(cx, rowY + (GovResRowH - GovResIconSize) / 2f, GovResIconSize, GovResIconSize), res.def.Icon);
+                cx += GovResIconSize + 4f;
 
-                // Resource name (centered)
+                // Resource name
                 Text.Font = GameFont.Tiny;
-                Text.Anchor = TextAnchor.MiddleCenter;
-                Widgets.Label(new Rect(cx, innerY, GovResCardW, 16f), res.def.LabelCap);
-                innerY += 18f;
+                Text.Anchor = TextAnchor.MiddleLeft;
+                GUI.color = hasGov ? new Color(0.75f, 0.75f, 0.75f) : GovGreyedOutText;
+                Widgets.Label(new Rect(cx, rowY, GovResNameW, GovResRowH), res.def.LabelCap);
+                cx += GovResNameW + 4f;
 
-                // Progress bar (using cached multiplier)
+                // Progress bar
                 double bonus = multipliers[i] - 1.0;
                 float barProgress = (float)(Math.Abs(bonus) / maxBonus);
                 barProgress = Mathf.Clamp01(barProgress);
 
-                Rect barRect = new Rect(innerX, innerY, innerW, GovResBarH);
+                float pctW = 42f;
+                float barW = rowX + cw - cx - pctW - 4f;
+                if (barW < 10f) barW = 10f;
+                Rect barRect = new Rect(cx, rowY + (GovResRowH - GovResBarH) / 2f, barW, GovResBarH);
                 Color barColor = hasFocusBonus
                     ? new Color(0.85f, 0.75f, 0.3f)
                     : AccentUtil.Income;
                 if (!hasGov) barColor = new Color(0.3f, 0.3f, 0.3f, GovGreyedOut.a);
                 UIUtil.DrawProgressBarColors(barRect, barProgress, GovBarBg, barColor);
-                innerY += GovResBarH + 2f;
+                cx += barW + 4f;
 
-                // Bonus percentage (centered)
+                // Bonus percentage (right-aligned)
                 Text.Font = GameFont.Tiny;
-                Text.Anchor = TextAnchor.MiddleCenter;
+                Text.Anchor = TextAnchor.MiddleRight;
                 string bonusText = hasGov
                     ? (bonus >= 0 ? "+" : "") + (bonus * 100).ToString("F1") + "%"
                     : "+0.0%";
                 GUI.color = hasGov ? (hasFocusBonus ? new Color(0.85f, 0.75f, 0.3f) : AccentUtil.Income) : GovGreyedOutText;
-                Widgets.Label(new Rect(cx, innerY, GovResCardW, 16f), bonusText);
+                Widgets.Label(new Rect(cx, rowY, pctW, GovResRowH), bonusText);
                 GUI.color = hasGov ? Color.white : GovGreyedOut;
 
-                // Tooltip with formula breakdown
-                if (hasGov)
+                // Tooltip
+                if (hasGov && Math.Abs(bonus) > 0.001)
                 {
-                    if (Math.Abs(bonus) > 0.001)
-                    {
-                        string tip = BuildGovResourceTooltip(res, gov);
-                        if (tip != null) TooltipHandler.TipRegion(cardRect, tip);
-                    }
+                    string tip = BuildGovResourceTooltip(res, gov);
+                    if (tip != null) TooltipHandler.TipRegion(rowRect, tip);
                 }
 
                 Text.Anchor = TextAnchor.UpperLeft;
             }
+
+            ScrollUtil.EndScrollView();
         }
 
         // --- Specialists sub-tab ---
@@ -906,12 +910,12 @@ namespace FactionColonies.Specialists
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("FCS_GovResTooltipHeader".Translate(resource.def.LabelCap));
-            sb.AppendLine("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
+            sb.AppendLine("-------------------------");
 
             sb.AppendLine("FCS_GovResTooltipFocus".Translate(gov.focus.LabelCap));
             sb.AppendLine("FCS_GovResTooltipSkillScore".Translate(gov.SkillScore.ToString("F1")));
             sb.AppendLine("FCS_GovResTooltipFood".Translate(comp.FoodSatisfaction.ToString("F1")));
-            sb.AppendLine("\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500");
+            sb.AppendLine("-------------------------");
 
             sb.AppendLine("FCS_GovResTooltipFinal".Translate(((mult - 1.0) * 100).ToString("F1")));
             sb.Append("FCS_GovResTooltipBarNote".Translate());
