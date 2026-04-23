@@ -954,7 +954,7 @@ namespace FactionColonies.Specialists
             Find.WindowStack.Add(new Dialog_RolePicker(
                 gov.pawn,
                 comp,
-                onSelectGovernor: focus => gov.SetFocus(focus, comp.Settlement),
+                onSelectGovernor: focus => comp.ChangeGovernorFocus(focus),
                 currentFocus: gov.focus));
         }
 

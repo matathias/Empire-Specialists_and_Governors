@@ -207,6 +207,13 @@ namespace FactionColonies.Specialists
             InvalidateAll();
         }
 
+        public void ChangeGovernorFocus(GovernorFocusDef newFocus)
+        {
+            if (governor is null || newFocus is null) return;
+            governor.SetFocus(newFocus, Settlement);
+            InvalidateAll();
+        }
+
         public void ChangeRole(SettlementSpecialist entry, SpecialistRoleDef newRole)
         {
             if (entry is null) return;
