@@ -40,7 +40,7 @@ namespace FactionColonies.Specialists
         private const float GovPanelGap = 6f;
         private const float GovTopRowHeight = 190f;
         private const float GovPortraitW = 100f;
-        private const float GovPortraitH = 140f;
+        private const float GovPortraitH = 160f;
         private const float GovResBarH = 6f;
         private const float GovResIconSize = 22f;
         private const float GovGridHeaderH = 30f;
@@ -973,55 +973,13 @@ namespace FactionColonies.Specialists
         private string GetTopSkillLabel(SettlementSpecialist s)
         {
             if (!s.HasUsableSkills) return "";
-            SkillRecord best = null;
-            SkillRecord second = null;
-            foreach (SkillRecord sk in s.pawn.skills.skills)
-            {
-                if (sk.TotallyDisabled) continue;
-                if (best is null || sk.Level > best.Level)
-                {
-                    second = best;
-                    best = sk;
-                }
-                else if (second is null || sk.Level > second.Level)
-                {
-                    second = sk;
-                }
-            }
-            if (best is null) return "";
-            string result = best.def.skillLabel.CapitalizeFirst() + " " + best.Level;
-            if (second != null)
-            {
-                result += ", " + second.def.skillLabel.CapitalizeFirst() + " " + second.Level;
-            }
-            return result;
+            return SpecUtil.TopRoleSkillsLabel(s.pawn, s.role);
         }
 
         private string GetTopSkillLabelGovernor(SettlementGovernor g)
         {
             if (!g.HasUsableSkills) return "";
-            SkillRecord best = null;
-            SkillRecord second = null;
-            foreach (SkillRecord sk in g.pawn.skills.skills)
-            {
-                if (sk.TotallyDisabled) continue;
-                if (best is null || sk.Level > best.Level)
-                {
-                    second = best;
-                    best = sk;
-                }
-                else if (second is null || sk.Level > second.Level)
-                {
-                    second = sk;
-                }
-            }
-            if (best is null) return "";
-            string result = best.def.skillLabel.CapitalizeFirst() + " " + best.Level;
-            if (second != null)
-            {
-                result += ", " + second.def.skillLabel.CapitalizeFirst() + " " + second.Level;
-            }
-            return result;
+            return SpecUtil.TopFocusSkillsLabel(g.pawn, g.focus);
         }
 
         private string GetContributionSummary(SettlementSpecialist s)

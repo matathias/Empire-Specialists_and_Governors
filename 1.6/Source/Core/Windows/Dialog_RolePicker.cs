@@ -181,6 +181,7 @@ namespace FactionColonies.Specialists
                         disabledReason = disabledReason
                     };
                     specEntry.bonusLines = GetBonusLines(specEntry);
+                    specEntry.skillLine = SpecUtil.TopRoleSkillsLabel(pawn, roleDef);
 
                     // Sort key: Generalist always second, then by best bonus descending, no-bonus at bottom
                     if (roleDef.isGeneralist)
@@ -226,6 +227,7 @@ namespace FactionColonies.Specialists
                         enabled = true
                     };
                     govEntry.bonusLines = GetBonusLines(govEntry);
+                    govEntry.skillLine = SpecUtil.TopFocusSkillsLabel(pawn, focusDef);
                     governorEntries.Add(govEntry);
                 }
             }
@@ -345,6 +347,12 @@ namespace FactionColonies.Specialists
                 height += descH + 2f;
             }
 
+            // Skill line
+            if (!string.IsNullOrEmpty(entry.skillLine))
+            {
+                height += BonusLineHeight + 2f;
+            }
+
             // Bonus lines
             int lineCount = entry.bonusLines is object ? entry.bonusLines.Count : 0;
             if (lineCount > 0)
@@ -430,6 +438,16 @@ namespace FactionColonies.Specialists
                 float descH = Text.CalcHeight(entry.description, textW);
                 Widgets.Label(new Rect(textX, curY, textW, descH), entry.description);
                 curY += descH + 2f;
+            }
+
+            // Skill line
+            if (!string.IsNullOrEmpty(entry.skillLine))
+            {
+                Text.Font = GameFont.Tiny;
+                Text.Anchor = TextAnchor.MiddleLeft;
+                GUI.color = entry.enabled ? Color.white : DisabledColor;
+                Widgets.Label(new Rect(textX, curY, textW, BonusLineHeight), entry.skillLine);
+                curY += BonusLineHeight + 2f;
             }
 
             // Bonus lines
@@ -679,6 +697,7 @@ namespace FactionColonies.Specialists
             public float sortKey;
             public float bestBonusMagnitude;
             public List<TaggedString> bonusLines;
+            public string skillLine;
         }
     }
 }

@@ -133,5 +133,71 @@ namespace FactionColonies.Specialists
             string label = "FCS_LetterSpecialistKilled".Translate();
             Find.LetterStack.ReceiveLetter(label, bodyText, LetterDefOf.Death);
         }
+
+        /* Top-N skills label, optionally filtered to a role's skillWeights */
+        public static string TopRoleSkillsLabel(Pawn pawn, SpecialistRoleDef role, int count = 2)
+        {
+            HashSet<SkillDef> relevant = null;
+            if (role is object && role.skillWeights is object && role.skillWeights.Count > 0)
+            {
+                relevant = new HashSet<SkillDef>();
+                foreach (SkillWeight sw in role.skillWeights)
+                {
+                    if (sw.skill is object) relevant.Add(sw.skill);
+                }
+                if (relevant.Count == 0) relevant = null;
+            }
+            return TopSkillsLabelCore(pawn, relevant, count);
+        }
+
+        /* Top-N skills label filtered to a governor focus's skillWeights; Social is always relevant */
+        public static string TopFocusSkillsLabel(Pawn pawn, GovernorFocusDef focus, int count = 2)
+        {
+            HashSet<SkillDef> relevant = null;
+            if (focus is object)
+            {
+                relevant = new HashSet<SkillDef>();
+                if (focus.skillWeights is object)
+                {
+                    foreach (SkillWeight sw in focus.skillWeights)
+                    {
+                        if (sw.skill is object) relevant.Add(sw.skill);
+                    }
+                }
+                relevant.Add(SkillDefOf.Social);
+                if (relevant.Count == 0) relevant = null;
+            }
+            return TopSkillsLabelCore(pawn, relevant, count);
+        }
+
+        private static string TopSkillsLabelCore(Pawn pawn, HashSet<SkillDef> relevant, int count)
+        {
+            if (pawn?.skills is null || count <= 0) return "";
+
+            SkillRecord best = null;
+            SkillRecord second = null;
+            foreach (SkillRecord sk in pawn.skills.skills)
+            {
+                if (sk.TotallyDisabled) continue;
+                if (relevant is object && !relevant.Contains(sk.def)) continue;
+                if (best is null || sk.Level > best.Level)
+                {
+                    second = best;
+                    best = sk;
+                }
+                else if (second is null || sk.Level > second.Level)
+                {
+                    second = sk;
+                }
+            }
+
+            if (best is null) return "";
+            string result = best.def.skillLabel.CapitalizeFirst() + " " + best.Level;
+            if (count >= 2 && second is object)
+            {
+                result += ", " + second.def.skillLabel.CapitalizeFirst() + " " + second.Level;
+            }
+            return result;
+        }
     }
 }
