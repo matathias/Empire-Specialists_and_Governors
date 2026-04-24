@@ -70,4 +70,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_3_5</defName>
+		<label>Assignment Update</label>
+		<description>Blocks prisoners and slaves from being assigned as residents, specialists, or governors.</description>
+		<releaseDate>2026-04-24</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Add IsPriseron and IsSlave checks to the IsEligible check for specialist assignment validity</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

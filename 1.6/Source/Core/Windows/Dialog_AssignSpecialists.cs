@@ -58,6 +58,8 @@ namespace FactionColonies.Specialists
             if (pawn.Downed) return false;
             if (pawn.Dead) return false;
             if (pawn.DevelopmentalStage != DevelopmentalStage.Adult) return false;
+            if (pawn.IsPrisoner) return false;
+            if (pawn.IsSlave) return false;
             return true;
         }
 
