@@ -105,14 +105,6 @@ namespace FactionColonies.Specialists
         }
     }
 
-    public class RecordWorker_FCS_TimeAsDefense : RecordWorker_SpecialistBase
-    {
-        public override bool ShouldMeasureTimeNow(Pawn pawn)
-        {
-            return SpecialistRoster.GetRole(pawn) == SpecialistRoleDefOf.Commander;
-        }
-    }
-
     public class RecordWorker_FCS_TimeAsGovernor : RecordWorker_SpecialistBase
     {
         public override bool ShouldMeasureTimeNow(Pawn pawn)

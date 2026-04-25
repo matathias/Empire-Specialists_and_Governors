@@ -29,15 +29,6 @@
     </RecordDef>
 
     <RecordDef>
-        <defName>FCS_TimeAsDefense</defName>
-        <label>time as a defense specialist</label>
-        <description>Total time this pawn has spent as a defense specialist at an Empire settlement.</description>
-        <type>Time</type>
-        <workerClass>FactionColonies.Specialists.RecordWorker_FCS_TimeAsDefense</workerClass>
-        <displayOrder>2003</displayOrder>
-    </RecordDef>
-
-    <RecordDef>
         <defName>FCS_TimeAsGovernor</defName>
         <label>time as a governor</label>
         <description>Total time this pawn has spent as a governor of an Empire settlement.</description>
