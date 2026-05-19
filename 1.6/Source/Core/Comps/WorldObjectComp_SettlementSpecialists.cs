@@ -114,7 +114,7 @@ namespace FactionColonies.Specialists
                 specialists.Add(entry);
 
             SpecialistRoster.Assign(pawn, role);
-            pawn.SetFaction(FactionCache.PlayerColonyFaction);
+            pawn.SetFaction(FindFC.EmpireFaction);
             if (!pawn.IsWorldPawn())
                 Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
 
@@ -135,7 +135,7 @@ namespace FactionColonies.Specialists
             governor = new SettlementGovernor(pawn, focus);
             SpecialistRoster.AssignGovernor(pawn);
 
-            pawn.SetFaction(FactionCache.PlayerColonyFaction);
+            pawn.SetFaction(FindFC.EmpireFaction);
             if (!pawn.IsWorldPawn())
                 Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
 
@@ -290,7 +290,7 @@ namespace FactionColonies.Specialists
 
         // ── Manual Battle Integration ──
 
-        public void DeployToBattle(Map map, List<Pawn> defenders, Lord defenseLord)
+        public void DeployToBattle(Map map, Lord defenseLord)
         {
             if (pawnsDeployedToBattle) return;
             deployedPawns.Clear();
@@ -301,8 +301,8 @@ namespace FactionColonies.Specialists
                 if (pawn.IsWorldPawn())
                     Find.WorldPawns.RemovePawn(pawn);
 
-                if (pawn.Faction != FactionCache.PlayerColonyFaction)
-                    pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                if (pawn.Faction != FindFC.EmpireFaction)
+                    pawn.SetFaction(FindFC.EmpireFaction);
 
                 IntVec3 loc = CellFinder.RandomClosewalkCellNear(map.Center, map, 15);
                 GenSpawn.Spawn(pawn, loc, map);
@@ -310,7 +310,6 @@ namespace FactionColonies.Specialists
                     pawn.drafter = new Pawn_DraftController(pawn);
                 map.mapPawns.RegisterPawn(pawn);
 
-                defenders.Add(pawn);
                 defenseLord.AddPawn(pawn);
                 deployedPawns.Add(pawn);
             }
@@ -343,20 +342,20 @@ namespace FactionColonies.Specialists
             {
                 if (s.pawn is null || s.pawn.Dead) continue;
                 if (s.pawn.Spawned) s.pawn.DeSpawn();
-                s.pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                s.pawn.SetFaction(FindFC.EmpireFaction);
                 Find.WorldPawns.PassToWorld(s.pawn, PawnDiscardDecideMode.KeepForever);
             }
             foreach (SettlementSpecialist r in residents)
             {
                 if (r.pawn is null || r.pawn.Dead) continue;
                 if (r.pawn.Spawned) r.pawn.DeSpawn();
-                r.pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                r.pawn.SetFaction(FindFC.EmpireFaction);
                 Find.WorldPawns.PassToWorld(r.pawn, PawnDiscardDecideMode.KeepForever);
             }
             if (governor is object && !governorDead)
             {
                 if (governor.pawn.Spawned) governor.pawn.DeSpawn();
-                governor.pawn.SetFaction(FactionCache.PlayerColonyFaction);
+                governor.pawn.SetFaction(FindFC.EmpireFaction);
                 Find.WorldPawns.PassToWorld(governor.pawn, PawnDiscardDecideMode.KeepForever);
             }
 
@@ -386,15 +385,6 @@ namespace FactionColonies.Specialists
                 if (pawn is object)
                     SpecUtil.SendDeathLetter("FCS_RoleGovernor".Translate(),
                         "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleGovernor".Translate(), Settlement.Name));
-            }
-
-            // Clean up military comp
-            WorldObjectComp_SettlementMilitary milComp =
-                Settlement.GetComponent<WorldObjectComp_SettlementMilitary>();
-            if (milComp is object)
-            {
-                foreach (Pawn p in deployedPawns)
-                    milComp.defenders.Remove(p);
             }
 
             deployedPawns.Clear();

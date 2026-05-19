@@ -4,11 +4,17 @@ using Verse;
 
 namespace FactionColonies.Specialists
 {
-    public class SpecialistLifecycleHandler : LifecycleParticipantBase
+    public class SpecialistLifecycleHandler : IMilitaryOperationListener
     {
-        public override void OnBattleResolved(WorldSettlementFC settlement,
-            MilitaryJobDef job, bool victory, BattleResult result)
+        public void OnOperationCreated(MilitaryOperation op) { }
+        public void OnOperationResolved(MilitaryOperation op) { }
+
+        public void OnBattleResolved(MilitaryOperation op, bool victory, BattleResult result)
         {
+            if (op is null) return;
+            WorldSettlementFC settlement = op.aggressor?.homeSettlement ?? op.defender?.homeSettlement;
+            if (settlement is null) return;
+
             WorldObjectComp_SettlementSpecialists comp =
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
             if (comp is null || comp.TotalCount == 0) return;

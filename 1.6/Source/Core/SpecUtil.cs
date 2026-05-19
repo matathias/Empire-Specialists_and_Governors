@@ -89,7 +89,7 @@ namespace FactionColonies.Specialists
 
         public static bool HasTrait(FCPolicyDef def)
         {
-            return def is object && FactionCache.FactionComp.HasTrait(def);
+            return def is object && FindFC.PolicyManager.HasTrait(def);
         }
 
         public static float XPPerDay()

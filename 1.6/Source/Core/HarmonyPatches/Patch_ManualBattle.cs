@@ -5,39 +5,48 @@ using Verse.AI.Group;
 
 namespace FactionColonies.Specialists
 {
-    [HarmonyPatch(typeof(WorldObjectComp_SettlementMilitary))]
+    /* Postfix on BattlefieldContext.ZoomIntoTile — fires only on fresh manual battles
+       (Path 3), after the map exists and defender pawns + their lord have been spawned. */
+    [HarmonyPatch(typeof(BattlefieldContext))]
     [HarmonyPatch("ZoomIntoTile")]
     public static class Patch_ZoomIntoTile_InjectSpecialists
     {
-        static void Postfix(WorldObjectComp_SettlementMilitary __instance)
+        static void Postfix(BattlefieldContext __instance, MilitaryOperation op)
         {
-            WorldSettlementFC settlement = __instance.WorldSettlement;
-            if (settlement == null) return;
+            if (op?.defender?.homeSettlement is null) return;
+            WorldSettlementFC settlement = op.defender.homeSettlement;
 
-            WorldObjectComp_SettlementSpecialists specComp = settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (specComp == null || specComp.TotalCount == 0) return;
+            WorldObjectComp_SettlementSpecialists specComp =
+                settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (specComp is null || specComp.TotalCount == 0) return;
+            if (specComp.PawnsDeployedToBattle) return;
 
-            Map map = settlement.Map;
-            if (map == null) return;
+            Map map = __instance.map;
+            if (map is null) return;
 
-            Lord defenseLord = map.lordManager.lords.FirstOrDefault(l => l.LordJob is LordJob_DefendColony);
-            if (defenseLord == null) return;
+            Lord defenseLord = op.defender.pawns
+                .Select(p => p?.GetLord())
+                .FirstOrDefault(l => l is object);
+            if (defenseLord is null) return;
 
-            specComp.DeployToBattle(map, __instance.defenders, defenseLord);
+            specComp.DeployToBattle(map, defenseLord);
         }
     }
 
-    [HarmonyPatch(typeof(WorldObjectComp_SettlementMilitary))]
+    /* Prefix on BattlefieldContext.EndAttack — fires once per battle after all ops
+       complete, before the map is torn down and combat hediffs stripped. */
+    [HarmonyPatch(typeof(BattlefieldContext))]
     [HarmonyPatch("EndAttack")]
     public static class Patch_EndAttack_RecoverSpecialists
     {
-        static void Prefix(WorldObjectComp_SettlementMilitary __instance)
+        static void Prefix(BattlefieldContext __instance)
         {
-            WorldSettlementFC settlement = __instance.WorldSettlement;
-            if (settlement == null) return;
+            WorldSettlementFC settlement = __instance.ParentSettlement;
+            if (settlement is null) return;
 
-            WorldObjectComp_SettlementSpecialists specComp = settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (specComp == null) return;
+            WorldObjectComp_SettlementSpecialists specComp =
+                settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (specComp is null || !specComp.PawnsDeployedToBattle) return;
 
             specComp.RecoverFromBattle();
         }

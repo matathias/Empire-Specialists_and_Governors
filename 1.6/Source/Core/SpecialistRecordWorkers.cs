@@ -50,7 +50,7 @@ namespace FactionColonies.Specialists
         {
             assignments.Clear();
             governors.Clear();
-            List<WorldSettlementFC> settlements = FactionCache.FactionComp?.settlements;
+            List<WorldSettlementFC> settlements = FindFC.Settlements;
             if (settlements is null) return;
             foreach (WorldSettlementFC settlement in settlements)
             {

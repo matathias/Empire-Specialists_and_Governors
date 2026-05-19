@@ -152,12 +152,12 @@ namespace FactionColonies.Specialists
         static SpecialistsStartup()
         {
             new Harmony("Matathias.Empire.Specialists").PatchAll(Assembly.GetExecutingAssembly());
-            LifecycleRegistry.Register(_lifecycleHandler);
+            EmpireRegistry.Register(_lifecycleHandler);
             EmpireCacheUtil.RegisterCacheInvalidator("Specialists", () =>
             {
                 SpecialistsCache.InvalidateCache();
                 // Re-register after InvalidateAll clears all registries
-                LifecycleRegistry.Register(_lifecycleHandler);
+                EmpireRegistry.Register(_lifecycleHandler);
             });
         }
     }
