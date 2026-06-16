@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Specialists & Governors - Codex Entry Definitions
+
+    One CodexEntryDef per documented mechanic. Following the project convention,
+    descriptions are deliberately qualitative: they describe direction and
+    relationships, not specific balance constants (skill weights, bonus
+    coefficients, caps, upkeep rates, death percentages), which are tuned and
+    would drift out of date here. Drift-prone live values are shown instead by
+    each entry's dynamicProvider, which reads current game state at render time.
+
+    iconPath is omitted throughout - a missing/unset texture renders the entry
+    icon-less with no error.
+-->
+<Defs>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_Overview</defName>
+        <label>Specialists &amp; Governors</label>
+        <description>Beyond its raw output, each settlement can be staffed with colonists you send out from your own colony. Assign them from a caravan standing on the settlement and they leave your colony to live and work there until you recall them.
+
+There are three tiers of assignment, in rising order of value and cost:
+
+[b]Residents[/b] are ordinary citizens. They cost nothing to keep and lend their numbers to the settlement's workforce.
+
+[b]Specialists[/b] each hold a single role - farmer, miner, researcher, and so on - and pour their skills into one kind of output. Their bonus [i]adds[/i] to production and stacks with every other specialist.
+
+[b]Governors[/b] administer the whole settlement. A settlement may appoint only one, and a governor's effect is a [i]multiplier[/i] that lifts everything the settlement does.
+
+Stationed colonists are real pawns: they gain experience over time, but they can also be wounded or killed when the settlement is caught up in a battle. Recalling one returns the pawn to a caravan at the settlement.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>10</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_Overview</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Residents</li>
+            <li>Codex_SG_Specialists</li>
+            <li>Codex_SG_Governors</li>
+            <li>Codex_SG_BattleRisk</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_Residents</defName>
+        <label>Residents</label>
+        <description>A resident is a colonist sent to a settlement without a specialised role. Residents have no skills to apply and no role to fill; instead, they swell the settlement's labour pool.
+
+Every few residents translate into one extra worker for the settlement. They cost no silver upkeep, which makes them the cheapest way to grow a settlement's output.
+
+The trade-off is risk. Of all the colonists you can station, residents are the most likely to be killed if the settlement is drawn into a battle. A resident can be promoted to a specialist role at any time if you would rather they apply a skill directly.
+
+The sidebar shows each settlement's current residents and the bonus workers they provide.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>20</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_Residents</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Specialists</li>
+            <li>Codex_SG_BattleRisk</li>
+            <li>Codex_ResourceProduction</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_Specialists</defName>
+        <label>Specialists</label>
+        <description>A specialist is a colonist assigned to a single role - farmer, miner, weaponsmith, researcher, and many more. The role decides which of the pawn's skills matter, and the pawn's ability in those skills decides how large a bonus they grant.
+
+A specialist's contribution is [b]additive[/b]: it is added on top of the settlement's normal output, and the bonuses of every specialist stack with one another.
+
+Each settlement supports a limited number of specialists. That cap rises as the settlement grows, and the Specialist Corps policy both widens the cap and sharpens specialist output across your {FACTION_TITLE}. You can change a specialist's role at any time, with the new bonus taking effect immediately.
+
+The sidebar shows how many specialists each settlement holds against its cap, and the roles currently filled.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>30</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_Specialists</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Roles</li>
+            <li>Codex_SG_SkillScore</li>
+            <li>Codex_SG_Upkeep</li>
+            <li>Codex_SG_BattleRisk</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_Governors</defName>
+        <label>Governors</label>
+        <description>A governor administers an entire settlement. Each settlement may appoint only one, and unlike a specialist, a governor applies a [b]multiplier[/b] - their effect scales everything the settlement produces, including the output of the specialists working under them.
+
+Every governor works to a [i]focus[/i] that directs their effort: toward the economy, the military, growth, administration, or a balanced spread. A governor's [b]Social[/b] skill always counts toward their effectiveness, on top of whatever skills their focus calls for. You can switch a governor's focus at any time without reappointing them.
+
+Because their effect is multiplicative, a capable governor is most valuable on a settlement that is already producing well - they magnify what is already there.
+
+The sidebar shows each settlement's governor, their focus, and their current effectiveness.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>40</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_Governors</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Focuses</li>
+            <li>Codex_SG_SkillScore</li>
+            <li>Codex_SG_Upkeep</li>
+            <li>Codex_SG_BattleRisk</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_SkillScore</defName>
+        <label>Skill &amp; Experience</label>
+        <description>Every bonus a specialist or governor grants is driven by a [b]skill score[/b] - a weighted sum of the pawn's relevant skill levels. Each role and focus weights skills differently, so the same colonist can be brilliant in one posting and mediocre in another. Match the pawn to the job.
+
+The score feeds the two bonus types differently. A specialist's score scales an [b]additive[/b] bonus, so a higher score simply adds more. A governor's score scales a [b]multiplier[/b], so a higher score lifts the whole settlement by a larger factor.
+
+Stationed colonists are not static. They slowly gain experience in the skills their role or focus uses, improving on the job, so a long-serving specialist becomes more valuable over time. The Specialist Corps and Meritocratic policies both speed this learning.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>50</displayOrder>
+        <seeAlso>
+            <li>Codex_SG_Specialists</li>
+            <li>Codex_SG_Governors</li>
+            <li>Codex_SG_Roles</li>
+            <li>Codex_SG_Focuses</li>
+            <li>Codex_PoliciesEdicts</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_Upkeep</defName>
+        <label>Upkeep &amp; Supply</label>
+        <description>Stationed colonists have to be paid for. Each [b]specialist[/b] costs silver every tax cycle - a base wage plus more for higher-skilled, higher-value pawns. A [b]governor[/b] costs a flat wage, raised under the Meritocratic policy, which pays its administrators more. [b]Residents[/b] draw no silver at all.
+
+When [b]Empire Refactored: Routes &amp; Resources[/b] is enabled, specialists and governors also eat into the settlement's stored food and draw a little medicine. If a settlement cannot meet that demand then its colonists keep working, but their bonuses are throttled in proportion to the shortfall.
+
+The sidebar shows each settlement's current staff wage bill, and - if Routes &amp; Resources is enabled - its food and medicine satisfaction.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>60</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_Upkeep</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Specialists</li>
+            <li>Codex_SG_Governors</li>
+            <li>Codex_TaxOverview</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_BattleRisk</defName>
+        <label>Battle Risk</label>
+        <description>Colonists stationed at a settlement share its danger. Whenever the settlement is involved in a battle, each stationed colonist rolls against a chance of being killed once the fighting is resolved.
+
+The risk depends on two things. First, the [b]tier[/b]: residents are the most exposed, specialists less so, and a governor the best protected. Second, the [b]outcome[/b]: losing a battle is far deadlier to your staff than winning one, though even a victory carries some risk.
+
+A defensively-minded specialist lowers the death chance for [i]everyone[/i] stationed at the settlement, scaling with their skill - a strong defender can make a settlement markedly safer to staff.
+
+The sidebar shows the current death chances at each settlement, by tier and outcome, after any defensive reduction.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>70</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_BattleRisk</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Residents</li>
+            <li>Codex_SG_Governors</li>
+            <li>Codex_BattleOutcomes</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_Roles</defName>
+        <label>Specialist Roles</label>
+        <description>Each specialist role channels a colonist's skills toward one kind of output. Production roles lift a single resource - food, ore, timber, weapons, medicine, research, etc. - while a few roles instead strengthen the settlement's military or its tax take. The generalist spreads a little benefit across everything at once.
+
+Which of a pawn's skills a role draws on, and how strongly, is set by the role itself, so the best candidate differs from role to role. Other mods can add further roles, and any that are loaded appear in the sidebar.
+
+The sidebar lists every specialist role currently available and what it affects.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>80</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_Roles</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Specialists</li>
+            <li>Codex_SG_SkillScore</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+    <FactionColonies.CodexEntryDef>
+        <defName>Codex_SG_Focuses</defName>
+        <label>Governor Focuses</label>
+        <description>A governor's focus decides where their multiplier is applied. An economic focus lifts trade and core production; a military focus strengthens the settlement in battle; a growth focus speeds its development; an administrative focus steadies its mood; and a balanced focus spreads a modest lift across everything.
+
+Whatever the focus, a governor's Social skill always contributes to their effectiveness. Other mods can add further focuses, and any that are loaded appear in the sidebar.
+
+The sidebar lists every governor focus currently available and what it affects.</description>
+        <category>CodexCat_Specialists</category>
+        <displayOrder>90</displayOrder>
+        <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_Focuses</dynamicProvider>
+        <seeAlso>
+            <li>Codex_SG_Governors</li>
+            <li>Codex_SG_SkillScore</li>
+        </seeAlso>
+    </FactionColonies.CodexEntryDef>
+
+</Defs>

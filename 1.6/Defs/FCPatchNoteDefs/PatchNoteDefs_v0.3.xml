@@ -98,4 +98,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_3_7</defName>
+		<label>Codex update</label>
+		<description>Adds Empire Codex entries to explain Specialists &amp; Governors&apos; mechanics.</description>
+		<releaseDate>2026-06-16</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Add Codex entries for the mod&apos;s mechanics</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
