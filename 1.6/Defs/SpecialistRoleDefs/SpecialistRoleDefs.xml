@@ -8,7 +8,7 @@
     <description>A jack-of-all-trades who contributes a small amount to every aspect of settlement production.</description>
     <isGeneralist>true</isGeneralist>
     <providesBaselineProduction>true</providesBaselineProduction>
-    <baselineProductionValue>0.02</baselineProductionValue>
+    <baselineProductionValue>0.03125</baselineProductionValue>
     <baseUpkeepSilver>2</baseUpkeepSilver>
     <skillUpkeepScaling>0.1</skillUpkeepScaling>
     <skillWeights>
@@ -220,8 +220,8 @@
       <li><skill>Melee</skill><weight>0.6</weight></li>
     </skillWeights>
     <statModifiers>
-      <li><stat>militaryCombatEfficiency</stat><value>0.01</value></li>
-      <li><stat>militaryBaseLevel</stat><value>0.05</value></li>
+      <li><stat>militaryCombatEfficiency</stat><value>0.008333</value></li>
+      <li><stat>militaryBaseLevel</stat><value>0.083333</value></li>
     </statModifiers>
     <modExtensions>
       <li Class="FactionColonies.Specialists.RoleBehaviorExt_Defense">

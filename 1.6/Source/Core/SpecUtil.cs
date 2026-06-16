@@ -7,6 +7,22 @@ namespace FactionColonies.Specialists
 {
     public static class SpecUtil
     {
+        /* Piecewise per-band scaling of a skill level's contribution to bonuses, so players can
+           tune how much low (1-10), mid (11-20), and above-cap (21+) skill levels matter. Each
+           band factor scales that band's slope: 1.0 = full, 0 = no contribution. Defaults
+           (1, 1, 0.5) leave vanilla 1-20 scaling untouched and halve above 20 — where only
+           skill-cap-removing mods reach, since SkillRecord.Level is engine-clamped to 20. */
+        public static float TaperedLevel(int level)
+        {
+            if (level <= 0) return 0f;
+            float eff = Math.Min(level, 10) * FCSSettings.skillTaperFactorBand1;
+            if (level > 10)
+                eff += Math.Min(level - 10, 10) * FCSSettings.skillTaperFactorBand2;
+            if (level > 20)
+                eff += (level - 20) * FCSSettings.skillTaperFactorBand3;
+            return eff;
+        }
+
         public static double SpecialistAdditiveForResource(SettlementSpecialist s, ResourceTypeDef resourceDef)
         {
             if (s is null || s.role is null || !s.HasUsableSkills) return 0;
@@ -116,7 +132,7 @@ namespace FactionColonies.Specialists
             {
                 SkillRecord govMed = governor.pawn.skills.GetSkill(SkillDefOf.Medicine);
                 if (govMed is object && govMed.Level > 0)
-                    bonus += govMed.Level * FCSSettings.healRatePerLevelGovernor;
+                    bonus += TaperedLevel(govMed.Level) * FCSSettings.healRatePerLevelGovernor;
             }
 
             return bonus;

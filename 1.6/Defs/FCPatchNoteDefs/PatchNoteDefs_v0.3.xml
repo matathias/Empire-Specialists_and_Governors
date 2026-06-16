@@ -112,4 +112,19 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_3_8</defName>
+		<label>Value Tuning</label>
+		<description>Tunes some of the specialist bonuses, and also adds settings sliders to let the player change how specialist bonuses scale by skill level.</description>
+		<releaseDate>2026-06-16</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Tune governor, commander, and generalist bonuses</li>
+		<li>Add settings sliders to let the player change how bonuses scale with skill level</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

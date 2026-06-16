@@ -33,6 +33,12 @@ namespace FactionColonies.Specialists
         // XP
         public static float xpPerDay = 500f;
 
+        // Skill scaling: per-band scaling of each skill level's contribution to bonuses.
+        // Defaults leave vanilla 1-20 untouched; band3 (21+) only matters for cap-removing mods.
+        public static float skillTaperFactorBand1 = 1f;   // levels 1-10
+        public static float skillTaperFactorBand2 = 1f;   // levels 11-20
+        public static float skillTaperFactorBand3 = 0.5f; // levels 21+
+
         // Supply chain integration: resource needs per tax period
         public static float foodPerSpecialist = 0.3f;
         public static float foodPerResident = 0.15f;
@@ -54,6 +60,9 @@ namespace FactionColonies.Specialists
             Scribe_Values.Look(ref scalingFactor, "scalingFactor", 1f);
             Scribe_Values.Look(ref healRatePerLevelGovernor, "healRatePerLevelGovernor", 0.02f);
             Scribe_Values.Look(ref xpPerDay, "xpPerDay", 500f);
+            Scribe_Values.Look(ref skillTaperFactorBand1, "skillTaperFactorBand1", 1f);
+            Scribe_Values.Look(ref skillTaperFactorBand2, "skillTaperFactorBand2", 1f);
+            Scribe_Values.Look(ref skillTaperFactorBand3, "skillTaperFactorBand3", 0.5f);
             Scribe_Values.Look(ref foodPerSpecialist, "foodPerSpecialist", 0.3f);
             Scribe_Values.Look(ref foodPerResident, "foodPerResident", 0.15f);
             Scribe_Values.Look(ref medicinePerSpecialist, "medicinePerSpecialist", 0.1f);
@@ -64,7 +73,7 @@ namespace FactionColonies.Specialists
         public void DoWindowContents(Rect inRect)
         {
             Listing_Standard ls = new Listing_Standard();
-            Rect viewRect = ScrollUtil.BeginScrollView(inRect, ref scrollPos, isRoutesResourcesActive ? 900f : 700f);
+            Rect viewRect = ScrollUtil.BeginScrollView(inRect, ref scrollPos, isRoutesResourcesActive ? 1050f : 850f);
             ls.Begin(viewRect);
 
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
@@ -101,6 +110,14 @@ namespace FactionColonies.Specialists
             ls.Label("FCS_Header_XP".Translate());
             ls.Gap(4f);
             xpPerDay = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingXpPerDay".Translate(), xpPerDay, 0f, 2000f), 0);
+            ls.GapLine();
+
+            // Skill scaling
+            ls.Label("FCS_Header_SkillScaling".Translate());
+            ls.Gap(4f);
+            skillTaperFactorBand1 = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillTaperBand1".Translate(), skillTaperFactorBand1, 0f, 1f), 2);
+            skillTaperFactorBand2 = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillTaperBand2".Translate(), skillTaperFactorBand2, 0f, 1f), 2);
+            skillTaperFactorBand3 = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillTaperBand3".Translate(), skillTaperFactorBand3, 0f, 1f), 2);
             ls.GapLine();
 
             // Supply chain needs (only show if Supply Chain submod is active)

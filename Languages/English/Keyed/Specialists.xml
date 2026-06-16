@@ -12,6 +12,7 @@
 	<FCS_Header_Workers>Workers</FCS_Header_Workers>
 	<FCS_Header_Upkeep>Upkeep</FCS_Header_Upkeep>
 	<FCS_Header_XP>Experience</FCS_Header_XP>
+	<FCS_Header_SkillScaling>Skill Scaling</FCS_Header_SkillScaling>
 	<FCS_Header_Death>Death Chances</FCS_Header_Death>
 	<FCS_Header_SupplyChain>Supply Chain Integration</FCS_Header_SupplyChain>
 
@@ -38,6 +39,11 @@
 
 	<!-- XP -->
 	<FCS_SettingXpPerDay>XP per day per skill: </FCS_SettingXpPerDay>
+
+	<!-- Skill Scaling -->
+	<FCS_SettingSkillTaperBand1>Level 1-10 scaling (1 = full): </FCS_SettingSkillTaperBand1>
+	<FCS_SettingSkillTaperBand2>Level 11-20 scaling (1 = full): </FCS_SettingSkillTaperBand2>
+	<FCS_SettingSkillTaperBand3>Level 21+ scaling (cap-removing mods): </FCS_SettingSkillTaperBand3>
 
 	<!-- Death Chances -->
 	<FCS_SettingCivilianDeathChance>Civilian specialist: </FCS_SettingCivilianDeathChance>

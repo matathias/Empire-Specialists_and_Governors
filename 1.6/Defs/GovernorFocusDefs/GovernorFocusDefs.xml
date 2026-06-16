@@ -10,12 +10,12 @@
       <li><skill>Intellectual</skill><weight>0.4</weight></li>
     </skillWeights>
     <statModifiers>
-      <li><stat>titheValueMultiplier</stat><value>0.01</value></li>
+      <li><stat>titheValueMultiplier</stat><value>0.007143</value></li>
     </statModifiers>
     <resourceBonuses>
-      <li><resource>RTD_Food</resource><baseValue>0.005</baseValue></li>
-      <li><resource>RTD_Mining</resource><baseValue>0.005</baseValue></li>
-      <li><resource>RTD_Logging</resource><baseValue>0.005</baseValue></li>
+      <li><resource>RTD_Food</resource><baseValue>0.003571</baseValue></li>
+      <li><resource>RTD_Mining</resource><baseValue>0.003571</baseValue></li>
+      <li><resource>RTD_Logging</resource><baseValue>0.003571</baseValue></li>
     </resourceBonuses>
   </FactionColonies.Specialists.GovernorFocusDef>
 
@@ -29,8 +29,8 @@
       <li><skill>Melee</skill><weight>0.5</weight></li>
     </skillWeights>
     <statModifiers>
-      <li><stat>militaryCombatEfficiency</stat><value>0.008</value></li>
-      <li><stat>militaryLevelBonusDefending</stat><value>0.01</value></li>
+      <li><stat>militaryCombatEfficiency</stat><value>0.005</value></li>
+      <li><stat>militaryLevelBonusDefending</stat><value>0.025</value></li>
     </statModifiers>
   </FactionColonies.Specialists.GovernorFocusDef>
 

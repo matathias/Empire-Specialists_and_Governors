@@ -30,12 +30,12 @@ namespace FactionColonies.Specialists
                     if (sw.skill == SkillDefOf.Social)
                     {
                         float effectiveWeight = sw.weight < 1f ? 1f : sw.weight;
-                        score += rec.Level * effectiveWeight;
+                        score += SpecUtil.TaperedLevel(rec.Level) * effectiveWeight;
                         socialHandled = true;
                     }
                     else
                     {
-                        score += rec.Level * sw.weight;
+                        score += SpecUtil.TaperedLevel(rec.Level) * sw.weight;
                     }
                 }
             }
@@ -44,7 +44,7 @@ namespace FactionColonies.Specialists
             {
                 SkillRecord social = pawn.skills.GetSkill(SkillDefOf.Social);
                 if (social is object)
-                    score += social.Level * 1f;
+                    score += SpecUtil.TaperedLevel(social.Level) * 1f;
             }
 
             return score;

@@ -67,7 +67,7 @@ namespace FactionColonies.Specialists
                 if (sw.skill is null) continue;
                 SkillRecord rec = pawn.skills.GetSkill(sw.skill);
                 if (rec is object)
-                    score += rec.Level * sw.weight;
+                    score += SpecUtil.TaperedLevel(rec.Level) * sw.weight;
             }
             return score;
         }
