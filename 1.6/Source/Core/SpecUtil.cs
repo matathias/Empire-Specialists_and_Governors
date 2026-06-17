@@ -23,6 +23,71 @@ namespace FactionColonies.Specialists
             return eff;
         }
 
+        /* -*-*-*- Pawn arrival via transport pod: eligibility + auto-role/focus selection -*-*-*- */
+
+        /* A pawn that may be assigned to a settlement (matches Dialog_AssignSpecialists.IsEligible,
+           plus IsColonist since pod cargo isn't pre-filtered to caravan colonists). */
+        public static bool IsAssignablePawn(Pawn p)
+        {
+            return p is object
+                && p.RaceProps.Humanlike
+                && p.IsColonist
+                && !p.Downed
+                && !p.Dead
+                && p.DevelopmentalStage == DevelopmentalStage.Adult
+                && !p.IsPrisoner
+                && !p.IsSlave;
+        }
+
+        /* The specialist role the pawn fits best (highest weighted skill score), skipping the
+           Generalist (it's the fallback) and any role already at its per-settlement cap. Falls back
+           to Generalist when the pawn has no relevant skills or every specific role is capped. */
+        public static SpecialistRoleDef BestSpecialistRole(Pawn pawn, WorldObjectComp_SettlementSpecialists roster)
+        {
+            SpecialistRoleDef best = null;
+            float bestScore = 0f;
+            foreach (SpecialistRoleDef role in DefDatabase<SpecialistRoleDef>.AllDefs)
+            {
+                if (role.isGeneralist) continue;
+                if (RoleAtCap(role, roster)) continue;
+                float score = role.ComputeSkillScore(pawn);
+                if (score > bestScore
+                    || (score == bestScore && best is object && string.CompareOrdinal(role.defName, best.defName) < 0))
+                {
+                    bestScore = score;
+                    best = role;
+                }
+            }
+            return best ?? SpecialistRoleDefOf.Generalist;
+        }
+
+        private static bool RoleAtCap(SpecialistRoleDef role, WorldObjectComp_SettlementSpecialists roster)
+        {
+            if (roster is null || role.maxPerSettlement <= 0) return false;
+            int existing = 0;
+            foreach (SettlementSpecialist s in roster.Specialists)
+                if (s.role == role) existing++;
+            return existing >= role.maxPerSettlement;
+        }
+
+        /* The governor focus the pawn fits best; falls back to Balanced. */
+        public static GovernorFocusDef BestGovernorFocus(Pawn pawn)
+        {
+            GovernorFocusDef best = null;
+            float bestScore = float.NegativeInfinity;
+            foreach (GovernorFocusDef focus in DefDatabase<GovernorFocusDef>.AllDefs)
+            {
+                float score = focus.ComputeSkillScore(pawn);
+                if (score > bestScore
+                    || (score == bestScore && best is object && string.CompareOrdinal(focus.defName, best.defName) < 0))
+                {
+                    bestScore = score;
+                    best = focus;
+                }
+            }
+            return best ?? GovernorFocusDefOf.Balanced;
+        }
+
         public static double SpecialistAdditiveForResource(SettlementSpecialist s, ResourceTypeDef resourceDef)
         {
             if (s is null || s.role is null || !s.HasUsableSkills) return 0;

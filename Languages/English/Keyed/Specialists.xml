@@ -76,6 +76,13 @@
 	<FCS_GizmoAssignLabel>Assign to Settlement</FCS_GizmoAssignLabel>
 	<FCS_GizmoAssignDesc>Assign pawns from this caravan to work at {0}.</FCS_GizmoAssignDesc>
 
+	<!-- Transport-pod arrival (auto-picks the best role/focus; change it afterward) -->
+	<FCS_ArrivalResident>Add residents to {0}</FCS_ArrivalResident>
+	<FCS_ArrivalSpecialist>Add specialists to {0}</FCS_ArrivalSpecialist>
+	<FCS_ArrivalGovernor>Add governor to {0}</FCS_ArrivalGovernor>
+	<FCS_ArrivalSpecialistFull>specialist capacity full</FCS_ArrivalSpecialistFull>
+	<FCS_ArrivalGovernorTaken>already has a governor</FCS_ArrivalGovernorTaken>
+
 	<!-- Tab -->
 	<FCS_TabName>Specialists</FCS_TabName>
 

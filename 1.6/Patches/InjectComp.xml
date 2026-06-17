@@ -6,6 +6,9 @@
     <xpath>/Defs/FactionColonies.WorldSettlementDef[@Name="WorldSettlementDef_Surface"]/comps</xpath>
     <value>
       <li Class="FactionColonies.Specialists.WorldObjectCompProperties_SettlementSpecialists" />
+      <li><compClass>FactionColonies.Specialists.WorldObjectComp_PawnArrival_Resident</compClass></li>
+      <li><compClass>FactionColonies.Specialists.WorldObjectComp_PawnArrival_Specialist</compClass></li>
+      <li><compClass>FactionColonies.Specialists.WorldObjectComp_PawnArrival_Governor</compClass></li>
     </value>
   </Operation>
 
@@ -15,6 +18,9 @@
     <xpath>/Defs/FactionColonies.WorldSettlementDef[@Name="WorldSettlementDef_Orbital"]/comps</xpath>
     <value>
       <li Class="FactionColonies.Specialists.WorldObjectCompProperties_SettlementSpecialists" />
+      <li><compClass>FactionColonies.Specialists.WorldObjectComp_PawnArrival_Resident</compClass></li>
+      <li><compClass>FactionColonies.Specialists.WorldObjectComp_PawnArrival_Specialist</compClass></li>
+      <li><compClass>FactionColonies.Specialists.WorldObjectComp_PawnArrival_Governor</compClass></li>
     </value>
   </Operation>
 
