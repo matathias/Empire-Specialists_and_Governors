@@ -23,6 +23,9 @@ namespace FactionColonies.Specialists
 
         public override string ArrivalMenuLabel => "FCS_ArrivalSpecialist".Translate(Settlement.Label);
 
+        public override string ArrivalMessage(List<Pawn> pawns)
+            => "FCS_ArrivalSpecialistDone".Translate(pawns.Count, Settlement.Label);
+
         public override void ReceivePawns(List<Pawn> pawns)
         {
             WorldObjectComp_SettlementSpecialists roster = Roster;

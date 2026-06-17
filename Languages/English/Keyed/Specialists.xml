@@ -39,7 +39,7 @@
 
 	<!-- XP -->
 	<FCS_SettingXpPerDay>XP per day per skill: </FCS_SettingXpPerDay>
-	<FCS_TooltipXpPerDay>Daily experience granted to each pawn's relevant skills — not all skills.\n\nA specialist gains XP only in the skills its role uses; a governor only in the skills its focus uses (each scaled by that skill's weight). Governors additionally always gain Social XP.</FCS_TooltipXpPerDay>
+	<FCS_TooltipXpPerDay>Daily experience granted to each pawn's relevant skills.\n\nA specialist gains XP only in the skills its role uses; a governor only in the skills its focus uses (each scaled by that skill's weight). Governors additionally always gain Social XP.</FCS_TooltipXpPerDay>
 
 	<!-- Skill Scaling -->
 	<FCS_SettingSkillTaperBand1>Level 1-10 scaling (1 = full): </FCS_SettingSkillTaperBand1>
@@ -82,6 +82,9 @@
 	<FCS_ArrivalGovernor>Add governor to {0}</FCS_ArrivalGovernor>
 	<FCS_ArrivalSpecialistFull>specialist capacity full</FCS_ArrivalSpecialistFull>
 	<FCS_ArrivalGovernorTaken>already has a governor</FCS_ArrivalGovernorTaken>
+	<FCS_ArrivalResidentDone>{0} resident(s) added to {1}</FCS_ArrivalResidentDone>
+	<FCS_ArrivalSpecialistDone>{0} specialist(s) added to {1}</FCS_ArrivalSpecialistDone>
+	<FCS_ArrivalGovernorDone>{0} appointed as governor of {1}</FCS_ArrivalGovernorDone>
 
 	<!-- Tab -->
 	<FCS_TabName>Specialists</FCS_TabName>
