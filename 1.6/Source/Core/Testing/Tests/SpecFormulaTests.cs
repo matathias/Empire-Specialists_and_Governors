@@ -210,9 +210,17 @@ namespace FactionColonies.Specialists
         public static void GovernorUpkeep_BranchesOnMeritocracy()
         {
             if (FindFC.FactionComp is null) TestAssert.Skip("No active faction (policy state unavailable)");
-            double mult = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
-            double expected = FCSSettings.specialistBaseCost * mult;
-            TestAssert.AreEqual(expected, SpecUtil.GovernorUpkeep());
+            Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
+            if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+            SpecTestHelper.WithStandardTaper(() =>
+            {
+                SettlementGovernor g = SpecTestHelper.Governor(p,
+                    SpecTestHelper.Focus(SkillDefOf.Plants, 1f, null, 0f, baseUpkeep: 4f, upkeepScaling: 0.3f));
+                double mult = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
+                // unified: (base + score * scaling * scalingFactor) * governor mult
+                double expected = (4.0 + g.SkillScore * 0.3 * 1.0) * mult;
+                TestAssert.AreEqual(expected, SpecUtil.GovernorUpkeep(g));
+            });
         }
 
         [EmpireTest("SG.Formula")]

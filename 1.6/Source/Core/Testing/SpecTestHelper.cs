@@ -92,12 +92,15 @@ namespace FactionColonies.Specialists
 
         // A governor focus weighted on one (non-Social) skill, optionally with a resource bonus.
         public static GovernorFocusDef Focus(SkillDef weightSkill, float weight,
-            ResourceTypeDef res, float resBaseValue)
+            ResourceTypeDef res, float resBaseValue,
+            float baseUpkeep = 0f, float upkeepScaling = 0f)
         {
             GovernorFocusDef focus = new GovernorFocusDef
             {
                 defName = "TEST_Focus",
                 label = "test focus",
+                baseUpkeepSilver = baseUpkeep,
+                skillUpkeepScaling = upkeepScaling,
                 skillWeights = new List<SkillWeight>
                 {
                     new SkillWeight { skill = weightSkill, weight = weight }
@@ -190,18 +193,20 @@ namespace FactionColonies.Specialists
         }
 
         /* -*- Settings snapshot helper: run `body` with the default per-band taper factors
-              (1, 1, 0.5) so TaperedLevel is deterministic regardless of the player's settings,
-              then restore. -*- */
+              (1, 1, 0.5) and the default upkeep scaling factor (1) so TaperedLevel and upkeep are
+              deterministic regardless of the player's settings, then restore. -*- */
         public static void WithStandardTaper(Action body)
         {
             float b1 = FCSSettings.skillTaperFactorBand1;
             float b2 = FCSSettings.skillTaperFactorBand2;
             float b3 = FCSSettings.skillTaperFactorBand3;
+            float sf = FCSSettings.scalingFactor;
             try
             {
                 FCSSettings.skillTaperFactorBand1 = 1f;
                 FCSSettings.skillTaperFactorBand2 = 1f;
                 FCSSettings.skillTaperFactorBand3 = 0.5f;
+                FCSSettings.scalingFactor = 1f;
                 body();
             }
             finally
@@ -209,6 +214,7 @@ namespace FactionColonies.Specialists
                 FCSSettings.skillTaperFactorBand1 = b1;
                 FCSSettings.skillTaperFactorBand2 = b2;
                 FCSSettings.skillTaperFactorBand3 = b3;
+                FCSSettings.scalingFactor = sf;
             }
         }
     }

@@ -231,15 +231,20 @@ namespace FactionColonies.Specialists
             lineY += 24f;
 
             // Upkeep
-            double upkeep = hasGov ? SpecUtil.GovernorUpkeep() : 0;
+            double upkeep = hasGov ? SpecUtil.GovernorUpkeep(gov) : 0;
             string upkeepText = "FCS_UpkeepDisplay".Translate(hasGov ? upkeep.ToString("F1") : "\u2014");
             Rect upkeepRect = new Rect(textX, lineY, textW, 22f);
             Widgets.Label(upkeepRect, upkeepText);
-            if (hasGov)
+            if (hasGov && gov.focus is object)
             {
                 double mult = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
                 string upkeepTip = "FCS_TooltipUpkeepGovFlat".Translate(
-                    FCSSettings.specialistBaseCost.ToString("F1"), mult.ToString("F1"), upkeep.ToString("F1"));
+                    gov.focus.baseUpkeepSilver.ToString("F1"),
+                    gov.SkillScore.ToString("F1"),
+                    gov.focus.skillUpkeepScaling.ToString("F2"),
+                    FCSSettings.scalingFactor.ToString("F2"),
+                    mult.ToString("F1"),
+                    upkeep.ToString("F1"));
                 TooltipHandler.TipRegion(upkeepRect, upkeepTip);
             }
             lineY += 24f;
@@ -875,6 +880,7 @@ namespace FactionColonies.Specialists
                 s.role.baseUpkeepSilver.ToString("F1"),
                 s.SkillScore.ToString("F1"),
                 s.role.skillUpkeepScaling.ToString("F2"),
+                FCSSettings.scalingFactor.ToString("F2"),
                 upkeep.ToString("F1"));
         }
 

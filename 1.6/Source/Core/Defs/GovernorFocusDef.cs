@@ -11,6 +11,8 @@ namespace FactionColonies.Specialists
         public List<ResourceProductionBonus> resourceBonuses;
         public bool providesBaselineProduction = false;
         public float baselineProductionValue = 0.005f;
+        public float baseUpkeepSilver = 0f;
+        public float skillUpkeepScaling = 0f;
 
         public float ComputeSkillScore(Pawn pawn)
         {

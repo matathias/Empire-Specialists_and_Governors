@@ -117,7 +117,7 @@ namespace FactionColonies.Specialists
                 comp.AssignSpecialist(p1, SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f, baseUpkeep: 5f, upkeepScaling: 0.3f));
                 comp.AssignGovernor(p2, focus);
 
-                double expected = SpecUtil.SpecialistUpkeep(comp.Specialists[0]) + SpecUtil.GovernorUpkeep();
+                double expected = SpecUtil.SpecialistUpkeep(comp.Specialists[0]) + SpecUtil.GovernorUpkeep(comp.Governor);
                 TestAssert.AreEqual(expected, comp.GetUpkeepContribution());
                 TestAssert.GreaterThan(comp.GetUpkeepContribution(), 0.0, "upkeep should be positive");
                 DestructiveTestUtil.AssertEmpireInvariants(f, "GetUpkeepContribution_SumsSpecialistsAndGovernor");

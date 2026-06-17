@@ -6,6 +6,8 @@
     <defName>Economic</defName>
     <label>economic development</label>
     <description>The governor focuses on trade and commerce, increasing tithe value and broadly boosting raw material production.</description>
+    <baseUpkeepSilver>2</baseUpkeepSilver>
+    <skillUpkeepScaling>0.1</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Intellectual</skill><weight>0.4</weight></li>
     </skillWeights>
@@ -24,6 +26,8 @@
     <defName>Military</defName>
     <label>military affairs</label>
     <description>The governor prioritizes martial readiness, improving combat effectiveness and defensive capabilities.</description>
+    <baseUpkeepSilver>2</baseUpkeepSilver>
+    <skillUpkeepScaling>0.1</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Shooting</skill><weight>0.5</weight></li>
       <li><skill>Melee</skill><weight>0.5</weight></li>
@@ -39,6 +43,8 @@
     <defName>Growth</defName>
     <label>settlement growth</label>
     <description>The governor invests in infrastructure and expansion, accelerating prosperity gain and basic resource output.</description>
+    <baseUpkeepSilver>2</baseUpkeepSilver>
+    <skillUpkeepScaling>0.1</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Plants</skill><weight>0.4</weight></li>
       <li><skill>Construction</skill><weight>0.4</weight></li>
@@ -58,6 +64,8 @@
     <defName>Administrative</defName>
     <label>administration</label>
     <description>The governor maintains order and bureaucratic efficiency, reducing unrest and keeping the populace content.</description>
+    <baseUpkeepSilver>2</baseUpkeepSilver>
+    <skillUpkeepScaling>0.1</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Intellectual</skill><weight>0.6</weight></li>
     </skillWeights>
@@ -72,6 +80,8 @@
     <defName>Balanced</defName>
     <label>balanced leadership</label>
     <description>The governor takes a measured approach, providing a small but consistent bonus to all settlement production.</description>
+    <baseUpkeepSilver>2</baseUpkeepSilver>
+    <skillUpkeepScaling>0.1</skillUpkeepScaling>
     <providesBaselineProduction>true</providesBaselineProduction>
     <baselineProductionValue>0.003</baselineProductionValue>
   </FactionColonies.Specialists.GovernorFocusDef>

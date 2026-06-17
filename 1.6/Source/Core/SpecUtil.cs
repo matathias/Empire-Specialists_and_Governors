@@ -91,10 +91,18 @@ namespace FactionColonies.Specialists
             return mult;
         }
 
+        /* Unified upkeep: base silver plus a skill-scaled portion, where the global Scaling factor
+           tunes how strongly skill raises wages. Specialists use their role's values; governors use
+           their focus's values and then apply the governor multiplier on top (see GovernorUpkeep). */
+        private static double ComputeUpkeep(float baseSilver, float skillScore, float skillScaling)
+        {
+            return baseSilver + (skillScore * skillScaling * FCSSettings.scalingFactor);
+        }
+
         public static double SpecialistUpkeep(SettlementSpecialist s)
         {
             if (s is null || s.role is null) return 0;
-            return s.role.baseUpkeepSilver + (s.SkillScore * s.role.skillUpkeepScaling);
+            return ComputeUpkeep(s.role.baseUpkeepSilver, s.SkillScore, s.role.skillUpkeepScaling);
         }
 
         public static int WorkerBonusFromResidents(int liveResidentCount)
@@ -138,10 +146,11 @@ namespace FactionColonies.Specialists
             return bonus;
         }
 
-        public static double GovernorUpkeep()
+        public static double GovernorUpkeep(SettlementGovernor g)
         {
+            if (g is null || g.focus is null) return 0; // no focus -> no bonuses and no wage
             double mult = HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
-            return FCSSettings.specialistBaseCost * mult;
+            return ComputeUpkeep(g.focus.baseUpkeepSilver, g.SkillScore, g.focus.skillUpkeepScaling) * mult;
         }
 
         public static void SendDeathLetter(string roleLabel, string bodyText)

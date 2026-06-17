@@ -667,9 +667,9 @@ namespace FactionColonies.Specialists
                 return "FCS_PickerUpkeep".Translate(upkeep.ToString("F1"));
             }
 
-            if (entry.type == RoleEntryType.GovernorFocus)
+            if (entry.type == RoleEntryType.GovernorFocus && entry.focusDef is object)
             {
-                double upkeep = SpecUtil.GovernorUpkeep();
+                double upkeep = SpecUtil.GovernorUpkeep(new SettlementGovernor(pawn, entry.focusDef));
                 return "FCS_PickerUpkeep".Translate(upkeep.ToString("F1"));
             }
 

@@ -612,7 +612,7 @@ namespace FactionColonies.Specialists
             foreach (SettlementSpecialist s in specialists)
                 total += SpecUtil.SpecialistUpkeep(s);
             if (governor is object)
-                total += SpecUtil.GovernorUpkeep();
+                total += SpecUtil.GovernorUpkeep(governor);
             return total;
         }
 
