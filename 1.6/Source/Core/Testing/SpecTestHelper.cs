@@ -157,8 +157,11 @@ namespace FactionColonies.Specialists
 
         /* -*- Controlled, never-spawned pawn -*- */
 
-        // A colonist whose every enabled skill is set to `level`, never spawned or passed to the
-        // world (so it leaves no persistent residue). Returns null if there is no active game.
+        // A colonist whose every skill is set to `level`, never spawned or passed to the world (so
+        // it leaves no persistent residue). The generated pawn's random backstory/traits would
+        // otherwise disable some skills (SkillRecord.Level returns 0 for a TotallyDisabled skill),
+        // making the formula tests flaky -- so EnsureAllSkillsEnabled strips every disable source
+        // first, leaving the fixture deterministic. Returns null if there is no active game.
         public static Pawn TryMakeControlledPawn(int level)
         {
             if (Current.Game is null || Find.World is null) return null;
@@ -183,13 +186,52 @@ namespace FactionColonies.Specialists
             }
             if (p?.skills is null) return null;
 
+            EnsureAllSkillsEnabled(p);
+
             foreach (SkillRecord rec in p.skills.skills)
             {
-                if (rec.TotallyDisabled) continue;
                 rec.Level = level;
                 rec.passion = Passion.None;
             }
             return p;
+        }
+
+        // Cached no-work-disabling backstories (reference identity only; never registered anew).
+        private static BackstoryDef noDisableChildhood;
+        private static BackstoryDef noDisableAdulthood;
+
+        // Strips every source of skill disabling from a freshly generated colonist (work-disabling
+        // traits + backstories), so that no SkillRecord is TotallyDisabled and each reads its set
+        // level. Generated pawns are Baseliner player colonists here, so backstories and traits are
+        // the only disable sources (no disabling genes; the Empire xenotype-forcing patch only fires
+        // for the Empire faction, not Faction.OfPlayer).
+        private static void EnsureAllSkillsEnabled(Pawn p)
+        {
+            if (p?.story is null) return;
+
+            if (p.story.traits is object)
+            {
+                List<Trait> disabling = new List<Trait>();
+                foreach (Trait t in p.story.traits.allTraits)
+                    if (t.def.disabledWorkTags != WorkTags.None) disabling.Add(t);
+                foreach (Trait t in disabling) p.story.traits.RemoveTrait(t);
+            }
+
+            if (noDisableChildhood is null)
+                noDisableChildhood = DefDatabase<BackstoryDef>.AllDefsListForReading.Find(b =>
+                    b.slot == BackstorySlot.Childhood && b.workDisables == WorkTags.None
+                    && (b.spawnCategories is null || !b.spawnCategories.Contains("Child")));
+            if (noDisableAdulthood is null)
+                noDisableAdulthood = DefDatabase<BackstoryDef>.AllDefsListForReading.Find(b =>
+                    b.slot == BackstorySlot.Adulthood && b.workDisables == WorkTags.None);
+
+            if (noDisableChildhood is object) p.story.Childhood = noDisableChildhood;
+            if (noDisableAdulthood is object) p.story.Adulthood = noDisableAdulthood;
+
+            // Refresh the lazily-cached disable state so the now-enabled skills report correctly.
+            p.Notify_DisabledWorkTypesChanged();
+            foreach (SkillRecord rec in p.skills.skills)
+                rec.Notify_SkillDisablesChanged();
         }
 
         /* -*- Settings snapshot helper: run `body` with the default per-band taper factors
