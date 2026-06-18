@@ -270,9 +270,10 @@ namespace FactionColonies.Specialists
         private void SpawnPawnInCaravan(Pawn pawn)
         {
             if (pawn is null) return;
+            if (pawn.Spawned) pawn.DeSpawn();
             pawn.SetFaction(Faction.OfPlayer);
-            if (pawn.IsWorldPawn())
-                Find.WorldPawns.RemovePawn(pawn);
+            if (!pawn.IsWorldPawn())
+                Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
             CaravanMaker.MakeCaravan(
                 new List<Pawn> { pawn },
                 Faction.OfPlayer,
