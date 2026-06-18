@@ -521,8 +521,8 @@ namespace FactionColonies.Specialists
             {
                 double bonus = SpecUtil.SpecialistAdditiveForResource(s, resource.def);
                 if (Math.Abs(bonus) > 0.001)
-                    sb.AppendLine(TextUtil.ColorizeAdditiveBonus(bonus) + " - "
-                        + s.pawn.LabelShort + " (" + s.role.LabelCap + ")");
+                    sb.AppendLine(TextUtil.AdditiveBonusLine(bonus,
+                        s.pawn.LabelShort + " (" + s.role.LabelCap + ")"));
             }
             string result = sb.ToString().TrimEnd();
             return result.Length > 0 ? result : null;
@@ -533,8 +533,8 @@ namespace FactionColonies.Specialists
             if (governor is null || !governor.HasUsableSkills) return null;
             double mult = SpecUtil.GovernorMultiplierForResource(governor, resource.def);
             if (Math.Abs(mult - 1.0) < 0.001) return null;
-            return TextUtil.ColorizeMultiplierBonus(mult) + " - "
-                + governor.pawn.LabelShort + " (" + governor.focus.LabelCap + ")";
+            return TextUtil.MultiplierBonusLine(mult,
+                governor.pawn.LabelShort + " (" + governor.focus.LabelCap + ")");
         }
 
         // ── IStatModifierProvider ──
@@ -587,7 +587,8 @@ namespace FactionColonies.Specialists
                 if (Math.Abs(statBonus) > 0.001)
                 {
                     if (sb.Length > 0) sb.Append("\n");
-                    sb.Append($"+{Math.Round(statBonus, 2)} - {s.pawn.LabelShort} ({s.role.LabelCap})");
+                    sb.Append(TextUtil.AdditiveBonusLine(statBonus,
+                        s.pawn.LabelShort + " (" + s.role.LabelCap + ")", invert: stat.invertedForDisplay));
                 }
             }
 

@@ -1028,9 +1028,9 @@ namespace FactionColonies.Specialists
                     if (Math.Abs(val) < 0.0001) continue;
                     if (statSb.Length > 0) statSb.Append(", ");
                     if (mod.stat.aggregation == FCStatAggregation.Multiplicative)
-                        statSb.Append(TextUtil.ColorizeMultiplierBonus(1.0 + val) + " " + mod.stat.LabelCap);
+                        statSb.Append(TextUtil.MultiplierBonusLine(1.0 + val, mod.stat.LabelCap, separator: " "));
                     else
-                        statSb.Append(TextUtil.ColorizeAdditiveBonus(val) + " " + mod.stat.LabelCap);
+                        statSb.Append(TextUtil.AdditiveBonusLine(val, mod.stat.LabelCap, separator: " "));
                 }
                 // Append death reduction if role has defense behavior
                 AppendDeathReduction(statSb, s.role, score);
@@ -1055,7 +1055,7 @@ namespace FactionColonies.Specialists
             double reduction = skillScore * defExt.baseReductionPerSkillPoint * 100.0;
             if (reduction < 0.01) return;
             if (sb.Length > 0) sb.Append(", ");
-            sb.Append(TextUtil.ColorizeAdditiveBonus(-reduction, invert: true) + " " + "FCS_PickerDeathReduction".Translate());
+            sb.Append(TextUtil.AdditiveBonusLine(-reduction, "FCS_PickerDeathReduction".Translate(), separator: " ", invert: true));
         }
 
         private void ComputeDeathChances(out float govChance, out float specChance, out float resChance,
