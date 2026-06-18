@@ -127,4 +127,21 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_3_9</defName>
+		<label>Fixes &amp; Updates</label>
+		<description>Numerous fixes, updates, and a minor feature.</description>
+		<releaseDate>2026-06-17</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Governor upkeep scales based on their skills, now</li>
+		<li>The base Specialists limit was nerfed (5 -&gt; 3)</li>
+		<li>Governors, Specialists, and Residents can now be easily sent directly by transport pod</li>
+		<li>Bugfix: pawns that were recalled from a settlement were incorrectly removed from the world pawn pool, resulting in them disappearing into the void on the next caravan tick</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
