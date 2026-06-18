@@ -490,6 +490,8 @@ namespace FactionColonies.Specialists
         public void PostCloseWindow() { TabRenderer.PostCloseWindow(); }
         public string OverviewTabName() => TabRenderer.OverviewTabName();
 
+        public bool ShouldShowOverviewTab(WorldSettlementFC settlement) => true;
+
         // ── IResourceProductionModifier ──
 
         public double GetResourceAdditiveModifier(ResourceFC resource)
