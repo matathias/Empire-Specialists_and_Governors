@@ -16,7 +16,7 @@ namespace FactionColonies.Specialists
         public static bool RoutesResourcesActive => isRoutesResourcesActive;
 
         // Specialist capacity
-        public static int specialistBaseMax = 5;
+        public static int specialistBaseMax = 3;
         public static int specialistPerLevels = 3;
 
         // Workers
@@ -51,7 +51,7 @@ namespace FactionColonies.Specialists
         {
             base.ExposeData();
             Scribe_Values.Look(ref printDebug, "printDebug", false);
-            Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", 5);
+            Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", 3);
             Scribe_Values.Look(ref specialistPerLevels, "specialistPerLevels", 3);
             Scribe_Values.Look(ref residentsPerWorker, "residentsPerWorker", 5);
             Scribe_Values.Look(ref scalingFactor, "scalingFactor", 1f);
@@ -70,7 +70,7 @@ namespace FactionColonies.Specialists
         public static void ResetToDefaults()
         {
             printDebug = false;
-            specialistBaseMax = 5;
+            specialistBaseMax = 3;
             specialistPerLevels = 3;
             residentsPerWorker = 5;
             scalingFactor = 1f;
