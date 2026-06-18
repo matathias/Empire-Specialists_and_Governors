@@ -23,8 +23,27 @@ namespace FactionColonies.Specialists
 
         public override string ArrivalMenuLabel => "FCS_ArrivalGovernor".Translate(Settlement.Label);
 
+        /* ReceivePawns has already run, so re-derive each pawn's actual outcome from the roster:
+           the one matching the live governor was installed, the rest overflowed to residents. */
         public override string ArrivalMessage(List<Pawn> pawns)
-            => "FCS_ArrivalGovernorDone".Translate(pawns[0].LabelShortCap, Settlement.Label);
+        {
+            WorldObjectComp_SettlementSpecialists roster = Roster;
+            Pawn governor = null;
+            int residents = 0;
+            for (int i = 0; i < pawns.Count; i++)
+            {
+                if (roster is object && roster.Governor is object && roster.Governor.pawn == pawns[i])
+                    governor = pawns[i];
+                else
+                    residents++;
+            }
+
+            if (governor is object && residents == 0)
+                return "FCS_ArrivalGovernorDone".Translate(governor.LabelShortCap, Settlement.Label);
+            if (governor is null)
+                return "FCS_ArrivalResidentDone".Translate(residents, Settlement.Label);
+            return "FCS_ArrivalGovernorAndResidents".Translate(governor.LabelShortCap, Settlement.Label, residents);
+        }
 
         public override void ReceivePawns(List<Pawn> pawns)
         {

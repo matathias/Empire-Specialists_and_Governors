@@ -85,6 +85,8 @@
 	<FCS_ArrivalResidentDone>{0} resident(s) added to {1}</FCS_ArrivalResidentDone>
 	<FCS_ArrivalSpecialistDone>{0} specialist(s) added to {1}</FCS_ArrivalSpecialistDone>
 	<FCS_ArrivalGovernorDone>{0} appointed as governor of {1}</FCS_ArrivalGovernorDone>
+	<FCS_ArrivalGovernorAndResidents>{0} appointed as governor of {1}, {2} added as resident(s)</FCS_ArrivalGovernorAndResidents>
+	<FCS_ArrivalSpecialistAndResidents>{0} specialist(s) and {1} resident(s) added to {2}</FCS_ArrivalSpecialistAndResidents>
 
 	<!-- Tab -->
 	<FCS_TabName>Specialists</FCS_TabName>
