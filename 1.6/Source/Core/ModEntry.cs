@@ -91,6 +91,7 @@ namespace FactionColonies.Specialists
             Listing_Standard ls = new Listing_Standard();
             Rect viewRect = ScrollUtil.BeginScrollView(inRect, ref scrollPos, contentHeight);
             ls.Begin(new Rect(viewRect.x, viewRect.y, viewRect.width, float.MaxValue));
+            Listing_StandardExtensions.ResetRowStripe();
 
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
             ls.GapLine();
@@ -98,41 +99,41 @@ namespace FactionColonies.Specialists
             // Specialist capacity
             ls.Label("FCS_Header_Capacity".Translate());
             ls.Gap(4f);
-            specialistBaseMax = (int)SliderLabeled(ls, "FCS_SettingSpecBaseMax".Translate(), specialistBaseMax, 1f, 20f);
-            specialistPerLevels = (int)SliderLabeled(ls, "FCS_SettingSpecPerLevels".Translate(), specialistPerLevels, 1f, 10f);
+            specialistBaseMax = ls.SliderTextField("FCS_SettingSpecBaseMax", "FCS_SettingSpecBaseMax".Translate(), specialistBaseMax, 1, 20);
+            specialistPerLevels = ls.SliderTextField("FCS_SettingSpecPerLevels", "FCS_SettingSpecPerLevels".Translate(), specialistPerLevels, 1, 10);
             ls.GapLine();
 
             // Workers
             ls.Label("FCS_Header_Workers".Translate());
             ls.Gap(4f);
-            residentsPerWorker = (int)SliderLabeled(ls, "FCS_SettingResidentsPerWorker".Translate(), residentsPerWorker, 1f, 20f);
+            residentsPerWorker = ls.SliderTextField("FCS_SettingResidentsPerWorker", "FCS_SettingResidentsPerWorker".Translate(), residentsPerWorker, 1, 20);
             ls.GapLine();
 
             // Upkeep
             Rect upkeepHeader = ls.Label("FCS_Header_Upkeep".Translate(), -1f, new TipSignal("FCS_TooltipUpkeepSection".Translate()));
             Widgets.DrawHighlightIfMouseover(upkeepHeader);
             ls.Gap(4f);
-            scalingFactor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingScalingFactor".Translate(), scalingFactor, 0f, 5f), 1);
+            scalingFactor = ls.SliderTextField("FCS_SettingScalingFactor", "FCS_SettingScalingFactor".Translate(), scalingFactor, 0f, 5f, 1);
             ls.GapLine();
 
             // Healing
             ls.Label("FCS_Header_Healing".Translate());
             ls.Gap(4f);
-            healRatePerLevelGovernor = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingHealRateGov".Translate(), healRatePerLevelGovernor, 0f, 0.1f), 3);
+            healRatePerLevelGovernor = ls.SliderTextField("FCS_SettingHealRateGov", "FCS_SettingHealRateGov".Translate(), healRatePerLevelGovernor, 0f, 0.1f, 3);
             ls.GapLine();
 
             // XP
             ls.Label("FCS_Header_XP".Translate());
             ls.Gap(4f);
-            xpPerDay = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingXpPerDay".Translate(), xpPerDay, 0f, 2000f, "FCS_TooltipXpPerDay".Translate()), 0);
+            xpPerDay = ls.SliderTextField("FCS_SettingXpPerDay", "FCS_SettingXpPerDay".Translate(), xpPerDay, 0f, 2000f, 0, tooltip: "FCS_TooltipXpPerDay".Translate());
             ls.GapLine();
 
             // Skill scaling
             ls.Label("FCS_Header_SkillScaling".Translate());
             ls.Gap(4f);
-            skillTaperFactorBand1 = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillTaperBand1".Translate(), skillTaperFactorBand1, 0f, 5f), 2);
-            skillTaperFactorBand2 = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillTaperBand2".Translate(), skillTaperFactorBand2, 0f, 5f), 2);
-            skillTaperFactorBand3 = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingSkillTaperBand3".Translate(), skillTaperFactorBand3, 0f, 5f), 2);
+            skillTaperFactorBand1 = ls.SliderTextField("FCS_SettingSkillTaperBand1", "FCS_SettingSkillTaperBand1".Translate(), skillTaperFactorBand1, 0f, 5f, 2);
+            skillTaperFactorBand2 = ls.SliderTextField("FCS_SettingSkillTaperBand2", "FCS_SettingSkillTaperBand2".Translate(), skillTaperFactorBand2, 0f, 5f, 2);
+            skillTaperFactorBand3 = ls.SliderTextField("FCS_SettingSkillTaperBand3", "FCS_SettingSkillTaperBand3".Translate(), skillTaperFactorBand3, 0f, 5f, 2);
             ls.GapLine();
 
             // Supply chain needs (only show if Supply Chain submod is active)
@@ -140,11 +141,11 @@ namespace FactionColonies.Specialists
             {
                 ls.Label("FCS_Header_SupplyChain".Translate());
                 ls.Gap(4f);
-                foodPerSpecialist = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingFoodPerSpec".Translate(), foodPerSpecialist, 0f, 2f), 2);
-                foodPerResident = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingFoodPerResident".Translate(), foodPerResident, 0f, 1f), 2);
-                medicinePerSpecialist = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingMedPerSpec".Translate(), medicinePerSpecialist, 0f, 1f), 2);
-                foodPenaltyPerUnit = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingFoodPenalty".Translate(), foodPenaltyPerUnit, 0f, 2f), 2);
-                medicinePenaltyPerUnit = (float)System.Math.Round(SliderLabeled(ls, "FCS_SettingMedPenalty".Translate(), medicinePenaltyPerUnit, 0f, 2f), 2);
+                foodPerSpecialist = ls.SliderTextField("FCS_SettingFoodPerSpec", "FCS_SettingFoodPerSpec".Translate(), foodPerSpecialist, 0f, 2f, 2);
+                foodPerResident = ls.SliderTextField("FCS_SettingFoodPerResident", "FCS_SettingFoodPerResident".Translate(), foodPerResident, 0f, 1f, 2);
+                medicinePerSpecialist = ls.SliderTextField("FCS_SettingMedPerSpec", "FCS_SettingMedPerSpec".Translate(), medicinePerSpecialist, 0f, 1f, 2);
+                foodPenaltyPerUnit = ls.SliderTextField("FCS_SettingFoodPenalty", "FCS_SettingFoodPenalty".Translate(), foodPenaltyPerUnit, 0f, 2f, 2);
+                medicinePenaltyPerUnit = ls.SliderTextField("FCS_SettingMedPenalty", "FCS_SettingMedPenalty".Translate(), medicinePenaltyPerUnit, 0f, 2f, 2);
                 ls.GapLine();
             }
 
@@ -159,16 +160,6 @@ namespace FactionColonies.Specialists
             contentHeight = ls.CurHeight + 12f;
             ls.End();
             ScrollUtil.EndScrollView();
-        }
-
-        private static float SliderLabeled(Listing_Standard ls, string label, float val, float min, float max, string tooltip = null)
-        {
-            return ls.SliderLabeled(label + val.ToString("F2"), val, min, max, tooltip: tooltip);
-        }
-
-        private static float SliderLabeledPct(Listing_Standard ls, string label, float val, float min, float max)
-        {
-            return ls.SliderLabeled(label + (val * 100f).ToString("F0") + "%", val, min, max);
         }
 
         public static void CheckForRoutesAndResources()

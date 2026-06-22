@@ -23,28 +23,28 @@
 	<FCS_SettingSkillFloorGovernor>Governor minimum skill level: </FCS_SettingSkillFloorGovernor>
 
 	<!-- Capacity -->
-	<FCS_SettingSpecBaseMax>Base Specialist Limit: </FCS_SettingSpecBaseMax>
-	<FCS_SettingSpecPerLevels>Settlement Levels per +1 Specialists Limit: </FCS_SettingSpecPerLevels>
+	<FCS_SettingSpecBaseMax>Base Specialist Limit</FCS_SettingSpecBaseMax>
+	<FCS_SettingSpecPerLevels>Settlement Levels per +1 Specialists Limit</FCS_SettingSpecPerLevels>
 
 	<!-- Workers -->
-	<FCS_SettingResidentsPerWorker>Number of Residents for each bonus worker: </FCS_SettingResidentsPerWorker>
+	<FCS_SettingResidentsPerWorker>Number of Residents for each bonus worker</FCS_SettingResidentsPerWorker>
 
 	<!-- Upkeep -->
-	<FCS_SettingScalingFactor>Scaling factor: </FCS_SettingScalingFactor>
+	<FCS_SettingScalingFactor>Scaling factor</FCS_SettingScalingFactor>
 	<FCS_TooltipUpkeepSection>Staff wages, paid each pay period.\n\nSpecialist = role base + (skill score × role scaling × Scaling factor).\nGovernor = focus base + (skill score × focus scaling × Scaling factor), then × 2 (or ×3 with the Meritocratic policy).\n\nEach specialist role and governor focus defines its own base and per-skill scaling. The Scaling factor below tunes how strongly skill raises wages (1 = default).</FCS_TooltipUpkeepSection>
 
 	<!-- Healing -->
 	<FCS_SettingHealRateSpec>Heal rate per Medicine level (Specialist): </FCS_SettingHealRateSpec>
-	<FCS_SettingHealRateGov>Heal rate per Medicine level (Governor): </FCS_SettingHealRateGov>
+	<FCS_SettingHealRateGov>Heal rate per Medicine level (Governor)</FCS_SettingHealRateGov>
 
 	<!-- XP -->
-	<FCS_SettingXpPerDay>XP per day per skill: </FCS_SettingXpPerDay>
+	<FCS_SettingXpPerDay>XP per day per skill</FCS_SettingXpPerDay>
 	<FCS_TooltipXpPerDay>Daily experience granted to each pawn's relevant skills.\n\nA specialist gains XP only in the skills its role uses; a governor only in the skills its focus uses (each scaled by that skill's weight). Governors additionally always gain Social XP.</FCS_TooltipXpPerDay>
 
 	<!-- Skill Scaling -->
-	<FCS_SettingSkillTaperBand1>Level 1-10 scaling (1 = full): </FCS_SettingSkillTaperBand1>
-	<FCS_SettingSkillTaperBand2>Level 11-20 scaling (1 = full): </FCS_SettingSkillTaperBand2>
-	<FCS_SettingSkillTaperBand3>Level 21+ scaling (cap-removing mods): </FCS_SettingSkillTaperBand3>
+	<FCS_SettingSkillTaperBand1>Level 1-10 scaling (1 = full)</FCS_SettingSkillTaperBand1>
+	<FCS_SettingSkillTaperBand2>Level 11-20 scaling (1 = full)</FCS_SettingSkillTaperBand2>
+	<FCS_SettingSkillTaperBand3>Level 21+ scaling (cap-removing mods)</FCS_SettingSkillTaperBand3>
 
 	<!-- Death Chances -->
 	<FCS_SettingCivilianDeathChance>Civilian specialist: </FCS_SettingCivilianDeathChance>
@@ -54,11 +54,11 @@
 	<FCS_SettingDeathReduction>Reduction per defender: </FCS_SettingDeathReduction>
 
 	<!-- Supply Chain -->
-	<FCS_SettingFoodPerSpec>Food per specialist/governor: </FCS_SettingFoodPerSpec>
-	<FCS_SettingFoodPerResident>Food per resident: </FCS_SettingFoodPerResident>
-	<FCS_SettingMedPerSpec>Medicine per specialist/governor: </FCS_SettingMedPerSpec>
-	<FCS_SettingFoodPenalty>Food penalty per unit: </FCS_SettingFoodPenalty>
-	<FCS_SettingMedPenalty>Medicine penalty per unit: </FCS_SettingMedPenalty>
+	<FCS_SettingFoodPerSpec>Food per specialist/governor</FCS_SettingFoodPerSpec>
+	<FCS_SettingFoodPerResident>Food per resident</FCS_SettingFoodPerResident>
+	<FCS_SettingMedPerSpec>Medicine per specialist/governor</FCS_SettingMedPerSpec>
+	<FCS_SettingFoodPenalty>Food penalty per unit</FCS_SettingFoodPenalty>
+	<FCS_SettingMedPenalty>Medicine penalty per unit</FCS_SettingMedPenalty>
 
 	<!-- Role Names -->
 	<FCS_RoleResident>Resident</FCS_RoleResident>
