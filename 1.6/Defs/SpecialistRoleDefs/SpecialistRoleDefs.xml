@@ -193,7 +193,7 @@
   </FactionColonies.Specialists.SpecialistRoleDef>
 
   <!-- ==================== Physicist ==================== -->
-  <FactionColonies.Specialists.SpecialistRoleDef>
+  <FactionColonies.Specialists.SpecialistRoleDef MayRequire="Ludeon.RimWorld.Odyssey">
     <defName>Physicist</defName>
     <label>physicist</label>
     <description>A theoretical physicist who pushes the boundaries of gravitic technology research.</description>
