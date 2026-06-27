@@ -9,6 +9,9 @@ using Verse.AI.Group;
 
 namespace FactionColonies.Specialists
 {
+    /* Why a roster member died — selects the death-letter wording in NotifyMemberDied. */
+    public enum SpecDeathCause { Other, AutoBattle, ManualBattle }
+
     public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         ISettlementWindowOverview, IStatModifierProvider, IResourceProductionModifier, IProfitContributor
     {
@@ -323,22 +326,9 @@ namespace FactionColonies.Specialists
         {
             if (!pawnsDeployedToBattle) return;
 
-            // Collect dead specialists
-            List<SettlementSpecialist> deadSpecs = new List<SettlementSpecialist>();
-            foreach (SettlementSpecialist s in specialists)
-            {
-                if (s.pawn is null || s.pawn.Dead)
-                    deadSpecs.Add(s);
-            }
-            List<SettlementSpecialist> deadResidents = new List<SettlementSpecialist>();
-            foreach (SettlementSpecialist r in residents)
-            {
-                if (r.pawn is null || r.pawn.Dead)
-                    deadResidents.Add(r);
-            }
-            bool governorDead = governor is object && (governor.pawn is null || governor.pawn.Dead);
-
-            // Despawn surviving pawns back to world
+            // Deaths during the on-map battle were already handled the moment each pawn was killed
+            // (Patch_Kill_SpecialistDeath -> NotifyMemberDied), so any roster entries still present
+            // here are survivors. Just despawn them back to the world.
             foreach (SettlementSpecialist s in specialists)
             {
                 if (s.pawn is null || s.pawn.Dead) continue;
@@ -353,45 +343,73 @@ namespace FactionColonies.Specialists
                 r.pawn.SetFaction(FindFC.EmpireFaction);
                 Find.WorldPawns.PassToWorld(r.pawn, PawnDiscardDecideMode.KeepForever);
             }
-            if (governor is object && !governorDead)
+            if (governor is object && governor.pawn is object && !governor.pawn.Dead)
             {
                 if (governor.pawn.Spawned) governor.pawn.DeSpawn();
                 governor.pawn.SetFaction(FindFC.EmpireFaction);
                 Find.WorldPawns.PassToWorld(governor.pawn, PawnDiscardDecideMode.KeepForever);
             }
 
-            // Process deaths
-            foreach (SettlementSpecialist s in deadSpecs)
-            {
-                Pawn pawn = s.pawn;
-                string roleLabel = s.role?.LabelCap ?? "Specialist";
-                RemoveSpecialist(s);
-                if (pawn is null) continue;
-                SpecUtil.SendDeathLetter(roleLabel,
-                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, roleLabel, Settlement.Name));
-            }
-            foreach (SettlementSpecialist r in deadResidents)
-            {
-                Pawn pawn = r.pawn;
-                RemoveSpecialist(r);
-                if (pawn is null) continue;
-                SpecUtil.SendDeathLetter("FCS_RoleResident".Translate(),
-                    "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleResident".Translate(), Settlement.Name));
-            }
-            if (governorDead)
-            {
-                Pawn pawn = governor.pawn;
-                SpecialistRoster.Recall(pawn);
-                governor = null;
-                if (pawn is object)
-                    SpecUtil.SendDeathLetter("FCS_RoleGovernor".Translate(),
-                        "FCS_LetterDeathDefending".Translate(pawn.LabelShort, "FCS_RoleGovernor".Translate(), Settlement.Name));
-            }
-
             deployedPawns.Clear();
             pawnsDeployedToBattle = false;
             InvalidateAll();
             LogSG.Message("Recovered specialists from battle at " + Settlement.Name);
+        }
+
+        /* Single funnel for every roster-member death, regardless of cause. Removes the member from
+           the roster and sends exactly one death letter (wording chosen by cause). Idempotent: a
+           second call for an already-removed pawn is a no-op. causeText, when supplied, is the
+           base-game cause-of-death sentence appended on a new line. */
+        public void NotifyMemberDied(Pawn pawn, SpecDeathCause cause, string causeText = null)
+        {
+            if (pawn is null) return;
+
+            string roleLabel;
+
+            SettlementSpecialist spec = specialists.Find(s => s.pawn == pawn);
+            if (spec is object)
+            {
+                roleLabel = spec.role?.LabelCap ?? "Specialist";
+                RemoveSpecialist(spec);
+            }
+            else
+            {
+                SettlementSpecialist res = residents.Find(r => r.pawn == pawn);
+                if (res is object)
+                {
+                    roleLabel = "FCS_RoleResident".Translate();
+                    RemoveSpecialist(res);
+                }
+                else if (governor is object && governor.pawn == pawn)
+                {
+                    roleLabel = "FCS_RoleGovernor".Translate();
+                    governor.Behavior?.OnFocusDeactivated(Settlement);
+                    SpecialistRoster.Recall(pawn);
+                    governor = null;
+                    InvalidateAll();
+                }
+                else
+                {
+                    return; // not a member of this settlement (or already removed)
+                }
+            }
+
+            string body;
+            switch (cause)
+            {
+                case SpecDeathCause.AutoBattle:
+                    body = "FCS_LetterDeathAttack".Translate(pawn.LabelShort, roleLabel, Settlement.Name);
+                    break;
+                case SpecDeathCause.ManualBattle:
+                    body = "FCS_LetterDeathDefending".Translate(pawn.LabelShort, roleLabel, Settlement.Name);
+                    break;
+                default:
+                    body = "FCS_LetterDeathGeneric".Translate(pawn.LabelShort, roleLabel, Settlement.Name);
+                    break;
+            }
+            if (!causeText.NullOrEmpty())
+                body += "\n\n" + causeText;
+            SpecUtil.SendDeathLetter(roleLabel, body);
         }
 
         // ── Serialization ──

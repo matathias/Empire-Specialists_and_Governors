@@ -224,6 +224,29 @@ namespace FactionColonies.Specialists
             Find.LetterStack.ReceiveLetter(label, bodyText, LetterDefOf.Death);
         }
 
+        /* The settlement comp whose roster (specialist/resident/governor) contains this pawn, or null.
+           Only called after SpecialistRoster.IsAssigned has confirmed the pawn is a member, so the
+           per-settlement scan runs rarely. */
+        public static WorldObjectComp_SettlementSpecialists FindOwningComp(Pawn pawn)
+        {
+            if (pawn is null) return null;
+            List<WorldSettlementFC> settlements = FindFC.Settlements;
+            if (settlements is null) return null;
+            foreach (WorldSettlementFC settlement in settlements)
+            {
+                WorldObjectComp_SettlementSpecialists comp =
+                    settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
+                if (comp is null) continue;
+                foreach (SettlementSpecialist s in comp.Specialists)
+                    if (s.pawn == pawn) return comp;
+                foreach (SettlementSpecialist r in comp.Residents)
+                    if (r.pawn == pawn) return comp;
+                // Match on identity, not HasGovernor: a just-killed governor is already !IsAlive.
+                if (comp.Governor is object && comp.Governor.pawn == pawn) return comp;
+            }
+            return null;
+        }
+
         /* Top-N skills label, optionally filtered to a role's skillWeights */
         public static string TopRoleSkillsLabel(Pawn pawn, SpecialistRoleDef role, int count = 2)
         {

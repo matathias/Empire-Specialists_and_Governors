@@ -12,13 +12,17 @@ namespace FactionColonies.Specialists
         public void OnBattleResolved(MilitaryOperation op, bool victory, BattleResult result)
         {
             if (op is null) return;
-            WorldSettlementFC settlement = op.aggressor?.homeSettlement ?? op.defender?.homeSettlement;
+            // Defense-only: the abstract roll only ever touches the settlement being defended. In an
+            // offensive op the player's settlement is the aggressor, so this resolves to the enemy
+            // (no specialists comp -> early return). Specialists play no part in offense.
+            WorldSettlementFC settlement = op.defender?.homeSettlement;
             if (settlement is null) return;
 
             WorldObjectComp_SettlementSpecialists comp =
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
             if (comp is null || comp.TotalCount == 0) return;
             if (comp.PawnsDeployedToBattle) return;
+            if (result is object && result.wasManualBattle) return; // only auto-resolved battles roll
 
             WorldObjectCompProperties_SettlementSpecialists props = comp.Props;
 
@@ -55,35 +59,27 @@ namespace FactionColonies.Specialists
 
             bool governorDied = comp.HasGovernor && Rand.Chance(govChance);
 
-            // Process specialist deaths
+            // Process deaths. NotifyMemberDied removes the roster entry and sends the letter before
+            // Kill, so the catch-all Pawn.Kill patch no-ops (the pawn is no longer assigned).
             foreach (SettlementSpecialist s in specToKill)
             {
                 Pawn pawn = s.pawn;
-                string roleLabel = s.role?.LabelCap ?? "Specialist";
-                comp.RemoveSpecialist(s);
+                comp.NotifyMemberDied(pawn, SpecDeathCause.AutoBattle);
                 pawn.Kill(null);
-                SpecUtil.SendDeathLetter(roleLabel,
-                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, roleLabel, settlement.Name));
             }
 
-            // Process resident deaths
             foreach (SettlementSpecialist r in residentsToKill)
             {
                 Pawn pawn = r.pawn;
-                comp.RemoveSpecialist(r);
+                comp.NotifyMemberDied(pawn, SpecDeathCause.AutoBattle);
                 pawn.Kill(null);
-                SpecUtil.SendDeathLetter("FCS_RoleResident".Translate(),
-                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, "FCS_RoleResident".Translate(), settlement.Name));
             }
 
-            // Process governor death
             if (governorDied)
             {
                 Pawn pawn = comp.Governor.pawn;
-                comp.RecallGovernor();
+                comp.NotifyMemberDied(pawn, SpecDeathCause.AutoBattle);
                 pawn.Kill(null);
-                SpecUtil.SendDeathLetter("FCS_RoleGovernor".Translate(),
-                    "FCS_LetterDeathAttack".Translate(pawn.LabelShort, "FCS_RoleGovernor".Translate(), settlement.Name));
             }
         }
     }

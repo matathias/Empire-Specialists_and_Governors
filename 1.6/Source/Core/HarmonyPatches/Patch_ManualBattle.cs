@@ -51,4 +51,28 @@ namespace FactionColonies.Specialists
             specComp.RecoverFromBattle();
         }
     }
+
+    /* Catch-all on Pawn.Kill — guarantees a death letter (and roster cleanup) whenever a roster
+       member dies for ANY reason. Auto-resolve deaths route through NotifyMemberDied directly and
+       remove the entry before Kill, so this no-ops for them (IsAssigned is already false). */
+    [HarmonyPatch(typeof(Pawn))]
+    [HarmonyPatch("Kill")]
+    public static class Patch_Kill_SpecialistDeath
+    {
+        static void Postfix(Pawn __instance, DamageInfo? dinfo, Hediff exactCulprit)
+        {
+            if (!SpecialistRoster.IsAssigned(__instance)) return; // O(1) fast reject
+            WorldObjectComp_SettlementSpecialists comp = SpecUtil.FindOwningComp(__instance);
+            if (comp is null) return;
+            SpecDeathCause cause = comp.PawnsDeployedToBattle
+                ? SpecDeathCause.ManualBattle
+                : SpecDeathCause.Other;
+            // Append the base-game cause of death only when a real one exists (otherwise the helper
+            // returns the redundant "<pawn> has died.", which our base letter line already says).
+            string causeText = (dinfo.HasValue || exactCulprit is object)
+                ? (string)HealthUtility.GetDiedLetterText(__instance, dinfo, exactCulprit)
+                : null;
+            comp.NotifyMemberDied(__instance, cause, causeText);
+        }
+    }
 }

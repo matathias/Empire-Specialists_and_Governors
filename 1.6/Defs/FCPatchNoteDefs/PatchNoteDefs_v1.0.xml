@@ -13,4 +13,19 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_1_0_1</defName>
+		<label>Update Specialist Death Handling</label>
+		<description>A couple changes to how specialist death is handled.</description>
+		<releaseDate>2026-06-27</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>The player now always receives a letter if a specialist dies, whether it was in battle or not.</li>
+		<li>The RNG roll for post-battle specialist death only runs for auto-defense battles</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
