@@ -28,4 +28,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_1_0_2</defName>
+		<label>Backend XML Update</label>
+		<description>Just an update of the xml patches; user-facing behavior shouldn&apos;t change.</description>
+		<releaseDate>2026-06-28</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Use PatchOperationConditional to patch orbital settlements instead of PatchOperationAdd with success=Always, which is outdated semantics</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
