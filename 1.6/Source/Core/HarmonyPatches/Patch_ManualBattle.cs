@@ -13,8 +13,16 @@ namespace FactionColonies.Specialists
     {
         static void Postfix(BattlefieldContext __instance, MilitaryOperation op)
         {
-            if (op?.defender?.homeSettlement is null) return;
-            WorldSettlementFC settlement = op.defender.homeSettlement;
+            if (op is null) return;
+            // Deploy the specialists of the settlement UNDER ATTACK (the one at the battle tile),
+            // not op.defender.homeSettlement -- auto-defender selection overwrites homeSettlement to
+            // the reinforcing settlement when a foreign squad defends, and that settlement's
+            // specialists are not present at this fight. Keying off ParentSettlement also keeps this
+            // in lockstep with Patch_EndAttack_RecoverSpecialists (which recovers via ParentSettlement),
+            // so a deployed roster is always recovered from the same comp. Null for external raid
+            // targets -> no deployment, matching recovery's early-out.
+            WorldSettlementFC settlement = __instance?.ParentSettlement;
+            if (settlement is null) return;
 
             WorldObjectComp_SettlementSpecialists specComp =
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();

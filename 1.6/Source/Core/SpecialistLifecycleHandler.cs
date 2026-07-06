@@ -12,10 +12,13 @@ namespace FactionColonies.Specialists
         public void OnBattleResolved(MilitaryOperation op, bool victory, BattleResult result)
         {
             if (op is null) return;
-            // Defense-only: the abstract roll only ever touches the settlement being defended. In an
-            // offensive op the player's settlement is the aggressor, so this resolves to the enemy
-            // (no specialists comp -> early return). Specialists play no part in offense.
-            WorldSettlementFC settlement = op.defender?.homeSettlement;
+            // Defense-only, and specific to the settlement actually under attack. The abstract death
+            // roll represents the enemy reaching the settlement's grounds, so it targets the ATTACKED
+            // settlement (op.targetObject) -- NOT op.defender.homeSettlement, which auto-defender
+            // selection overwrites to the reinforcing settlement when a foreign squad is sent to help.
+            // In an offensive op the target is an enemy WorldObject (not a WorldSettlementFC) -> null
+            // -> early return, so offense stays untouched.
+            WorldSettlementFC settlement = op.targetObject as WorldSettlementFC;
             if (settlement is null) return;
 
             WorldObjectComp_SettlementSpecialists comp =

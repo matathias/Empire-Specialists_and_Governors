@@ -42,4 +42,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_1_0_3</defName>
+		<label>Battle Fix</label>
+		<description>Fixes an issue where, after a battle, specialists from the wrong settlement could die.</description>
+		<releaseDate>2026-07-05</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Bugfix: when Settlement A is under attack and a squad from Settlement B is sent to defend, on battle resolution, a specialist from Settlement B could die, instead of A</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
