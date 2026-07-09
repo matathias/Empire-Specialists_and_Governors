@@ -78,6 +78,7 @@ namespace FactionColonies.Specialists
             int passed = 0, failed = 0, errors = 0, skipped = 0;
             var skipDetails = new List<string>();
             var failDetails = new List<string>();
+            var errorDetails = new List<string>();
             foreach (var (method, attr) in list)
             {
                 string testName = $"[{attr.Category}] {method.DeclaringType.Name}.{method.Name}";
@@ -104,6 +105,7 @@ namespace FactionColonies.Specialists
                     errors++;
                     var inner = ex is TargetInvocationException t ? t.InnerException : ex;
                     LogSG.Error($"ERROR: {testName} -- {inner.GetType().Name}: {inner.Message}");
+                    errorDetails.Add($"  ERROR: {testName} -- {inner.GetType().Name}: {inner.Message}");
                 }
             }
 
@@ -113,6 +115,10 @@ namespace FactionColonies.Specialists
             if (failDetails.Count > 0)
             {
                 LogSG.MessageForce("Failed tests:\n" + string.Join("\n", failDetails));
+            }
+            if (errorDetails.Count > 0)
+            {
+                LogSG.MessageForce("Errored tests:\n" + string.Join("\n", errorDetails));
             }
             if (skipDetails.Count > 0)
             {
