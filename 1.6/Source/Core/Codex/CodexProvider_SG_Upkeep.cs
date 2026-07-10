@@ -6,7 +6,7 @@ namespace FactionColonies.Specialists
 {
     /// <summary>
     /// Dynamic Codex provider for the Upkeep &amp; Supply entry. Shows each settlement's
-    /// current staff wage bill (GetUpkeepContribution, the sum of specialist and
+    /// current daily staff wage bill (GetDailyUpkeepContribution, the sum of specialist and
     /// governor silver upkeep), plus food/medicine satisfaction wherever the Routes &amp;
     /// Resources supply system is throttling bonuses (satisfaction below full).
     /// Settlements with no wage bill and full supply are omitted.
@@ -24,7 +24,7 @@ namespace FactionColonies.Specialists
                     s.GetComponent<WorldObjectComp_SettlementSpecialists>();
                 if (comp is null) continue;
 
-                double upkeep = comp.GetUpkeepContribution();
+                double upkeep = comp.GetDailyUpkeepContribution();
                 bool foodShort = comp.FoodSatisfaction < 0.999f;
                 bool medShort = comp.MedicineSatisfaction < 0.999f;
                 if (upkeep <= 0 && !foodShort && !medShort) continue;

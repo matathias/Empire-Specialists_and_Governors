@@ -40,7 +40,6 @@ namespace FactionColonies.Specialists
 
         public virtual void OnAssigned(WorldSettlementFC settlement, Pawn pawn) { }
         public virtual void OnRemoved(WorldSettlementFC settlement, Pawn pawn) { }
-        public virtual void OnTaxTick(WorldSettlementFC settlement) { }
         public virtual double ModifyStatBonus(FCStatDef stat, double baseValue) { return baseValue; }
 
         public virtual void ModifyDeathChances(WorldSettlementFC settlement, float skillScore,

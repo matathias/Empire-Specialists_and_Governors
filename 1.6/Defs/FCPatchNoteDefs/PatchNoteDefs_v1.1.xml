@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_1_1_0</defName>
+		<label>Update for Empire Refactored 1.6</label>
+		<description>Updates the mod to handle the new daily resource cadence introduced by Empire Refactored v1.6.</description>
+		<releaseDate>2026-07-09</releaseDate>
+		<patchNoteType>Minor</patchNoteType>
+		<patchNoteLines>
+		<li>Divide all specialist and governor costs by 5</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
+</Defs>

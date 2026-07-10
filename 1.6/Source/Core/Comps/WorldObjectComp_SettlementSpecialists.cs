@@ -628,7 +628,7 @@ namespace FactionColonies.Specialists
 
         // ── IProfitContributor ──
 
-        public double GetUpkeepContribution()
+        public double GetDailyUpkeepContribution()
         {
             double total = 0;
             foreach (SettlementSpecialist s in specialists)
@@ -638,14 +638,14 @@ namespace FactionColonies.Specialists
             return total;
         }
 
-        public string GetUpkeepContributionDesc()
+        public string GetDailyUpkeepContributionDesc()
         {
-            double total = GetUpkeepContribution();
+            double total = GetDailyUpkeepContribution();
             if (total <= 0) return null;
             return $"+{Math.Round(total, 2)} - {"FCS_UpkeepSettlementLine".Translate()}";
         }
 
-        public double GetIncomeContribution() { return 0; }
-        public string GetIncomeContributionDesc() { return null; }
+        public double GetDailyIncomeContribution() { return 0; }
+        public string GetDailyIncomeContributionDesc() { return null; }
     }
 }

@@ -9,8 +9,8 @@
     <isGeneralist>true</isGeneralist>
     <providesBaselineProduction>true</providesBaselineProduction>
     <baselineProductionValue>0.03125</baselineProductionValue>
-    <baseUpkeepSilver>2</baseUpkeepSilver>
-    <skillUpkeepScaling>0.1</skillUpkeepScaling>
+    <baseUpkeepSilver>0.4</baseUpkeepSilver>
+    <skillUpkeepScaling>0.02</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Shooting</skill><weight>0.08</weight></li>
       <li><skill>Melee</skill><weight>0.08</weight></li>
@@ -32,8 +32,8 @@
     <defName>Farmer</defName>
     <label>farmer</label>
     <description>A skilled agriculturalist who tends crops and boosts food production at the settlement.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Plants</skill><weight>1.0</weight></li>
       <li><skill>Animals</skill><weight>0.3</weight></li>
@@ -48,8 +48,8 @@
     <defName>Rancher</defName>
     <label>rancher</label>
     <description>An animal handler who raises livestock, increasing the settlement's animal product output.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Animals</skill><weight>1.0</weight></li>
       <li><skill>Plants</skill><weight>0.3</weight></li>
@@ -64,8 +64,8 @@
     <defName>Miner</defName>
     <label>miner</label>
     <description>A seasoned excavator who extracts ore and stone, boosting mining output at the settlement.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Mining</skill><weight>1.0</weight></li>
       <li><skill>Construction</skill><weight>0.3</weight></li>
@@ -80,8 +80,8 @@
     <defName>Forester</defName>
     <label>forester</label>
     <description>A woodsman skilled in sustainable timber harvesting, increasing logging production.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Plants</skill><weight>1.0</weight></li>
       <li><skill>Construction</skill><weight>0.3</weight></li>
@@ -96,8 +96,8 @@
     <defName>Weaponsmith</defName>
     <label>weaponsmith</label>
     <description>A master forger of arms who increases the settlement's weapons production.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Crafting</skill><weight>1.0</weight></li>
       <li><skill>Shooting</skill><weight>0.3</weight></li>
@@ -112,8 +112,8 @@
     <defName>Tailor</defName>
     <label>tailor</label>
     <description>A textile artisan who crafts clothing and armor, boosting the settlement's apparel output.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Crafting</skill><weight>1.0</weight></li>
       <li><skill>Artistic</skill><weight>0.3</weight></li>
@@ -128,8 +128,8 @@
     <defName>Apothecary</defName>
     <label>apothecary</label>
     <description>A healer and herbalist who produces medicine and can tend to the settlement's wounded.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Medicine</skill><weight>1.0</weight></li>
       <li><skill>Intellectual</skill><weight>0.3</weight></li>
@@ -150,8 +150,8 @@
     <defName>Researcher</defName>
     <label>researcher</label>
     <description>A dedicated scholar who advances the settlement's research output through rigorous study.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Intellectual</skill><weight>1.0</weight></li>
     </skillWeights>
@@ -165,8 +165,8 @@
     <defName>Engineer</defName>
     <label>engineer</label>
     <description>A technical specialist who maintains power infrastructure and improves energy production.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Construction</skill><weight>1.0</weight></li>
       <li><skill>Crafting</skill><weight>0.3</weight></li>
@@ -181,8 +181,8 @@
     <defName>Chemist</defName>
     <label>chemist</label>
     <description>A chemical specialist who refines fuel compounds, increasing the settlement's chemfuel output.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Crafting</skill><weight>0.7</weight></li>
       <li><skill>Intellectual</skill><weight>0.5</weight></li>
@@ -197,8 +197,8 @@
     <defName>Physicist</defName>
     <label>physicist</label>
     <description>A theoretical physicist who pushes the boundaries of gravitic technology research.</description>
-    <baseUpkeepSilver>5</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Intellectual</skill><weight>1.0</weight></li>
       <li><skill>Construction</skill><weight>0.3</weight></li>
@@ -213,8 +213,8 @@
     <defName>Commander</defName>
     <label>commander</label>
     <description>A military leader who drills troops and improves the combat effectiveness of the settlement's forces, while also reducing casualties during attacks.</description>
-    <baseUpkeepSilver>8</baseUpkeepSilver>
-    <skillUpkeepScaling>0.4</skillUpkeepScaling>
+    <baseUpkeepSilver>1.6</baseUpkeepSilver>
+    <skillUpkeepScaling>0.08</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Shooting</skill><weight>0.6</weight></li>
       <li><skill>Melee</skill><weight>0.6</weight></li>
@@ -235,8 +235,8 @@
     <defName>Quartermaster</defName>
     <label>quartermaster</label>
     <description>A logistics officer who optimizes supply chains, increasing the silver value of tithes collected.</description>
-    <baseUpkeepSilver>6</baseUpkeepSilver>
-    <skillUpkeepScaling>0.3</skillUpkeepScaling>
+    <baseUpkeepSilver>1.2</baseUpkeepSilver>
+    <skillUpkeepScaling>0.06</skillUpkeepScaling>
     <skillWeights>
       <li><skill>Social</skill><weight>0.8</weight></li>
       <li><skill>Intellectual</skill><weight>0.4</weight></li>

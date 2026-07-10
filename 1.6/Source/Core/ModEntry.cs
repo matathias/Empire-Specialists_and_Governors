@@ -37,7 +37,7 @@ namespace FactionColonies.Specialists
         public static float skillTaperFactorBand2 = 1f;   // levels 11-20
         public static float skillTaperFactorBand3 = 0.5f; // levels 21+
 
-        // Supply chain integration: resource needs per tax period
+        // Supply chain integration: per-day resource needs consumed by SupplyChain.
         public static float foodPerSpecialist = 0.3f;
         public static float foodPerResident = 0.15f;
         public static float medicinePerSpecialist = 0.1f;

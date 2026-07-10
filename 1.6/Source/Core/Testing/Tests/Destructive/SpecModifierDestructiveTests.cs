@@ -100,7 +100,7 @@ namespace FactionColonies.Specialists
         }
 
         [EmpireDestructiveTest("SG.Destructive.Modifiers")]
-        public static void GetUpkeepContribution_SumsSpecialistsAndGovernor()
+        public static void GetDailyUpkeepContribution_SumsSpecialistsAndGovernor()
         {
             FactionFC f = DestructiveTestUtil.RequireFaction();
             WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
@@ -118,9 +118,9 @@ namespace FactionColonies.Specialists
                 comp.AssignGovernor(p2, focus);
 
                 double expected = SpecUtil.SpecialistUpkeep(comp.Specialists[0]) + SpecUtil.GovernorUpkeep(comp.Governor);
-                TestAssert.AreEqual(expected, comp.GetUpkeepContribution());
-                TestAssert.GreaterThan(comp.GetUpkeepContribution(), 0.0, "upkeep should be positive");
-                DestructiveTestUtil.AssertEmpireInvariants(f, "GetUpkeepContribution_SumsSpecialistsAndGovernor");
+                TestAssert.AreEqual(expected, comp.GetDailyUpkeepContribution());
+                TestAssert.GreaterThan(comp.GetDailyUpkeepContribution(), 0.0, "upkeep should be positive");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "GetDailyUpkeepContribution_SumsSpecialistsAndGovernor");
             }
             finally
             {
@@ -130,7 +130,7 @@ namespace FactionColonies.Specialists
         }
 
         [EmpireDestructiveTest("SG.Destructive.Modifiers")]
-        public static void GetUpkeepContribution_Empty_Zero()
+        public static void GetDailyUpkeepContribution_Empty_Zero()
         {
             FactionFC f = DestructiveTestUtil.RequireFaction();
             WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
@@ -139,8 +139,8 @@ namespace FactionColonies.Specialists
             if (comp is null) TestAssert.Skip("No specialists comp");
             try
             {
-                TestAssert.AreEqual(0.0, comp.GetUpkeepContribution());
-                DestructiveTestUtil.AssertEmpireInvariants(f, "GetUpkeepContribution_Empty_Zero");
+                TestAssert.AreEqual(0.0, comp.GetDailyUpkeepContribution());
+                DestructiveTestUtil.AssertEmpireInvariants(f, "GetDailyUpkeepContribution_Empty_Zero");
             }
             finally
             {

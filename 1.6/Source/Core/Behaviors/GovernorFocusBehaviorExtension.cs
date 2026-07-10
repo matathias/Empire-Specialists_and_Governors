@@ -40,7 +40,6 @@ namespace FactionColonies.Specialists
 
         public virtual void OnFocusActivated(WorldSettlementFC settlement) { }
         public virtual void OnFocusDeactivated(WorldSettlementFC settlement) { }
-        public virtual void OnTaxTick(WorldSettlementFC settlement) { }
         public virtual double ModifyStatBonus(FCStatDef stat, double baseValue) { return baseValue; }
         public virtual void ExposeData() { }
 
