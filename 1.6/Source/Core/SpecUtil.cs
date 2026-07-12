@@ -49,7 +49,7 @@ namespace FactionColonies.Specialists
             foreach (SpecialistRoleDef role in DefDatabase<SpecialistRoleDef>.AllDefs)
             {
                 if (role.isGeneralist) continue;
-                if (RoleAtCap(role, roster)) continue;
+                if (roster is object && roster.RoleAtCap(role)) continue;
                 float score = role.ComputeSkillScore(pawn);
                 if (score > bestScore
                     || (score == bestScore && best is object && string.CompareOrdinal(role.defName, best.defName) < 0))
@@ -59,15 +59,6 @@ namespace FactionColonies.Specialists
                 }
             }
             return best ?? SpecialistRoleDefOf.Generalist;
-        }
-
-        private static bool RoleAtCap(SpecialistRoleDef role, WorldObjectComp_SettlementSpecialists roster)
-        {
-            if (roster is null || role.maxPerSettlement <= 0) return false;
-            int existing = 0;
-            foreach (SettlementSpecialist s in roster.Specialists)
-                if (s.role == role) existing++;
-            return existing >= role.maxPerSettlement;
         }
 
         /* The governor focus the pawn fits best; falls back to Balanced. */

@@ -82,6 +82,20 @@ namespace FactionColonies.Specialists
 
         // ── Core roster operations ──
 
+        /// <summary>
+        /// True if the role defines a per-settlement cap and this settlement is already at it. A pawn
+        /// assigned to a capped role is rejected without being placed, so callers that must not drop the
+        /// pawn should fall back to a Resident (null role) when this returns true.
+        /// </summary>
+        public bool RoleAtCap(SpecialistRoleDef role)
+        {
+            if (role is null || role.maxPerSettlement <= 0) return false;
+            int existing = 0;
+            foreach (SettlementSpecialist s in specialists)
+                if (s.role == role) existing++;
+            return existing >= role.maxPerSettlement;
+        }
+
         public void AssignSpecialist(Pawn pawn, SpecialistRoleDef role)
         {
             if (pawn is null) return;
@@ -95,19 +109,13 @@ namespace FactionColonies.Specialists
                 return;
             }
 
-            if (role is object && role.maxPerSettlement > 0)
+            if (RoleAtCap(role))
             {
-                int existing = 0;
-                foreach (SettlementSpecialist s in specialists)
-                    if (s.role == role) existing++;
-                if (existing >= role.maxPerSettlement)
-                {
-                    LogSG.Message($"Cannot assign {role.defName}: max per settlement reached");
-                    Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
-                        pawn.LabelShort, role.LabelCap, Settlement.Name, role.maxPerSettlement),
-                        MessageTypeDefOf.RejectInput);
-                    return;
-                }
+                LogSG.Message($"Cannot assign {role.defName}: max per settlement reached");
+                Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
+                    pawn.LabelShort, role.LabelCap, Settlement.Name, role.maxPerSettlement),
+                    MessageTypeDefOf.RejectInput);
+                return;
             }
 
             SettlementSpecialist entry = new SettlementSpecialist(pawn, role);
