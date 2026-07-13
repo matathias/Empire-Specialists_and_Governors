@@ -532,6 +532,20 @@ namespace FactionColonies.Specialists
         {
             base.CompTick();
             if (Find.TickManager.TicksGame % GenDate.TicksPerDay != 0) return;
+            DoDailySkillTick();
+        }
+
+        /// <summary>
+        /// Daily skill growth: raise each member's weighted role/focus skills, then dirty the
+        /// skill-score caches and the settlement stat cache so the grown levels feed production/stat/
+        /// upkeep values in the same session. Without the final <see cref="InvalidateAll"/> the cached
+        /// scores stay frozen at assignment-time values until the next reload.
+        /// </summary>
+        public void DoDailySkillTick()
+        {
+            // Only roles/foci grow; residents (null role) don't, so skip the no-op loops and the
+            // needless daily stat-cache invalidation when nothing can grow.
+            if (specialists.Count == 0 && governor is null) return;
 
             float xp = SpecUtil.XPPerDay();
 
@@ -561,6 +575,10 @@ namespace FactionColonies.Specialists
                 if (social is object && !social.TotallyDisabled)
                     social.Learn(xp, true);
             }
+
+            // Surface the grown levels this session: dirty every member's cached SkillScore and the
+            // settlement stat cache.
+            InvalidateAll();
         }
 
         // ── Caravan gizmos ──
