@@ -16,6 +16,8 @@ namespace FactionColonies.Specialists
         {
             RoleBehaviorExt_Defense ext = Ext<RoleBehaviorExt_Defense>();
             float reduction = skillScore * ext.baseReductionPerSkillPoint;
+            // Professional Army: each defense specialist's casualty reduction is doubled.
+            if (SpecUtil.HasTrait(SpecPolicyDefOf.FCSprofessionalArmy)) reduction *= 2f;
             float floor = ext.minimumDeathChance;
 
             govChance = Math.Max(floor, govChance - reduction);

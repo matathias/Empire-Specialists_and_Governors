@@ -25,8 +25,7 @@
 		<factionLevelRequirement>3</factionLevelRequirement>
 		<techLevelRequirement>Undefined</techLevelRequirement>
 		<positiveEffects>
-			<li>- Governor Social skill scaling widened (x0.75-2.0 instead of x0.5-1.5)</li>
-			<li>- Governor focus bonus increased to x2.0 (from x1.5)</li>
+			<li>- Governor focus bonuses are stronger and scale harder with skill</li>
 			<li>- Specialists gain 50% more XP</li>
 		</positiveEffects>
 		<negativeEffects>
@@ -37,7 +36,7 @@
 	<FactionColonies.FCPolicyDef>
 		<defName>FCSprofessionalArmy</defName>
 		<label>Professional Army</label>
-		<desc>Defense specialists are trained career soldiers. Their military contributions are doubled and they provide greater protection to civilians.</desc>
+		<desc>Commanders are trained career soldiers. Their military contributions are doubled and they provide greater protection to civilians.</desc>
 		<category>Trait</category>
 		<factionLevelRequirement>0</factionLevelRequirement>
 		<techLevelRequirement>Undefined</techLevelRequirement>
@@ -45,35 +44,31 @@
 			<li>pacifist</li>
 		</incompatiblePolicies>
 		<positiveEffects>
-			<li>- Defense specialists contribute 2x military level</li>
-			<li>- Death reduction per defender doubled (4% instead of 2%)</li>
+			<li>- Commanders contribute 2x military level</li>
+			<li>- Casualty reduction from each Commander is doubled</li>
 		</positiveEffects>
 	</FactionColonies.FCPolicyDef>
 
+	<!-- Retired: Patrician (dual governor focus) was removed. The def is kept only so old saves
+	     that adopted it still deserialize; its Undefined category hides it from every policy picker,
+	     and GameComponent_SpecialistRoster strips it from any faction that had it. -->
 	<FactionColonies.FCPolicyDef>
 		<defName>FCSpatrician</defName>
 		<label>Patrician</label>
-		<desc>Governors are trained to manage diverse economic portfolios. They can focus on two resources simultaneously at full effectiveness.</desc>
-		<category>Trait</category>
-		<factionLevelRequirement>2</factionLevelRequirement>
-		<techLevelRequirement>Undefined</techLevelRequirement>
-		<positiveEffects>
-			<li>- Governors can set 2 focus resources (both at full x1.5 bonus)</li>
-		</positiveEffects>
-		<negativeEffects>
-		</negativeEffects>
+		<desc>This trait has been removed.</desc>
+		<category>Undefined</category>
 	</FactionColonies.FCPolicyDef>
 
 	<FactionColonies.FCPolicyDef>
 		<defName>FCSgarrisonDoctrine</defName>
 		<label>Garrison Doctrine</label>
-		<desc>A standing garrison doctrine that keeps defense specialists safe and boosts settlement morale through visible security.</desc>
+		<desc>A standing garrison doctrine that keeps Commanders safe and boosts settlement morale through visible security.</desc>
 		<category>Trait</category>
 		<factionLevelRequirement>0</factionLevelRequirement>
 		<techLevelRequirement>Undefined</techLevelRequirement>
 		<positiveEffects>
-			<li>- Defense specialist death chance halved (5% instead of 10%)</li>
-			<li>- Defense specialists boost settlement happiness</li>
+			<li>- Commanders die half as often when a settlement is attacked</li>
+			<li>- Commanders boost settlement happiness</li>
 		</positiveEffects>
 		<negativeEffects>
 		</negativeEffects>

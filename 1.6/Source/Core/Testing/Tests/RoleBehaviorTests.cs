@@ -53,5 +53,21 @@ namespace FactionColonies.Specialists
             TestAssert.AreEqual(0.20, spec);
             TestAssert.AreEqual(0.30, res);
         }
+
+        // Professional Army doubles each defender's reduction. Mirrors the live trait state (the
+        // suite runs in a game where the trait is usually absent, so factor is 1) so the wiring is
+        // verified without needing to toggle the faction's policy.
+        [EmpireTest("SG.Behavior")]
+        public static void ModifyDeathChances_ProfessionalArmy_ScalesReduction()
+        {
+            RoleBehavior_Defense b = Behavior(0.02f, 0f);
+            float gov = 1.0f, spec = 1.0f, res = 1.0f; // start high so nothing clamps
+            b.ModifyDeathChances(null, 5f, ref gov, ref spec, ref res);
+            float factor = SpecUtil.HasTrait(SpecPolicyDefOf.FCSprofessionalArmy) ? 2f : 1f;
+            float expected = 1.0f - 5f * 0.02f * factor;
+            TestAssert.AreEqual(expected, gov);
+            TestAssert.AreEqual(expected, spec);
+            TestAssert.AreEqual(expected, res);
+        }
     }
 }

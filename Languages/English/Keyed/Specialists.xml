@@ -126,6 +126,7 @@
 	<FCS_StatWorkerBonus>+{0} workers ({1} residents)</FCS_StatWorkerBonus>
 	<FCS_StatEffectLine>+{0} - {1}: {2}</FCS_StatEffectLine>
 	<FCS_HealRateLine>+{0} heal rate - Medicine: {1}</FCS_HealRateLine>
+	<FCS_GarrisonHappinessLine>+{0} happiness - Garrison Doctrine</FCS_GarrisonHappinessLine>
 
 	<!-- Resource Modifier Descriptions -->
 	<FCS_ResSpecialists>Specialists ({0})</FCS_ResSpecialists>
@@ -226,6 +227,9 @@
 	<!-- Orbital recall/removal drop-pod delivery ({0} = count, {1} = source settlement, {2} = destination colony) -->
 	<FCS_LetterRecallDropPodLabel>Specialists delivered by drop pod</FCS_LetterRecallDropPodLabel>
 	<FCS_LetterRecallDropPodText>{0} member(s) recalled from {1} will arrive by drop pod at {2}.</FCS_LetterRecallDropPodText>
+
+	<!-- Retired trait cleanup -->
+	<FCS_PatricianRemoved>The Patrician faction trait has been removed and was cleared from your faction.</FCS_PatricianRemoved>
 
 	<!-- Codex (dynamic provider strings; {0}/{1}/{2} are numbered args, never faction tokens) -->
 	<FCS_CodexYes>yes</FCS_CodexYes>

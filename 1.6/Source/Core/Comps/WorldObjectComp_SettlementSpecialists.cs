@@ -725,6 +725,10 @@ namespace FactionColonies.Specialists
             if (stat == FCStatDefOf.mercHealRateMultiplier)
                 value += SpecUtil.MedicalHealRateBonus(specialists, governor) * satisfaction;
 
+            // Garrison Doctrine: Commander specialists boost settlement happiness
+            if (stat == FCStatDefOf.happinessGainedBase)
+                value += SpecUtil.GarrisonHappinessBonus(specialists) * satisfaction;
+
             return value;
         }
 
@@ -758,6 +762,16 @@ namespace FactionColonies.Specialists
                 {
                     if (sb.Length > 0) sb.Append("\n");
                     sb.Append("FCS_HealRateLine".Translate(Math.Round(healBonus, 2)));
+                }
+            }
+
+            if (stat == FCStatDefOf.happinessGainedBase)
+            {
+                double garrisonBonus = SpecUtil.GarrisonHappinessBonus(specialists);
+                if (garrisonBonus > 0)
+                {
+                    if (sb.Length > 0) sb.Append("\n");
+                    sb.Append("FCS_GarrisonHappinessLine".Translate(Math.Round(garrisonBonus, 2)));
                 }
             }
 

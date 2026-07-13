@@ -100,6 +100,13 @@ namespace FactionColonies.Specialists
             return bonus;
         }
 
+        /* Meritocratic amplifies a governor's focus effectiveness: the bonus portion (the part above
+           1.0) of every governor multiplier is scaled up. */
+        public static double GovernorEffectiveness()
+        {
+            return HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 1.25 : 1.0;
+        }
+
         public static double GovernorMultiplierForResource(SettlementGovernor g, ResourceTypeDef resourceDef)
         {
             if (g is null || g.focus is null || !g.HasUsableSkills) return 1.0;
@@ -118,7 +125,7 @@ namespace FactionColonies.Specialists
             if (g.focus.providesBaselineProduction)
                 multiplier *= (1.0 + g.focus.baselineProductionValue * score);
 
-            return multiplier;
+            return 1.0 + (multiplier - 1.0) * GovernorEffectiveness();
         }
 
         public static double SpecialistStatBonus(SettlementSpecialist s, FCStatDef stat)
@@ -130,6 +137,29 @@ namespace FactionColonies.Specialists
             {
                 if (mod.stat == stat)
                     bonus += mod.value * score;
+            }
+
+            // Professional Army: Commander specialists contribute double military level.
+            if (bonus != 0 && stat == FCStatDefOf.militaryBaseLevel
+                && s.role == SpecialistRoleDefOf.Commander
+                && HasTrait(SpecPolicyDefOf.FCSprofessionalArmy))
+                bonus *= 2.0;
+
+            return bonus;
+        }
+
+        /* Garrison Doctrine: settlement happiness gained per Commander specialist, scaled by skill.
+           Tunable; kept worker-count-independent (per-specialist skill scaling only). */
+        public const double GarrisonHappinessPerSkill = 0.05;
+
+        public static double GarrisonHappinessBonus(IEnumerable<SettlementSpecialist> specialists)
+        {
+            if (specialists is null || !HasTrait(SpecPolicyDefOf.FCSgarrisonDoctrine)) return 0;
+            double bonus = 0;
+            foreach (SettlementSpecialist s in specialists)
+            {
+                if (s.role != SpecialistRoleDefOf.Commander || !s.HasUsableSkills) continue;
+                bonus += s.SkillScore * GarrisonHappinessPerSkill;
             }
             return bonus;
         }
@@ -144,7 +174,7 @@ namespace FactionColonies.Specialists
                 if (mod.stat == stat)
                     mult += mod.value * score;
             }
-            return mult;
+            return 1.0 + (mult - 1.0) * GovernorEffectiveness();
         }
 
         /* Unified upkeep: base silver plus a skill-scaled portion, where the global Scaling factor
@@ -169,7 +199,7 @@ namespace FactionColonies.Specialists
 
         public static bool HasTrait(FCPolicyDef def)
         {
-            return def is object && FindFC.PolicyManager.HasTrait(def);
+            return def is object && (FindFC.PolicyManager?.HasTrait(def) ?? false);
         }
 
         public static float XPPerDay()

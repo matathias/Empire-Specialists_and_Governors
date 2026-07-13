@@ -100,8 +100,10 @@ namespace FactionColonies.Specialists
             {
                 SettlementGovernor g = SpecTestHelper.Governor(p,
                     SpecTestHelper.Focus(SkillDefOf.Intellectual, 0.4f, food, 0.01f));
-                // score = 10*0.4 (Intellectual) + 10*1.0 (Social) = 14; mult = 1 + 0.01*14 = 1.14
-                TestAssert.AreEqual(1.14, SpecUtil.GovernorMultiplierForResource(g, food));
+                // score = 10*0.4 (Intellectual) + 10*1.0 (Social) = 14; raw mult = 1 + 0.01*14 = 1.14,
+                // then the bonus portion is scaled by governor effectiveness (Meritocracy amplifies it).
+                double expected = 1.0 + 0.14 * SpecUtil.GovernorEffectiveness();
+                TestAssert.AreEqual(expected, SpecUtil.GovernorMultiplierForResource(g, food));
             });
         }
 
@@ -157,8 +159,9 @@ namespace FactionColonies.Specialists
             {
                 SettlementGovernor g = SpecTestHelper.Governor(p,
                     SpecTestHelper.FocusWithStat(anyStat, 0.01, SkillDefOf.Intellectual, 0.4f));
-                // score 14; mult = 1 + 0.01*14 = 1.14
-                TestAssert.AreEqual(1.14, SpecUtil.GovernorStatMultiplier(g, anyStat));
+                // score 14; raw mult = 1 + 0.01*14 = 1.14, bonus portion scaled by governor effectiveness.
+                double expected = 1.0 + 0.14 * SpecUtil.GovernorEffectiveness();
+                TestAssert.AreEqual(expected, SpecUtil.GovernorStatMultiplier(g, anyStat));
             });
         }
 

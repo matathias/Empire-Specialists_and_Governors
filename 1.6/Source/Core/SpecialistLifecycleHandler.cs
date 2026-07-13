@@ -56,7 +56,7 @@ namespace FactionColonies.Specialists
             float specChance = victory ? props.specialistDeathChanceVictory : props.specialistDeathChanceDefeat;
             float residentChance = victory ? props.residentDeathChanceVictory : props.residentDeathChanceDefeat;
 
-            // Let Defense specialist behaviors modify chances
+            // Let Commander specialist behaviors modify chances
             foreach (SettlementSpecialist s in comp.Specialists)
             {
                 if (s.role is null || !s.HasUsableSkills) continue;
@@ -67,11 +67,16 @@ namespace FactionColonies.Specialists
             }
 
             // Snapshot lists before mutation
+            bool garrison = SpecUtil.HasTrait(SpecPolicyDefOf.FCSgarrisonDoctrine);
             List<SettlementSpecialist> specToKill = new List<SettlementSpecialist>();
             foreach (SettlementSpecialist s in comp.Specialists)
             {
                 if (!s.IsAlive) continue;
-                if (Rand.Chance(specChance))
+                // Garrison Doctrine: Commander specialists themselves die half as often.
+                float chance = specChance;
+                if (garrison && s.role == SpecialistRoleDefOf.Commander)
+                    chance *= 0.5f;
+                if (Rand.Chance(chance))
                     specToKill.Add(s);
             }
 
