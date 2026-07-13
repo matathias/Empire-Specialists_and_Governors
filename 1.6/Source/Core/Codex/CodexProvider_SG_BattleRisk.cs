@@ -8,7 +8,7 @@ namespace FactionColonies.Specialists
     /// Dynamic Codex provider for the Battle Risk entry. Mirrors the death-chance
     /// calculation in SpecialistLifecycleHandler.OnBattleResolved: it starts from the
     /// per-tier base chances on the comp's properties, then lets each stationed
-    /// specialist's behavior (e.g. the defensive role) reduce them, and reports the
+    /// specialist's behavior (e.g. the Commander role) reduce them, and reports the
     /// resulting victory/defeat chances per settlement. Settlements with no stationed
     /// colonists are omitted.
     /// </summary>

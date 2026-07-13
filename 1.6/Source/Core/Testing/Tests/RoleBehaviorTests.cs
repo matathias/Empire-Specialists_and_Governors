@@ -1,9 +1,9 @@
 namespace FactionColonies.Specialists
 {
     /// <summary>
-    /// Defense role behavior: death-chance reduction math. No game required. RoleBehavior_Defense
+    /// Commander role behavior: death-chance reduction math. No game required. RoleBehavior_Defense
     /// reads its config from the <c>extension</c> field, so it can be exercised in isolation (the
-    /// settlement arg is unused by the Defense override).
+    /// settlement arg is unused by the Commander role's override).
     /// </summary>
     public static class RoleBehaviorTests
     {
@@ -54,7 +54,7 @@ namespace FactionColonies.Specialists
             TestAssert.AreEqual(0.30, res);
         }
 
-        // Professional Army doubles each defender's reduction. Mirrors the live trait state (the
+        // Professional Army doubles each Commander's reduction. Mirrors the live trait state (the
         // suite runs in a game where the trait is usually absent, so factor is 1) so the wiring is
         // verified without needing to toggle the faction's policy.
         [EmpireTest("SG.Behavior")]

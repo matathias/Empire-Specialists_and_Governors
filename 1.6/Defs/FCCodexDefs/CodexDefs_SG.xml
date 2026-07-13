@@ -145,9 +145,9 @@ The sidebar shows each settlement's current staff wage bill, and - if Routes &am
 
 The risk depends on two things. First, the [b]tier[/b]: residents are the most exposed, specialists less so, and a governor the best protected. Second, the [b]outcome[/b]: losing a battle is far deadlier to your staff than winning one, though even a victory carries some risk.
 
-A defensively-minded specialist lowers the death chance for [i]everyone[/i] stationed at the settlement, scaling with their skill - a strong defender can make a settlement markedly safer to staff.
+A Commander lowers the death chance for [i]everyone[/i] stationed at the settlement, scaling with their skill - a strong Commander can make a settlement markedly safer to staff.
 
-The sidebar shows the current death chances at each settlement, by tier and outcome, after any defensive reduction.</description>
+The sidebar shows the current death chances at each settlement, by tier and outcome, after any Commander reduction.</description>
         <category>CodexCat_Specialists</category>
         <displayOrder>70</displayOrder>
         <dynamicProvider>FactionColonies.Specialists.CodexProvider_SG_BattleRisk</dynamicProvider>

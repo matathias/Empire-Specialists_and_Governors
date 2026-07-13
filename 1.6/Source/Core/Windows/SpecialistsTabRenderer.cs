@@ -1032,7 +1032,7 @@ namespace FactionColonies.Specialists
                     else
                         statSb.Append(TextUtil.AdditiveBonusLine(val, mod.stat.LabelCap, separator: " "));
                 }
-                // Append death reduction if role has defense behavior
+                // Append death reduction if role has the Commander's defense behavior
                 AppendDeathReduction(statSb, s.role, score);
                 if (statSb.Length > 0) return statSb.ToString();
             }

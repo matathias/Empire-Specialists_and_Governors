@@ -586,7 +586,7 @@ namespace FactionColonies.Specialists
                     }
                 }
 
-                // Death reduction from defense behavior
+                // Death reduction from the Commander role's behavior
                 RoleBehaviorExt_Defense defExt = entry.roleDef.GetModExtension<RoleBehaviorExt_Defense>();
                 if (defExt is object)
                 {
