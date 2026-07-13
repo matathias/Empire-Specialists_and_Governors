@@ -34,7 +34,7 @@ namespace FactionColonies.Specialists
         }
     }
 
-    public abstract class SpecialistRoleBehavior : IExposable
+    public abstract class SpecialistRoleBehavior
     {
         [Unsaved] public SpecialistRoleBehaviorExtension extension;
 
@@ -44,8 +44,6 @@ namespace FactionColonies.Specialists
 
         public virtual void ModifyDeathChances(WorldSettlementFC settlement, float skillScore,
             ref float govChance, ref float specChance, ref float residentChance) { }
-
-        public virtual void ExposeData() { }
 
         protected T Ext<T>() where T : SpecialistRoleBehaviorExtension
         {

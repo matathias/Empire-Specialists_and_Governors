@@ -24,7 +24,6 @@ namespace FactionColonies.Specialists
         private const float AccentBarWidth = 3f;
         private const float margin = 10f;
         private static readonly Color SelectedAccent = new Color(0.3f, 0.7f, 0.3f, 0.5f);
-        private static readonly Color DefenseColor = new Color(0.9f, 0.4f, 0.4f);
         private static readonly Color GovColor = new Color(0.85f, 0.75f, 0.5f);
 
         public override Vector2 InitialSize
@@ -53,7 +52,7 @@ namespace FactionColonies.Specialists
 
         private bool IsEligible(Pawn pawn)
         {
-            if (pawn == null) return false;
+            if (pawn is null) return false;
             if (!pawn.RaceProps.Humanlike) return false;
             if (pawn.Downed) return false;
             if (pawn.Dead) return false;
@@ -146,18 +145,22 @@ namespace FactionColonies.Specialists
             // Line 1: Name
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(textX, rowRect.y + 2f, textW, 18f), entry.pawn.LabelShort);
+            // Reserve the checkbox column on the right so no text line draws under it.
+            Rect nameRect = new Rect(textX, rowRect.y + 2f, textW, 18f);
+            Widgets.Label(nameRect, TextUtil.ClampWithEllipsis(nameRect, entry.pawn.LabelShort, CheckboxSize + 8f));
 
             // Line 2: Identity (title, age, xenotype)
             Text.Font = GameFont.Tiny;
             Text.WordWrap = false;
             GUI.color = Color.gray;
             string identity = SpecialistsTabRenderer.BuildIdentityLine(entry.pawn);
-            Widgets.Label(new Rect(textX, rowRect.y + 18f, textW, 16f), identity);
+            Rect identityRect = new Rect(textX, rowRect.y + 18f, textW, 16f);
+            Widgets.Label(identityRect, TextUtil.ClampWithEllipsis(identityRect, identity, CheckboxSize + 8f));
 
             // Line 3: Skills
             string skills = GetTopSkills(entry.pawn, 3);
-            Widgets.Label(new Rect(textX, rowRect.y + 34f, textW, 16f), skills);
+            Rect skillsRect = new Rect(textX, rowRect.y + 34f, textW, 16f);
+            Widgets.Label(skillsRect, TextUtil.ClampWithEllipsis(skillsRect, skills, CheckboxSize + 8f));
             GUI.color = Color.white;
 
             // Line 4: Bonus preview + checkbox

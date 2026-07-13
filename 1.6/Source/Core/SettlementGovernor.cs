@@ -54,8 +54,8 @@ namespace FactionColonies.Specialists
 
         public void SetFocus(GovernorFocusDef newFocus, WorldSettlementFC settlement)
         {
-            if (behavior is object && settlement is object)
-                behavior.OnFocusDeactivated(settlement);
+            if (Behavior is object && settlement is object)
+                Behavior.OnFocusDeactivated(settlement);
 
             focus = newFocus;
             behaviorResolved = false;

@@ -183,7 +183,6 @@ namespace FactionColonies.Specialists
             EmpireRegistry.Register(_lifecycleHandler);
             EmpireCacheUtil.RegisterCacheInvalidator("Specialists", () =>
             {
-                SpecialistsCache.InvalidateCache();
                 // Re-register after InvalidateAll clears all registries
                 EmpireRegistry.Register(_lifecycleHandler);
             });

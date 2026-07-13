@@ -107,6 +107,64 @@ namespace FactionColonies.Specialists
             });
         }
 
+        // The death-letter title is role-specific (Governor/Resident/role name), not a fixed
+        // "Specialist killed" -- guards the FCS_LetterMemberKilled {0} placeholder wiring.
+        [EmpireTest("SG.Formula")]
+        public static void DeathLetterTitle_CarriesRoleLabel()
+        {
+            if (Current.Game is null) TestAssert.Skip("No game / translation unavailable");
+            string governorTitle = "FCS_LetterMemberKilled".Translate("Governor").Resolve();
+            string residentTitle = "FCS_LetterMemberKilled".Translate("Resident").Resolve();
+            TestAssert.IsTrue(governorTitle.Contains("Governor"),
+                "Death-letter title should embed the role label");
+            TestAssert.IsTrue(residentTitle.Contains("Resident"),
+                "Death-letter title should embed the role label");
+            TestAssert.IsFalse(governorTitle == residentTitle,
+                "Title must vary by role, not be a fixed 'Specialist killed'");
+        }
+
+        // A focus defining BOTH a per-resource bonus and baseline production folds them additively,
+        // not multiplicatively (which would scale superlinearly).
+        [EmpireTest("SG.Formula")]
+        public static void GovernorMultiplier_ResourceAndBaseline_FoldAdditively()
+        {
+            ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
+            if (food is null) TestAssert.Skip("RTD_Food not loaded");
+            Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
+            if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+            SpecTestHelper.WithStandardTaper(() =>
+            {
+                GovernorFocusDef focus = SpecTestHelper.Focus(SkillDefOf.Intellectual, 0.4f, food, 0.01f);
+                focus.providesBaselineProduction = true;
+                focus.baselineProductionValue = 0.02f;
+                SettlementGovernor g = SpecTestHelper.Governor(p, focus);
+                // score = 10*0.4 + 10*1.0 (Social) = 14; additive bonus = (0.01 + 0.02) * 14 = 0.42.
+                // Old multiplicative folding would give 1.14 * 1.28 = 1.4592 (bonus 0.4592) -- superlinear.
+                double expected = 1.0 + (0.01 + 0.02) * 14.0 * SpecUtil.GovernorEffectiveness();
+                TestAssert.AreEqual(expected, SpecUtil.GovernorMultiplierForResource(g, food));
+            });
+        }
+
+        // Baseline-only focus is unchanged by the additive reconciliation (multiplier starts at 1.0).
+        [EmpireTest("SG.Formula")]
+        public static void GovernorMultiplier_BaselineOnly_Unchanged()
+        {
+            ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
+            if (food is null) TestAssert.Skip("RTD_Food not loaded");
+            Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
+            if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+            SpecTestHelper.WithStandardTaper(() =>
+            {
+                GovernorFocusDef focus = SpecTestHelper.Focus(SkillDefOf.Intellectual, 0.4f, null, 0f);
+                focus.providesBaselineProduction = true;
+                focus.baselineProductionValue = 0.02f;
+                SettlementGovernor g = SpecTestHelper.Governor(p, focus);
+                // score = 14; bonus = 0.02 * 14 = 0.28.
+                double expected = 1.0 + 0.02 * 14.0 * SpecUtil.GovernorEffectiveness();
+                TestAssert.AreEqual(expected, SpecUtil.GovernorMultiplierForResource(g, food));
+            });
+        }
+
         [EmpireTest("SG.Formula")]
         public static void GovernorScore_SocialWeightBumpedToOne()
         {

@@ -17,6 +17,7 @@ namespace FactionColonies.Specialists
         private int subTab;
         private Vector2 scrollPosSpec;
         private Vector2 scrollPosRes;
+        private Vector2 scrollPosGovRes;
         private Vector2 scrollPosFocus;
 
         // --- UI constants ---
@@ -52,12 +53,8 @@ namespace FactionColonies.Specialists
         private static readonly Color GovGreyedOut = new Color(1f, 1f, 1f, 0.35f);
         private static readonly Color GovGreyedOutText = new Color(0.5f, 0.5f, 0.5f, 0.35f);
 
-        private static readonly string[] tabLabels =
-        {
-            "FCS_SubGovernor".Translate(),
-            "FCS_SubSpecialists".Translate(),
-            "FCS_SubResidents".Translate()
-        };
+        // Resolved per window-open (in PreOpenWindow) so a mid-session language change is picked up.
+        private string[] tabLabels;
         private static readonly Color[] tabColors =
         {
             new Color(0.85f, 0.75f, 0.5f),
@@ -73,9 +70,17 @@ namespace FactionColonies.Specialists
         public void PreOpenWindow(WorldSettlementFC settlement)
         {
             uiSettlement = settlement;
+            tabLabels = new[]
+            {
+                (string)"FCS_SubGovernor".Translate(),
+                (string)"FCS_SubSpecialists".Translate(),
+                (string)"FCS_SubResidents".Translate()
+            };
             subTab = 0;
             scrollPosSpec = Vector2.zero;
             scrollPosRes = Vector2.zero;
+            scrollPosGovRes = Vector2.zero;
+            scrollPosFocus = Vector2.zero;
         }
 
         public void OnTabSwitch()
@@ -83,6 +88,8 @@ namespace FactionColonies.Specialists
             subTab = 0;
             scrollPosSpec = Vector2.zero;
             scrollPosRes = Vector2.zero;
+            scrollPosGovRes = Vector2.zero;
+            scrollPosFocus = Vector2.zero;
         }
 
         public void DrawOverviewTab(Rect boundingBox)
@@ -226,7 +233,7 @@ namespace FactionColonies.Specialists
             // Skill score
             GUI.color = hasGov ? Color.white : GovGreyedOut;
             Text.Font = GameFont.Small;
-            string scoreLabel = "FCS_GovSocial".Translate(hasGov ? gov.SkillScore.ToString("F1") : "\u2014");
+            string scoreLabel = "FCS_GovSkillScore".Translate(hasGov ? gov.SkillScore.ToString("F1") : "\u2014");
             Widgets.Label(new Rect(textX, lineY, textW, 22f), scoreLabel);
             lineY += 24f;
 
@@ -237,7 +244,7 @@ namespace FactionColonies.Specialists
             Widgets.Label(upkeepRect, upkeepText);
             if (hasGov && gov.focus is object)
             {
-                double mult = SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
+                double mult = SpecUtil.GovernorUpkeepMultiplier;
                 string upkeepTip = "FCS_TooltipUpkeepGovFlat".Translate(
                     gov.focus.baseUpkeepSilver.ToString("F1"),
                     gov.SkillScore.ToString("F1"),
@@ -491,7 +498,7 @@ namespace FactionColonies.Specialists
             if (hasGov)
             {
                 string multSummary = BuildGovMultiplierSummary();
-                if (multSummary != null)
+                if (multSummary is object)
                 {
                     Text.Anchor = TextAnchor.MiddleRight;
                     GUI.color = new Color(0.85f, 0.75f, 0.5f);
@@ -522,7 +529,7 @@ namespace FactionColonies.Specialists
             float scrollAreaH = rect.yMax - y;
 
             Rect scrollOuter = new Rect(x, y, w, scrollAreaH);
-            Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosRes, contentH);
+            Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosGovRes, contentH);
             float colW = scrollView.width / 2f;
             int leftCount = (resources.Count + 1) / 2;
 
@@ -588,7 +595,7 @@ namespace FactionColonies.Specialists
                 if (hasGov && Math.Abs(bonus) > 0.001)
                 {
                     string tip = BuildGovResourceTooltip(res, gov);
-                    if (tip != null) TooltipHandler.TipRegion(rowRect, tip);
+                    if (tip is object) TooltipHandler.TipRegion(rowRect, tip);
                 }
 
                 Text.Anchor = TextAnchor.UpperLeft;
@@ -793,7 +800,7 @@ namespace FactionColonies.Specialists
 
                     // Contribution tooltip
                     string contribTip = BuildContributionTooltip(s);
-                    if (contribTip != null)
+                    if (contribTip is object)
                     {
                         TooltipHandler.TipRegion(contribRect, contribTip);
                     }
@@ -811,7 +818,6 @@ namespace FactionColonies.Specialists
             float btnX = rowRect.xMax - btnAreaW;
             float btnY = rowRect.y + 10f;
 
-            string roleBtnLabel = s.role is object ? s.role.LabelCap : "FCS_RoleResident".Translate();
             if (Widgets.ButtonText(new Rect(btnX, btnY, RoleBtnWidth, BtnHeight), "FCS_BtnRole".Translate()))
             {
                 ShowRoleChangeMenu(s);
@@ -833,7 +839,7 @@ namespace FactionColonies.Specialists
                 parts.Add(title);
             }
             parts.Add("FCS_IdentityAge".Translate(pawn.ageTracker.AgeBiologicalYears));
-            if (ModsConfig.BiotechActive && pawn.genes?.Xenotype != null)
+            if (ModsConfig.BiotechActive && pawn.genes?.Xenotype is object)
             {
                 parts.Add(pawn.genes.XenotypeLabelCap);
             }
@@ -870,18 +876,6 @@ namespace FactionColonies.Specialists
                 sb.Append("FCS_TooltipContribBest".Translate(bestBonus.ToString("F2"), bestLabel));
             }
             return sb.Length > 0 ? sb.ToString() : null;
-        }
-
-        private string BuildUpkeepTooltip(SettlementSpecialist s)
-        {
-            if (s.pawn is null || s.role is null) return null;
-            double upkeep = SpecUtil.SpecialistUpkeep(s);
-            return "FCS_TooltipUpkeepSpec".Translate(
-                s.role.baseUpkeepSilver.ToString("F1"),
-                s.SkillScore.ToString("F1"),
-                s.role.skillUpkeepScaling.ToString("F2"),
-                FCSSettings.scalingFactor.ToString("F2"),
-                upkeep.ToString("F1"));
         }
 
         private Color GetBestResourceColor(SettlementSpecialist s)
@@ -1075,15 +1069,18 @@ namespace FactionColonies.Specialists
                 if (s.role is null || !s.HasUsableSkills) continue;
                 SpecialistRoleBehavior behavior = s.Behavior;
                 if (behavior is null) continue;
-                float prevSpec = specChance;
+                float prevGov = govChance, prevSpec = specChance, prevRes = resChance;
                 behavior.ModifyDeathChances(uiSettlement, s.SkillScore,
                     ref govChance, ref specChance, ref resChance);
-                float reduction = prevSpec - specChance;
+                // The same reduction is subtracted from all three chances but each is floor-clamped
+                // independently, so the largest of the three deltas is the un-clamped reduction.
+                float reduction = Mathf.Max(prevGov - govChance, prevSpec - specChance, prevRes - resChance);
                 if (reduction > 0.0001f)
                 {
                     tipSb.Append("FCS_DeathChanceTipReduction".Translate(
                         s.pawn.LabelShort,
-                        Math.Round(reduction * 100, 1).ToString("F1")));
+                        Math.Round(reduction * 100, 1).ToString("F1"),
+                        s.role.LabelCap));
                 }
             }
             reductionTip = tipSb.ToString();

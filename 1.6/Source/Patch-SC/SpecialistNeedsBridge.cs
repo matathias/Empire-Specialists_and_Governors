@@ -27,43 +27,35 @@ namespace FactionColonies.Specialists.SC
         private WorldObjectComp_SettlementSpecialists Specialists => specialistsComp ??
                                                                      (specialistsComp = parent.GetComponent<WorldObjectComp_SettlementSpecialists>());
 
-        private static readonly List<NeedPenalty> foodPenalties = new List<NeedPenalty>();
-        private static readonly List<NeedPenalty> medicinePenalties = new List<NeedPenalty>();
+        private static FCStatDef happinessLostStat;
+        private static FCStatDef HappinessLostStat => happinessLostStat ??
+            (happinessLostStat = DefDatabase<FCStatDef>.GetNamedSilentFail("happinessLostBase"));
 
-        private static void EnsurePenaltiesBuilt()
+        // Built fresh per collection so the food/medicine penalty sliders take effect live (no restart).
+        private static List<NeedPenalty> BuildPenalties(float penaltyPerUnit)
         {
-            if (foodPenalties.Count == 0)
+            FCStatDef stat = HappinessLostStat;
+            if (stat is null) return null;
+            return new List<NeedPenalty>
             {
-                FCStatDef happinessLost = DefDatabase<FCStatDef>.GetNamedSilentFail("happinessLostBase");
-                if (happinessLost != null)
+                new NeedPenalty
                 {
-                    foodPenalties.Add(new NeedPenalty
-                    {
-                        stat = happinessLost,
-                        penaltyPerUnit = FCSSettings.foodPenaltyPerUnit,
-                        label = "FCSRR_happinesspenalty".Translate()
-                    });
-                    medicinePenalties.Add(new NeedPenalty
-                    {
-                        stat = happinessLost,
-                        penaltyPerUnit = FCSSettings.medicinePenaltyPerUnit,
-                        label = "FCSRR_happinesspenalty".Translate()
-                    });
+                    stat = stat,
+                    penaltyPerUnit = penaltyPerUnit,
+                    label = "FCSRR_happinesspenalty".Translate()
                 }
-            }
+            };
         }
 
         public void CollectNeeds(WorldSettlementFC settlement, List<NeedEntry> needs)
         {
             var spec = Specialists;
-            if (spec == null) return;
+            if (spec is null) return;
 
             int activeCount = spec.SpecialistCount + (spec.HasGovernor ? 1 : 0);
             int residentCount = spec.ResidentCount;
 
             if (activeCount + residentCount <= 0) return;
-
-            EnsurePenaltiesBuilt();
 
             // Food need: specialists + governor eat more, residents eat less
             double foodAmount = activeCount * FCSSettings.foodPerSpecialist
@@ -76,7 +68,7 @@ namespace FactionColonies.Specialists.SC
                     label = "FCSRR_FoodNeed".Translate(),
                     resource = ResourceTypeDefOf.RTD_Food,
                     amount = foodAmount,
-                    penalties = foodPenalties
+                    penalties = BuildPenalties(FCSSettings.foodPenaltyPerUnit)
                 });
             }
 
@@ -92,7 +84,7 @@ namespace FactionColonies.Specialists.SC
                         label = "FCSRR_MedicineNeed".Translate(),
                         resource = ResourceTypeDefOf.RTD_Medicine,
                         amount = medAmount,
-                        penalties = medicinePenalties
+                        penalties = BuildPenalties(FCSSettings.medicinePenaltyPerUnit)
                     });
                 }
             }
@@ -101,7 +93,7 @@ namespace FactionColonies.Specialists.SC
         public void OnNeedsResolved(List<NeedResolution> resolvedNeeds)
         {
             var spec = Specialists;
-            if (spec == null) return;
+            if (spec is null) return;
 
             foreach (NeedResolution r in resolvedNeeds)
             {
@@ -112,7 +104,7 @@ namespace FactionColonies.Specialists.SC
             }
 
             WorldSettlementFC ws = parent as WorldSettlementFC;
-            if (ws != null)
+            if (ws is object)
             {
                 ws.InvalidateStatCache();
             }

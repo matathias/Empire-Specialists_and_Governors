@@ -45,7 +45,7 @@ namespace FactionColonies.Specialists
         private static readonly Color SeparatorColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
         private static readonly Color CurrentHighlight = new Color(1f, 1f, 1f, 0.08f);
 
-        private static readonly string[] tabLabels =
+        private readonly string[] tabLabels =
         {
             "FCS_SubSpecialists".Translate(),
             "FCS_SubGovernor".Translate()
@@ -87,7 +87,8 @@ namespace FactionColonies.Specialists
             this.pendingSpecialists = pendingSpecialists;
             this.pendingRoleCounts = pendingRoleCounts;
             this.governorFocusOnly = false;
-            this.selectedTab = isCurrentlyGovernor ? 1 : 0;
+            // Only default to the governor tab if it will actually be shown.
+            this.selectedTab = (isCurrentlyGovernor && allowGovernor) ? 1 : 0;
 
             draggable = true;
             doCloseX = true;
@@ -269,8 +270,9 @@ namespace FactionColonies.Specialists
 
             float listTop = TitleHeight + 4f;
 
-            // Tab bar (skip if governorFocusOnly)
-            if (!governorFocusOnly)
+            // Tab bar (skip if governorFocusOnly, or if the governor tab is disallowed — then only the
+            // specialist list shows, with no empty second tab).
+            if (!governorFocusOnly && allowGovernor)
             {
                 float tabAreaW = inRect.width - TabMarginRight;
                 float tabW = tabAreaW / 2f;

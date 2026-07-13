@@ -34,14 +34,13 @@ namespace FactionColonies.Specialists
         }
     }
 
-    public abstract class GovernorFocusBehavior : IExposable
+    public abstract class GovernorFocusBehavior
     {
         [Unsaved] public GovernorFocusBehaviorExtension extension;
 
         public virtual void OnFocusActivated(WorldSettlementFC settlement) { }
         public virtual void OnFocusDeactivated(WorldSettlementFC settlement) { }
         public virtual double ModifyStatBonus(FCStatDef stat, double baseValue) { return baseValue; }
-        public virtual void ExposeData() { }
 
         protected T Ext<T>() where T : GovernorFocusBehaviorExtension
         {

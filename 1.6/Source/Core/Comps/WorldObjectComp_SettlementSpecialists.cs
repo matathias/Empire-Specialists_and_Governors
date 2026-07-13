@@ -446,11 +446,17 @@ namespace FactionColonies.Specialists
                 if (pawn.Faction != FindFC.EmpireFaction)
                     pawn.SetFaction(FindFC.EmpireFaction);
 
-                IntVec3 loc = CellFinder.RandomClosewalkCellNear(map.Center, map, 15);
+                // Pick a standable, reachable cell so pawns don't spawn inside walls/structures.
+                // GenSpawn.Spawn already registers the pawn with mapPawns (idempotent), so no explicit RegisterPawn.
+                IntVec3 loc;
+                if (!CellFinder.TryFindRandomCellNear(map.Center, map, 15,
+                        c => c.Standable(map) && !c.Fogged(map)
+                             && map.reachability.CanReachMapEdge(c, TraverseParms.For(pawn)),
+                        out loc))
+                    loc = map.Center;
                 GenSpawn.Spawn(pawn, loc, map);
                 if (pawn.drafter is null)
                     pawn.drafter = new Pawn_DraftController(pawn);
-                map.mapPawns.RegisterPawn(pawn);
 
                 defenseLord.AddPawn(pawn);
                 deployedPawns.Add(pawn);

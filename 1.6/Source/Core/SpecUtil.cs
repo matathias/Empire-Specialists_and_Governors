@@ -122,8 +122,10 @@ namespace FactionColonies.Specialists
                 }
             }
 
+            // Baseline folds additively too, so per-resource and baseline contributions compose
+            // consistently (a focus defining both won't scale superlinearly).
             if (g.focus.providesBaselineProduction)
-                multiplier *= (1.0 + g.focus.baselineProductionValue * score);
+                multiplier += g.focus.baselineProductionValue * score;
 
             return 1.0 + (multiplier - 1.0) * GovernorEffectiveness();
         }
@@ -232,16 +234,19 @@ namespace FactionColonies.Specialists
             return bonus;
         }
 
+        /* Governor upkeep (wage) is Meritocratic ×3, otherwise ×2. Shared so the tooltip breakdown
+           and the applied value can't drift. */
+        public static double GovernorUpkeepMultiplier => HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
+
         public static double GovernorUpkeep(SettlementGovernor g)
         {
             if (g is null || g.focus is null) return 0; // no focus -> no bonuses and no wage
-            double mult = HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
-            return ComputeUpkeep(g.focus.baseUpkeepSilver, g.SkillScore, g.focus.skillUpkeepScaling) * mult;
+            return ComputeUpkeep(g.focus.baseUpkeepSilver, g.SkillScore, g.focus.skillUpkeepScaling) * GovernorUpkeepMultiplier;
         }
 
         public static void SendDeathLetter(string roleLabel, string bodyText)
         {
-            string label = "FCS_LetterSpecialistKilled".Translate();
+            string label = "FCS_LetterMemberKilled".Translate(roleLabel);
             Find.LetterStack.ReceiveLetter(label, bodyText, LetterDefOf.Death);
         }
 
