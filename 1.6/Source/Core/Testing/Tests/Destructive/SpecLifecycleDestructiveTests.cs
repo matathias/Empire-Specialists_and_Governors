@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using RimWorld;
+using RimWorld.Planet;
 using Verse;
 
 namespace FactionColonies.Specialists
@@ -139,6 +142,75 @@ namespace FactionColonies.Specialists
                     props.governorDeathChanceDefeat = savedGovernor;
                 }
                 SpecDestructiveTestUtil.CleanupRoster(compA);
+                DestructiveTestUtil.SafeRemoveSettlement(a);
+            }
+        }
+
+        /* DESTRUCTIVE regression guard: removing a settlement must disband its roster --
+           every member cleared from the static SpecialistRoster (no stale thingIDNumbers) and the
+           survivors returned to the player in a caravan. Without the ISettlementListener handler the
+           pawns leak as invisible Empire-faction world pawns and the static roster stays stale. */
+        [EmpireDestructiveTest("SG.Destructive.Lifecycle")]
+        public static void OnSettlementRemoved_DisbandsRosterAndClearsStaticRoster()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+
+            WorldSettlementFC a = null;
+            WorldObjectComp_SettlementSpecialists comp = null;
+            Pawn specPawn = null, resPawn = null, govPawn = null;
+            try
+            {
+                a = DestructiveTestUtil.CreateTransientSettlement();
+                if (a is null) TestAssert.Skip("No valid tile");
+                comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
+                if (comp is null) TestAssert.Skip("No specialists comp");
+                if (comp.MaxSpecialists < 1) TestAssert.Skip("MaxSpecialists too low");
+
+                SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+                GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+                if (role is null || focus is null) TestAssert.Skip("Missing role/focus defs");
+
+                specPawn = SpecDestructiveTestUtil.MakeAssignable(6);
+                resPawn = SpecDestructiveTestUtil.MakeAssignable(6);
+                govPawn = SpecDestructiveTestUtil.MakeAssignable(6);
+                if (specPawn is null || resPawn is null || govPawn is null) TestAssert.Skip("No pawn");
+
+                comp.AssignSpecialist(specPawn, role);
+                comp.AssignSpecialist(resPawn, null); // resident
+                comp.AssignGovernor(govPawn, focus);
+                if (comp.TotalCount != 3) TestAssert.Skip("Roster setup failed");
+
+                new SpecialistLifecycleHandler().OnSettlementRemoved(a);
+
+                // Roster emptied and every member cleared from the static roster (the core leak guard).
+                TestAssert.AreEqual(0, comp.TotalCount);
+                TestAssert.IsFalse(comp.HasGovernor, "governor should be cleared");
+                TestAssert.IsFalse(SpecialistRoster.IsAssigned(specPawn), "specialist not in static roster");
+                TestAssert.IsFalse(SpecialistRoster.IsAssigned(resPawn), "resident not in static roster");
+                TestAssert.IsFalse(SpecialistRoster.IsGovernor(govPawn), "governor not in static roster");
+                TestAssert.IsFalse(SpecialistRoster.IsAssigned(govPawn), "ex-governor not in static roster");
+
+                // Survivors returned to the player.
+                TestAssert.IsTrue(specPawn.Faction == Faction.OfPlayer, "specialist returned to player");
+                TestAssert.IsTrue(govPawn.Faction == Faction.OfPlayer, "governor returned to player");
+
+                DestructiveTestUtil.AssertEmpireInvariants(f, "OnSettlementRemoved_DisbandsRosterAndClearsStaticRoster");
+            }
+            finally
+            {
+                // The disband forms a caravan of the survivors at the tile; destroy it so the pawns
+                // don't linger, then clear any static-roster residue and remove the settlement.
+                if (a is object)
+                {
+                    List<Caravan> caravans = new List<Caravan>(Find.WorldObjects.Caravans);
+                    foreach (Caravan c in caravans)
+                        if (c is object && !c.Destroyed && c.Tile == a.Tile)
+                            c.Destroy();
+                }
+                SpecialistRoster.Recall(specPawn);
+                SpecialistRoster.Recall(resPawn);
+                SpecialistRoster.Recall(govPawn);
+                SpecDestructiveTestUtil.CleanupRoster(comp);
                 DestructiveTestUtil.SafeRemoveSettlement(a);
             }
         }

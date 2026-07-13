@@ -218,7 +218,11 @@
 	<FCS_LetterDeathAttack>{0} ({1}) was killed in the attack on {2}.</FCS_LetterDeathAttack>
 	<FCS_LetterDeathDefending>{0} ({1}) died defending {2}.</FCS_LetterDeathDefending>
 	<FCS_LetterDeathGeneric>{0} ({1}) of {2} has died.</FCS_LetterDeathGeneric>
-	
+
+	<!-- Roster disbanded on settlement removal ({0} = survivor count, {1} = settlement name) -->
+	<FCS_LetterRosterDisbandedLabel>Roster disbanded</FCS_LetterRosterDisbandedLabel>
+	<FCS_LetterRosterDisbandedText>{0} member(s) of the {1} roster returned in a caravan after the settlement was lost.</FCS_LetterRosterDisbandedText>
+
 	<!-- Codex (dynamic provider strings; {0}/{1}/{2} are numbered args, never faction tokens) -->
 	<FCS_CodexYes>yes</FCS_CodexYes>
 	<FCS_CodexNone>none</FCS_CodexNone>

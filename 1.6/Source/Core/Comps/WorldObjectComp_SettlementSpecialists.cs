@@ -311,6 +311,68 @@ namespace FactionColonies.Specialists
                 false);
         }
 
+        /// <summary>
+        /// Disband the entire roster when the settlement is removed (abandoned or lost). Clears every
+        /// member from the static SpecialistRoster -- otherwise their thingIDNumbers stay assigned for
+        /// the rest of the session -- and returns the survivors to the player in a single caravan.
+        /// Called from SpecialistLifecycleHandler.OnSettlementRemoved, before the comp is destroyed
+        /// with its WorldObject.
+        /// </summary>
+        public void DisbandRosterOnRemoval()
+        {
+            if (specialists.Count == 0 && residents.Count == 0 && governor is null) return;
+
+            // Recall EVERY member (dead included) from the static roster so no stale thingIDNumber
+            // survives, and collect the living for delivery.
+            List<Pawn> survivors = new List<Pawn>();
+            foreach (SettlementSpecialist s in specialists)
+            {
+                if (s.pawn is null) continue;
+                SpecialistRoster.Recall(s.pawn);
+                if (s.IsAlive) survivors.Add(s.pawn);
+            }
+            foreach (SettlementSpecialist r in residents)
+            {
+                if (r.pawn is null) continue;
+                SpecialistRoster.Recall(r.pawn);
+                if (r.IsAlive) survivors.Add(r.pawn);
+            }
+            if (governor is object)
+            {
+                if (governor.Behavior is object)
+                    governor.Behavior.OnFocusDeactivated(Settlement);
+                if (governor.pawn is object)
+                {
+                    SpecialistRoster.Recall(governor.pawn);
+                    if (governor.IsAlive) survivors.Add(governor.pawn);
+                }
+            }
+
+            specialists.Clear();
+            residents.Clear();
+            governor = null;
+
+            // Return survivors to the player as ONE caravan at the settlement tile.
+            if (survivors.Count > 0)
+            {
+                foreach (Pawn pawn in survivors)
+                {
+                    if (pawn.Spawned) pawn.DeSpawn();
+                    pawn.SetFaction(Faction.OfPlayer);
+                    if (!pawn.IsWorldPawn())
+                        Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+                }
+                CaravanMaker.MakeCaravan(survivors, Faction.OfPlayer, Settlement.Tile, false);
+
+                Find.LetterStack.ReceiveLetter(
+                    "FCS_LetterRosterDisbandedLabel".Translate(),
+                    "FCS_LetterRosterDisbandedText".Translate(survivors.Count, Settlement.Name),
+                    LetterDefOf.NeutralEvent);
+            }
+
+            LogSG.Message($"Disbanded roster of {Settlement.Name} on removal ({survivors.Count} survivor(s) returned)");
+        }
+
         private void InvalidateAll()
         {
             foreach (SettlementSpecialist s in specialists) s.DirtySkillScore();
