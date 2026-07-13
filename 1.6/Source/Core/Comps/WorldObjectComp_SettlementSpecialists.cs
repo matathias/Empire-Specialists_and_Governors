@@ -183,7 +183,7 @@ namespace FactionColonies.Specialists
             specialists.Remove(entry);
             residents.Remove(entry);
             SpecialistRoster.Recall(pawn);
-            SpawnPawnInCaravan(pawn);
+            DeliverRecalledPawn(pawn);
             LogSG.Message($"Recalled {pawn.LabelShort} from {Settlement.Name}");
             InvalidateAll();
         }
@@ -197,7 +197,7 @@ namespace FactionColonies.Specialists
             SpecialistRoster.Recall(pawn);
             governor = null;
             if (pawn is object)
-                SpawnPawnInCaravan(pawn);
+                DeliverRecalledPawn(pawn);
             LogSG.Message($"Recalled governor from {Settlement.Name}");
             InvalidateAll();
         }
@@ -297,26 +297,63 @@ namespace FactionColonies.Specialists
             return result;
         }
 
-        private void SpawnPawnInCaravan(Pawn pawn)
+        private void DeliverRecalledPawn(Pawn pawn)
         {
             if (pawn is null) return;
-            if (pawn.Spawned) pawn.DeSpawn();
-            pawn.SetFaction(Faction.OfPlayer);
-            if (!pawn.IsWorldPawn())
-                Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
-            CaravanMaker.MakeCaravan(
-                new List<Pawn> { pawn },
-                Faction.OfPlayer,
-                Settlement.Tile,
-                false);
+            DeliverPawnsToPlayer(new List<Pawn> { pawn });
+        }
+
+        /// <summary>
+        /// Return recalled/released pawns to the player, layer-aware: a caravan at the settlement tile
+        /// on caravan-capable layers (surface), or a drop pod to the player's home colony on layers
+        /// that can't form caravans (orbit) so the pawns are never stranded. The pawns are normalized
+        /// to player-faction world pawns first; DropThingsNear -> MakeDropPodAt then removes each from
+        /// WorldPawns on landing, releasing the KeepForever hold.
+        /// </summary>
+        private void DeliverPawnsToPlayer(List<Pawn> pawns)
+        {
+            if (pawns is null || pawns.Count == 0) return;
+
+            foreach (Pawn pawn in pawns)
+            {
+                if (pawn.Spawned) pawn.DeSpawn();
+                pawn.SetFaction(Faction.OfPlayer);
+                if (!pawn.IsWorldPawn())
+                    Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+            }
+
+            if (Settlement.Tile.LayerDef.canFormCaravans)
+            {
+                CaravanMaker.MakeCaravan(pawns, Faction.OfPlayer, Settlement.Tile, false);
+                return;
+            }
+
+            // Non-caravan layer (orbit): drop-pod to the player's home colony, with a letter since the
+            // pawns land off-screen.
+            Map map = FindFC.TaxMap;
+            if (map is object)
+            {
+                IntVec3 cell = DropCellFinder.TradeDropSpot(map);
+                DropPodUtility.DropThingsNear(cell, map, pawns, 110, false, false, false, false);
+                Find.LetterStack.ReceiveLetter(
+                    "FCS_LetterRecallDropPodLabel".Translate(),
+                    "FCS_LetterRecallDropPodText".Translate(pawns.Count, Settlement.Name, map.Parent.Label),
+                    LetterDefOf.PositiveEvent);
+                return;
+            }
+
+            // No player home map at all: last-resort caravan so the pawns are never lost.
+            LogSG.Warning($"DeliverPawnsToPlayer: no player home map; forming caravan at {Settlement.Name} tile as last resort");
+            CaravanMaker.MakeCaravan(pawns, Faction.OfPlayer, Settlement.Tile, false);
         }
 
         /// <summary>
         /// Disband the entire roster when the settlement is removed (abandoned or lost). Clears every
         /// member from the static SpecialistRoster -- otherwise their thingIDNumbers stay assigned for
-        /// the rest of the session -- and returns the survivors to the player in a single caravan.
-        /// Called from SpecialistLifecycleHandler.OnSettlementRemoved, before the comp is destroyed
-        /// with its WorldObject.
+        /// the rest of the session -- and returns the survivors to the player (caravan on the surface,
+        /// drop pod from orbit; see <see cref="DeliverPawnsToPlayer"/>). Called from
+        /// SpecialistLifecycleHandler.OnSettlementRemoved, before the comp is destroyed with its
+        /// WorldObject.
         /// </summary>
         public void DisbandRosterOnRemoval()
         {
@@ -352,17 +389,11 @@ namespace FactionColonies.Specialists
             residents.Clear();
             governor = null;
 
-            // Return survivors to the player as ONE caravan at the settlement tile.
+            // Return survivors to the player (layer-aware) and mark the settlement-loss event. The
+            // delivery may be a drop pod (orbit), so the disband letter stays delivery-agnostic.
             if (survivors.Count > 0)
             {
-                foreach (Pawn pawn in survivors)
-                {
-                    if (pawn.Spawned) pawn.DeSpawn();
-                    pawn.SetFaction(Faction.OfPlayer);
-                    if (!pawn.IsWorldPawn())
-                        Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
-                }
-                CaravanMaker.MakeCaravan(survivors, Faction.OfPlayer, Settlement.Tile, false);
+                DeliverPawnsToPlayer(survivors);
 
                 Find.LetterStack.ReceiveLetter(
                     "FCS_LetterRosterDisbandedLabel".Translate(),

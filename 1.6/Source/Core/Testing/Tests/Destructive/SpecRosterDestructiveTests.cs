@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimWorld.Planet;
 using Verse;
 
 namespace FactionColonies.Specialists
@@ -284,6 +285,50 @@ namespace FactionColonies.Specialists
             }
             finally
             {
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(s);
+            }
+        }
+
+        /* DESTRUCTIVE regression guard for H5: recall now routes through the layer-aware
+           DeliverPawnsToPlayer. On a surface settlement (caravan-capable layer) the refactor must
+           still form a player caravan at the settlement tile -- the orbital drop-pod branch can't be
+           exercised here (transient settlements are surface-only) and is verified manually. */
+        [EmpireDestructiveTest("SG.Destructive.Roster")]
+        public static void RecallSpecialist_SurfaceFormsCaravan()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
+            if (s is null) TestAssert.Skip("No valid tile");
+            WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) TestAssert.Skip("No specialists comp");
+            if (!s.Tile.LayerDef.canFormCaravans) TestAssert.Skip("Transient settlement is not on a caravan-capable layer");
+            SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+            if (role is null) TestAssert.Skip("No SpecialistRoleDef loaded");
+            Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+            if (p is null) TestAssert.Skip("No pawn");
+            try
+            {
+                comp.AssignSpecialist(p, role);
+                SettlementSpecialist entry = comp.Specialists[0];
+                comp.RecallSpecialist(entry);
+
+                TestAssert.AreEqual(0, comp.SpecialistCount);
+                TestAssert.IsFalse(SpecialistRoster.IsAssigned(p), "recalled pawn should leave the roster");
+
+                // The surface delivery path must still form a player caravan carrying the pawn.
+                Caravan caravan = Find.WorldObjects.Caravans.FirstOrDefault(
+                    c => c is object && !c.Destroyed && c.Tile == s.Tile && c.PawnsListForReading.Contains(p));
+                TestAssert.IsTrue(caravan is object, "recall on a surface settlement should form a caravan carrying the pawn");
+
+                DestructiveTestUtil.AssertEmpireInvariants(f, "RecallSpecialist_SurfaceFormsCaravan");
+            }
+            finally
+            {
+                List<Caravan> caravans = new List<Caravan>(Find.WorldObjects.Caravans);
+                foreach (Caravan c in caravans)
+                    if (c is object && !c.Destroyed && c.Tile == s.Tile)
+                        c.Destroy();
                 SpecDestructiveTestUtil.CleanupRoster(comp);
                 DestructiveTestUtil.SafeRemoveSettlement(s);
             }

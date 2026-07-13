@@ -221,7 +221,11 @@
 
 	<!-- Roster disbanded on settlement removal ({0} = survivor count, {1} = settlement name) -->
 	<FCS_LetterRosterDisbandedLabel>Roster disbanded</FCS_LetterRosterDisbandedLabel>
-	<FCS_LetterRosterDisbandedText>{0} member(s) of the {1} roster returned in a caravan after the settlement was lost.</FCS_LetterRosterDisbandedText>
+	<FCS_LetterRosterDisbandedText>{0} member(s) of the {1} roster were evacuated after the settlement was lost.</FCS_LetterRosterDisbandedText>
+
+	<!-- Orbital recall/removal drop-pod delivery ({0} = count, {1} = source settlement, {2} = destination colony) -->
+	<FCS_LetterRecallDropPodLabel>Specialists delivered by drop pod</FCS_LetterRecallDropPodLabel>
+	<FCS_LetterRecallDropPodText>{0} member(s) recalled from {1} will arrive by drop pod at {2}.</FCS_LetterRecallDropPodText>
 
 	<!-- Codex (dynamic provider strings; {0}/{1}/{2} are numbered args, never faction tokens) -->
 	<FCS_CodexYes>yes</FCS_CodexYes>
