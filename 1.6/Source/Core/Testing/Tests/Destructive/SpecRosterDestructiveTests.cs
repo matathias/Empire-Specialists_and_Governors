@@ -290,6 +290,81 @@ namespace FactionColonies.Specialists
             }
         }
 
+        /* DESTRUCTIVE regression guard for M7: supply-chain satisfaction must reset to 1 once the
+           roster empties (the SC bridge stops writing it, so a stale <1 value would otherwise scale
+           every future member's bonuses forever). It must NOT reset while any member remains. */
+        [EmpireDestructiveTest("SG.Destructive.Roster")]
+        public static void RosterEmptied_ResetsSatisfaction()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
+            if (s is null) TestAssert.Skip("No valid tile");
+            WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) TestAssert.Skip("No specialists comp");
+            SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+            if (role is null) TestAssert.Skip("No SpecialistRoleDef loaded");
+            Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(8);
+            Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
+            if (p1 is null || p2 is null) TestAssert.Skip("No pawn");
+            try
+            {
+                comp.AssignSpecialist(p1, role);
+                comp.AssignSpecialist(p2, null); // resident
+                comp.FoodSatisfaction = 0.3f;
+                comp.MedicineSatisfaction = 0.4f;
+
+                // Roster still non-empty after removing one -> satisfaction preserved.
+                comp.RecallSpecialist(comp.Specialists[0]);
+                TestAssert.AreEqual(0.3, comp.FoodSatisfaction, message: "satisfaction preserved while a member remains");
+                TestAssert.AreEqual(0.4, comp.MedicineSatisfaction);
+
+                // Removing the last member empties the roster -> both reset to 1.
+                comp.RecallSpecialist(comp.Residents[0]);
+                TestAssert.AreEqual(0, comp.TotalCount);
+                TestAssert.AreEqual(1.0, comp.FoodSatisfaction, message: "food satisfaction resets on empty roster");
+                TestAssert.AreEqual(1.0, comp.MedicineSatisfaction, message: "medicine satisfaction resets on empty roster");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "RosterEmptied_ResetsSatisfaction");
+            }
+            finally
+            {
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(s);
+            }
+        }
+
+        /* DESTRUCTIVE regression guard for M7: the governor-recall path also resets satisfaction when
+           it empties the roster. */
+        [EmpireDestructiveTest("SG.Destructive.Roster")]
+        public static void RecallGovernor_LastMember_ResetsSatisfaction()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
+            if (s is null) TestAssert.Skip("No valid tile");
+            WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) TestAssert.Skip("No specialists comp");
+            GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+            if (focus is null) TestAssert.Skip("No GovernorFocusDef loaded");
+            Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+            if (p is null) TestAssert.Skip("No pawn");
+            try
+            {
+                comp.AssignGovernor(p, focus);
+                comp.FoodSatisfaction = 0.2f;
+                comp.MedicineSatisfaction = 0.6f;
+
+                comp.RecallGovernor();
+                TestAssert.AreEqual(0, comp.TotalCount);
+                TestAssert.AreEqual(1.0, comp.FoodSatisfaction, message: "food satisfaction resets on empty roster");
+                TestAssert.AreEqual(1.0, comp.MedicineSatisfaction, message: "medicine satisfaction resets on empty roster");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "RecallGovernor_LastMember_ResetsSatisfaction");
+            }
+            finally
+            {
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(s);
+            }
+        }
+
         /* DESTRUCTIVE regression guard for H5: recall now routes through the layer-aware
            DeliverPawnsToPlayer. On a surface settlement (caravan-capable layer) the refactor must
            still form a player caravan at the settlement tile -- the orbital drop-pod branch can't be

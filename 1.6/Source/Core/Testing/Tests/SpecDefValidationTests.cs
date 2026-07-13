@@ -116,5 +116,49 @@ namespace FactionColonies.Specialists
                     $"Shipped focus '{def.defName}' has a null-reference ConfigError");
             }
         }
+
+        // A non-settlement stat on a focus/role modifier is silently dead (these providers only feed
+        // settlement-scoped aggregation), so ConfigErrors must flag it.
+        [EmpireTest("SG.Defs")]
+        public static void FocusDef_NonSettlementStat_YieldsError()
+        {
+            FCStatDef squadOnly = new FCStatDef { defName = "TEST_FocusSquadOnlyStat", appliesToSettlements = false };
+            GovernorFocusDef focus = new GovernorFocusDef
+            {
+                defName = "TEST_FocusNonSettlementStat",
+                label = "test",
+                statModifiers = new List<FCStatModifier> { new FCStatModifier { stat = squadOnly, value = 1.0 } }
+            };
+            TestAssert.IsTrue(Errors(focus).Any(e => e.Contains("is not appliesToSettlements")),
+                "Expected an appliesToSettlements ConfigError");
+        }
+
+        [EmpireTest("SG.Defs")]
+        public static void RoleDef_NonSettlementStat_YieldsError()
+        {
+            FCStatDef squadOnly = new FCStatDef { defName = "TEST_RoleSquadOnlyStat", appliesToSettlements = false };
+            SpecialistRoleDef role = new SpecialistRoleDef
+            {
+                defName = "TEST_RoleNonSettlementStat",
+                label = "test",
+                statModifiers = new List<FCStatModifier> { new FCStatModifier { stat = squadOnly, value = 1.0 } }
+            };
+            TestAssert.IsTrue(Errors(role).Any(e => e.Contains("is not appliesToSettlements")),
+                "Expected an appliesToSettlements ConfigError");
+        }
+
+        // The Military focus's militaryLevelBonusDefending is only live because the base stat is now
+        // appliesToSettlements; guard against a regression that re-flags shipped defs.
+        [EmpireTest("SG.Defs")]
+        public static void ShippedFocusDefs_NoDeadSettlementStat()
+        {
+            List<GovernorFocusDef> defs = DefDatabase<GovernorFocusDef>.AllDefsListForReading;
+            if (defs is null || defs.Count == 0) TestAssert.Skip("No GovernorFocusDef loaded");
+            foreach (GovernorFocusDef def in defs)
+            {
+                TestAssert.IsFalse(def.ConfigErrors().Any(e => e.Contains("is not appliesToSettlements")),
+                    $"Shipped focus '{def.defName}' carries a non-settlement stat modifier");
+            }
+        }
     }
 }

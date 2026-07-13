@@ -185,6 +185,7 @@ namespace FactionColonies.Specialists
             SpecialistRoster.Recall(pawn);
             DeliverRecalledPawn(pawn);
             LogSG.Message($"Recalled {pawn.LabelShort} from {Settlement.Name}");
+            ResetSatisfactionIfRosterEmpty();
             InvalidateAll();
         }
 
@@ -199,6 +200,7 @@ namespace FactionColonies.Specialists
             if (pawn is object)
                 DeliverRecalledPawn(pawn);
             LogSG.Message($"Recalled governor from {Settlement.Name}");
+            ResetSatisfactionIfRosterEmpty();
             InvalidateAll();
         }
 
@@ -282,6 +284,7 @@ namespace FactionColonies.Specialists
             residents.Remove(entry);
             if (entry.pawn is object)
                 SpecialistRoster.Recall(entry.pawn);
+            ResetSatisfactionIfRosterEmpty();
             InvalidateAll();
         }
 
@@ -388,6 +391,7 @@ namespace FactionColonies.Specialists
             specialists.Clear();
             residents.Clear();
             governor = null;
+            ResetSatisfactionIfRosterEmpty();
 
             // Return survivors to the player (layer-aware) and mark the settlement-loss event. The
             // delivery may be a drop pod (orbit), so the disband letter stays delivery-agnostic.
@@ -410,6 +414,20 @@ namespace FactionColonies.Specialists
             foreach (SettlementSpecialist r in residents) r.DirtySkillScore();
             if (governor is object) governor.DirtySkillScore();
             Settlement.InvalidateStatCache();
+        }
+
+        /* When the roster empties, reset supply-chain satisfaction to 1. The Routes & Resources bridge
+         * only writes these fields while the roster has members (CollectNeeds early-outs on an empty
+         * roster), so a starved-then-emptied settlement would otherwise keep a stale <1 value scribed
+         * forever -- silently scaling every future member's bonuses, and permanently so if R&R is later
+         * removed (the read sites apply satisfaction unconditionally). */
+        private void ResetSatisfactionIfRosterEmpty()
+        {
+            if (specialists.Count == 0 && residents.Count == 0 && governor is null)
+            {
+                foodSatisfaction = 1f;
+                medicineSatisfaction = 1f;
+            }
         }
 
         // ── Manual Battle Integration ──
@@ -449,25 +467,31 @@ namespace FactionColonies.Specialists
             // Deaths during the on-map battle were already handled the moment each pawn was killed
             // (Patch_Kill_SpecialistDeath -> NotifyMemberDied), so any roster entries still present
             // here are survivors. Just despawn them back to the world.
+            // A drop pod launched before the attack can complete in-flight during the manual battle,
+            // making the arriving member already a world pawn; guard PassToWorld (as the assign paths
+            // do) so vanilla doesn't log an "already here" error per such pawn.
             foreach (SettlementSpecialist s in specialists)
             {
                 if (s.pawn is null || s.pawn.Dead) continue;
                 if (s.pawn.Spawned) s.pawn.DeSpawn();
                 s.pawn.SetFaction(FindFC.EmpireFaction);
-                Find.WorldPawns.PassToWorld(s.pawn, PawnDiscardDecideMode.KeepForever);
+                if (!s.pawn.IsWorldPawn())
+                    Find.WorldPawns.PassToWorld(s.pawn, PawnDiscardDecideMode.KeepForever);
             }
             foreach (SettlementSpecialist r in residents)
             {
                 if (r.pawn is null || r.pawn.Dead) continue;
                 if (r.pawn.Spawned) r.pawn.DeSpawn();
                 r.pawn.SetFaction(FindFC.EmpireFaction);
-                Find.WorldPawns.PassToWorld(r.pawn, PawnDiscardDecideMode.KeepForever);
+                if (!r.pawn.IsWorldPawn())
+                    Find.WorldPawns.PassToWorld(r.pawn, PawnDiscardDecideMode.KeepForever);
             }
             if (governor is object && governor.pawn is object && !governor.pawn.Dead)
             {
                 if (governor.pawn.Spawned) governor.pawn.DeSpawn();
                 governor.pawn.SetFaction(FindFC.EmpireFaction);
-                Find.WorldPawns.PassToWorld(governor.pawn, PawnDiscardDecideMode.KeepForever);
+                if (!governor.pawn.IsWorldPawn())
+                    Find.WorldPawns.PassToWorld(governor.pawn, PawnDiscardDecideMode.KeepForever);
             }
 
             deployedPawns.Clear();
@@ -506,6 +530,7 @@ namespace FactionColonies.Specialists
                     governor.Behavior?.OnFocusDeactivated(Settlement);
                     SpecialistRoster.Recall(pawn);
                     governor = null;
+                    ResetSatisfactionIfRosterEmpty();
                     InvalidateAll();
                 }
                 else
@@ -676,23 +701,40 @@ namespace FactionColonies.Specialists
         public string GetResourceAdditiveDesc(ResourceFC resource)
         {
             StringBuilder sb = new StringBuilder();
+            double total = 0;
             foreach (SettlementSpecialist s in specialists)
             {
                 double bonus = SpecUtil.SpecialistAdditiveForResource(s, resource.def);
                 if (Math.Abs(bonus) > 0.001)
+                {
+                    total += bonus;
                     sb.AppendLine(TextUtil.AdditiveBonusLine(bonus,
                         s.pawn.LabelShort + " (" + s.role.LabelCap + ")"));
+                }
             }
-            string result = sb.ToString().TrimEnd();
-            return result.Length > 0 ? result : null;
+            if (sb.Length == 0) return null;
+
+            // Mirror the multipliers GetResourceAdditiveModifier applies to the summed bonus so the
+            // breakdown reconciles with the value shown.
+            if (total > 0 && SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps))
+                sb.AppendLine(TextUtil.MultiplierBonusLine(1.2, SpecPolicyDefOf.FCSspecialistCorps.LabelCap));
+            float satisfaction = foodSatisfaction * medicineSatisfaction;
+            if (satisfaction < 0.999f)
+                sb.AppendLine(TextUtil.MultiplierBonusLine(satisfaction, "FCS_SatisfactionLabel".Translate()));
+
+            return sb.ToString().TrimEnd();
         }
 
         public string GetResourceMultiplierDesc(ResourceFC resource)
         {
             if (governor is null || !governor.HasUsableSkills) return null;
-            double mult = SpecUtil.GovernorMultiplierForResource(governor, resource.def);
-            if (Math.Abs(mult - 1.0) < 0.001) return null;
-            return TextUtil.MultiplierBonusLine(mult,
+            double rawMult = SpecUtil.GovernorMultiplierForResource(governor, resource.def);
+            if (Math.Abs(rawMult - 1.0) < 0.001) return null;
+            // Show the effective multiplier GetResourceMultiplierModifier actually applies (raw damped
+            // by satisfaction) so the breakdown reconciles with the value.
+            float satisfaction = foodSatisfaction * medicineSatisfaction;
+            double effectiveMult = 1.0 + (rawMult - 1.0) * satisfaction;
+            return TextUtil.MultiplierBonusLine(effectiveMult,
                 governor.pawn.LabelShort + " (" + governor.focus.LabelCap + ")");
         }
 
@@ -735,6 +777,10 @@ namespace FactionColonies.Specialists
         public string GetStatModifierDesc(FCStatDef stat)
         {
             StringBuilder sb = new StringBuilder();
+            // Whether any satisfaction-scaled contribution was added. The resident worker bonus below
+            // is NOT satisfaction-scaled, but no shipped role/focus modifies workerBaseMax, so it never
+            // coexists with the scaled contributions on the same stat.
+            bool anyScaled = false;
 
             if (stat == FCStatDefOf.workerBaseMax)
             {
@@ -752,6 +798,20 @@ namespace FactionColonies.Specialists
                     if (sb.Length > 0) sb.Append("\n");
                     sb.Append(TextUtil.AdditiveBonusLine(statBonus,
                         s.pawn.LabelShort + " (" + s.role.LabelCap + ")", invert: stat.invertedForDisplay));
+                    anyScaled = true;
+                }
+            }
+
+            // Governor's additive stat contribution (mirrors the (govMult - 1.0) term in GetStatModifier)
+            if (governor is object && governor.HasUsableSkills)
+            {
+                double govMult = SpecUtil.GovernorStatMultiplier(governor, stat);
+                if (Math.Abs(govMult - 1.0) > 0.001)
+                {
+                    if (sb.Length > 0) sb.Append("\n");
+                    sb.Append(TextUtil.AdditiveBonusLine(govMult - 1.0,
+                        governor.pawn.LabelShort + " (" + governor.focus.LabelCap + ")", invert: stat.invertedForDisplay));
+                    anyScaled = true;
                 }
             }
 
@@ -762,6 +822,7 @@ namespace FactionColonies.Specialists
                 {
                     if (sb.Length > 0) sb.Append("\n");
                     sb.Append("FCS_HealRateLine".Translate(Math.Round(healBonus, 2)));
+                    anyScaled = true;
                 }
             }
 
@@ -772,7 +833,17 @@ namespace FactionColonies.Specialists
                 {
                     if (sb.Length > 0) sb.Append("\n");
                     sb.Append("FCS_GarrisonHappinessLine".Translate(Math.Round(garrisonBonus, 2)));
+                    anyScaled = true;
                 }
+            }
+
+            // Supply satisfaction scales every contribution above (except the worker bonus); show it so
+            // the breakdown reconciles with the applied value.
+            float satisfaction = foodSatisfaction * medicineSatisfaction;
+            if (anyScaled && satisfaction < 0.999f)
+            {
+                if (sb.Length > 0) sb.Append("\n");
+                sb.Append(TextUtil.MultiplierBonusLine(satisfaction, "FCS_SatisfactionLabel".Translate()));
             }
 
             return sb.Length > 0 ? sb.ToString() : null;

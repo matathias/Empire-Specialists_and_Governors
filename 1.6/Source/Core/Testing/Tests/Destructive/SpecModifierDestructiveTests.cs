@@ -147,5 +147,121 @@ namespace FactionColonies.Specialists
                 DestructiveTestUtil.SafeRemoveSettlement(s);
             }
         }
+
+        /* M2 regression: with the base stat now appliesToSettlements and CombineForce passing the
+           anchor settlement, a Military-focus governor's militaryLevelBonusDefending contribution
+           must reach the stat at settlement scope (previously silently dead). */
+        [EmpireDestructiveTest("SG.Destructive.Modifiers")]
+        public static void GovernorMilitaryFocus_FeedsDefendingStatAtSettlementScope()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            FCStatDef stat = FCStatDefOf.militaryLevelBonusDefending;
+            if (stat is null) TestAssert.Skip("militaryLevelBonusDefending not loaded");
+            if (!stat.appliesToSettlements) TestAssert.Skip("stat is not settlement-scoped (M2 flip missing)");
+            GovernorFocusDef mil = DefDatabase<GovernorFocusDef>.GetNamedSilentFail("Military");
+            if (mil is null) TestAssert.Skip("Military focus not loaded");
+            WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
+            if (s is null) TestAssert.Skip("No valid tile");
+            WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) TestAssert.Skip("No specialists comp");
+            Pawn p = SpecDestructiveTestUtil.MakeAssignable(12);
+            if (p is null) TestAssert.Skip("No pawn");
+            try
+            {
+                comp.AssignGovernor(p, mil);
+                if (comp.GetStatModifier(stat) <= stat.IdentityValue)
+                    TestAssert.Skip("Governor produced no defending contribution (skills disabled?)");
+
+                double factionOnly = f.GetStatValue(stat, null);
+                double withSettlement = f.GetStatValue(stat, s);
+                TestAssert.GreaterThan(withSettlement, factionOnly,
+                    "settlement scope should fold in the Military governor's defending bonus");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "GovernorMilitaryFocus_FeedsDefendingStatAtSettlementScope");
+            }
+            finally
+            {
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(s);
+            }
+        }
+
+        /* M5 regression: GetStatModifier applies the governor's stat contribution but the paired
+           breakdown previously emitted no line for it, so the tooltip under-reported. */
+        [EmpireDestructiveTest("SG.Destructive.Modifiers")]
+        public static void GetStatModifierDesc_IncludesGovernorLine()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            FCStatDef stat = FCStatDefOf.militaryLevelBonusDefending;
+            if (stat is null) TestAssert.Skip("militaryLevelBonusDefending not loaded");
+            GovernorFocusDef mil = DefDatabase<GovernorFocusDef>.GetNamedSilentFail("Military");
+            if (mil is null) TestAssert.Skip("Military focus not loaded");
+            WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
+            if (s is null) TestAssert.Skip("No valid tile");
+            WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) TestAssert.Skip("No specialists comp");
+            Pawn p = SpecDestructiveTestUtil.MakeAssignable(12);
+            if (p is null) TestAssert.Skip("No pawn");
+            try
+            {
+                comp.AssignGovernor(p, mil);
+                if (comp.GetStatModifier(stat) <= stat.IdentityValue)
+                    TestAssert.Skip("Governor produced no contribution (skills disabled?)");
+
+                string desc = comp.GetStatModifierDesc(stat);
+                TestAssert.IsNotNull(desc, "expected a stat breakdown");
+                TestAssert.IsTrue(desc.Contains(p.LabelShort),
+                    "breakdown should include a governor contribution line");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "GetStatModifierDesc_IncludesGovernorLine");
+            }
+            finally
+            {
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(s);
+            }
+        }
+
+        /* M5 regression: the resource additive breakdown must surface the satisfaction multiplier so
+           its lines reconcile with the damped value from GetResourceAdditiveModifier. */
+        [EmpireDestructiveTest("SG.Destructive.Modifiers")]
+        public static void GetResourceAdditiveDesc_ShowsSatisfactionWhenDamped()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
+            if (s is null) TestAssert.Skip("No valid tile");
+            WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) TestAssert.Skip("No specialists comp");
+            if (s.Resources is null || s.Resources.Count == 0) TestAssert.Skip("Settlement has no resources");
+            ResourceFC rfc = s.Resources[0];
+            if (rfc?.def is null) TestAssert.Skip("Resource has no def");
+            Pawn p = SpecDestructiveTestUtil.MakeAssignable(10);
+            if (p is null) TestAssert.Skip("No pawn");
+            string satisfactionLabel = "FCS_SatisfactionLabel".Translate();
+            try
+            {
+                comp.AssignSpecialist(p, SpecTestHelper.Role(SkillDefOf.Plants, 1f, rfc.def, 0.05f));
+                if (SpecUtil.SpecialistAdditiveForResource(comp.Specialists[0], rfc.def) <= 0.001)
+                    TestAssert.Skip("Specialist adds no production (skills disabled?)");
+
+                // Fresh comp: satisfaction == 1, so no satisfaction line.
+                string full = comp.GetResourceAdditiveDesc(rfc);
+                TestAssert.IsNotNull(full, "expected a production breakdown");
+                TestAssert.IsFalse(full.Contains(satisfactionLabel), "no satisfaction line when satisfaction is 1");
+
+                // Damp satisfaction: the applied value drops and the breakdown must show the multiplier.
+                comp.FoodSatisfaction = 0.5f;
+                double damped = comp.GetResourceAdditiveModifier(rfc);
+                double undamped = SpecUtil.SpecialistAdditiveForResource(comp.Specialists[0], rfc.def);
+                TestAssert.LessThan(damped, undamped, "satisfaction should reduce the applied bonus");
+                string dampedDesc = comp.GetResourceAdditiveDesc(rfc);
+                TestAssert.IsTrue(dampedDesc.Contains(satisfactionLabel),
+                    "breakdown should show the satisfaction multiplier when damped");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "GetResourceAdditiveDesc_ShowsSatisfactionWhenDamped");
+            }
+            finally
+            {
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(s);
+            }
+        }
     }
 }

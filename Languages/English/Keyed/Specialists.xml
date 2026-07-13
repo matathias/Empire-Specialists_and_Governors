@@ -125,8 +125,9 @@
 	<!-- Stat Modifier Descriptions -->
 	<FCS_StatWorkerBonus>+{0} workers ({1} residents)</FCS_StatWorkerBonus>
 	<FCS_StatEffectLine>+{0} - {1}: {2}</FCS_StatEffectLine>
-	<FCS_HealRateLine>+{0} heal rate - Medicine: {1}</FCS_HealRateLine>
+	<FCS_HealRateLine>+{0} heal rate</FCS_HealRateLine>
 	<FCS_GarrisonHappinessLine>+{0} happiness - Garrison Doctrine</FCS_GarrisonHappinessLine>
+	<FCS_SatisfactionLabel>Supply satisfaction</FCS_SatisfactionLabel>
 
 	<!-- Resource Modifier Descriptions -->
 	<FCS_ResSpecialists>Specialists ({0})</FCS_ResSpecialists>

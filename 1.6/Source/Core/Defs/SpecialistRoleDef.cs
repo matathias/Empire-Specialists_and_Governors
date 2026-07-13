@@ -60,6 +60,16 @@ namespace FactionColonies.Specialists
             {
                 foreach (string err in FCStatModifier.ConfigErrors(statModifiers, defName))
                     yield return err;
+
+                // Role stat modifiers only ever feed settlement-scoped aggregation (via the
+                // settlement comp's IStatModifierProvider). A stat that doesn't apply to
+                // settlements is silently dead here, so flag it at load.
+                for (int i = 0; i < statModifiers.Count; i++)
+                {
+                    if (statModifiers[i].stat is object && !statModifiers[i].stat.appliesToSettlements)
+                        yield return defName + ": statModifiers[" + i + "] stat '" + statModifiers[i].stat.defName
+                            + "' is not appliesToSettlements, so it can never apply to a specialist role";
+                }
             }
         }
     }
