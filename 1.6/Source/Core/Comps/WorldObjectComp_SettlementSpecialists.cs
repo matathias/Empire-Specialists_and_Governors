@@ -471,33 +471,16 @@ namespace FactionColonies.Specialists
             if (!pawnsDeployedToBattle) return;
 
             // Deaths during the on-map battle were already handled the moment each pawn was killed
-            // (Patch_Kill_SpecialistDeath -> NotifyMemberDied), so any roster entries still present
-            // here are survivors. Just despawn them back to the world.
-            // A drop pod launched before the attack can complete in-flight during the manual battle,
-            // making the arriving member already a world pawn; guard PassToWorld (as the assign paths
-            // do) so vanilla doesn't log an "already here" error per such pawn.
-            foreach (SettlementSpecialist s in specialists)
+            // (Patch_Kill_SpecialistDeath -> NotifyMemberDied), so any deployed pawn still alive here
+            // is a survivor. Recover exactly who we deployed -- not the current roster: a drop pod
+            // launched before the attack can arrive mid-battle and is passed to the world by the
+            // arrival handler; it was never on this map, so it must not be touched here.
+            foreach (Pawn pawn in deployedPawns)
             {
-                if (s.pawn is null || s.pawn.Dead) continue;
-                if (s.pawn.Spawned) s.pawn.DeSpawn();
-                s.pawn.SetFaction(FindFC.EmpireFaction);
-                if (!s.pawn.IsWorldPawn())
-                    Find.WorldPawns.PassToWorld(s.pawn, PawnDiscardDecideMode.KeepForever);
-            }
-            foreach (SettlementSpecialist r in residents)
-            {
-                if (r.pawn is null || r.pawn.Dead) continue;
-                if (r.pawn.Spawned) r.pawn.DeSpawn();
-                r.pawn.SetFaction(FindFC.EmpireFaction);
-                if (!r.pawn.IsWorldPawn())
-                    Find.WorldPawns.PassToWorld(r.pawn, PawnDiscardDecideMode.KeepForever);
-            }
-            if (governor is object && governor.pawn is object && !governor.pawn.Dead)
-            {
-                if (governor.pawn.Spawned) governor.pawn.DeSpawn();
-                governor.pawn.SetFaction(FindFC.EmpireFaction);
-                if (!governor.pawn.IsWorldPawn())
-                    Find.WorldPawns.PassToWorld(governor.pawn, PawnDiscardDecideMode.KeepForever);
+                if (pawn is null || pawn.Dead) continue;
+                if (pawn.Spawned) pawn.DeSpawn();
+                pawn.SetFaction(FindFC.EmpireFaction);
+                Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
             }
 
             deployedPawns.Clear();
