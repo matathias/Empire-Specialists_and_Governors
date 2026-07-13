@@ -12,12 +12,19 @@ namespace FactionColonies.Specialists
         public void OnBattleResolved(MilitaryOperation op, bool victory, BattleResult result)
         {
             if (op is null) return;
-            // Defense-only, and specific to the settlement actually under attack. The abstract death
-            // roll represents the enemy reaching the settlement's grounds, so it targets the ATTACKED
-            // settlement (op.targetObject) -- NOT op.defender.homeSettlement, which auto-defender
-            // selection overwrites to the reinforcing settlement when a foreign squad is sent to help.
-            // In an offensive op the target is an enemy WorldObject (not a WorldSettlementFC) -> null
-            // -> early return, so offense stays untouched.
+
+            // Only auto-resolved battles where the EMPIRE is the defender roll abstract deaths. A
+            // Deploy op (mercs called in to a manual defense) targets the player's own settlement but
+            // is aggressor-side with no defender faction -> IsDefensive == false; its real on-map fight
+            // already applied deaths, and it finalizes as a non-manual battle, so without this gate a
+            // WON manual defense would re-roll DEFEAT death chances against the survivors. Offensive
+            // ops are excluded here too (empire is the aggressor, not the defender).
+            if (!op.IsDefensive) return;
+
+            // Specific to the settlement actually under attack. The abstract death roll represents the
+            // enemy reaching the settlement's grounds, so it targets the ATTACKED settlement
+            // (op.targetObject) -- NOT op.defender.homeSettlement, which auto-defender selection
+            // overwrites to the reinforcing settlement when a foreign squad is sent to help.
             WorldSettlementFC settlement = op.targetObject as WorldSettlementFC;
             if (settlement is null) return;
 

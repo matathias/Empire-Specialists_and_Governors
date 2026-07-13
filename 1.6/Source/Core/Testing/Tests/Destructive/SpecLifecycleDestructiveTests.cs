@@ -81,5 +81,66 @@ namespace FactionColonies.Specialists
                 DestructiveTestUtil.SafeRemoveSettlement(b);
             }
         }
+
+        /* DESTRUCTIVE regression guard for H2: a Deploy op (mercs called in to a manual defense)
+           targets the player's own settlement but is aggressor-side with no defender faction, so
+           IsDefensive == false. The abstract death roll must be skipped -- otherwise a WON manual
+           defense re-rolls DEFEAT death chances against the survivors. Forces a certain-kill defeat
+           chance, then asserts the resident survives because the op is not defensive. */
+        [EmpireDestructiveTest("SG.Destructive.Lifecycle")]
+        public static void OnBattleResolved_DeployOpDoesNotRoll()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+
+            WorldSettlementFC a = null;
+            WorldObjectCompProperties_SettlementSpecialists props = null;
+            float savedResident = 0f, savedSpecialist = 0f, savedGovernor = 0f;
+            WorldObjectComp_SettlementSpecialists compA = null;
+            try
+            {
+                a = DestructiveTestUtil.CreateTransientSettlement();
+                if (a is null) TestAssert.Skip("No valid tile");
+
+                compA = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
+                if (compA is null) TestAssert.Skip("No specialists comp");
+
+                Pawn pawnA = SpecDestructiveTestUtil.MakeAssignable(8);
+                if (pawnA is null) TestAssert.Skip("No pawn");
+
+                // Certain resident kill on defeat -- so if the roll wrongly ran, the resident dies.
+                props = compA.Props;
+                savedResident = props.residentDeathChanceDefeat;
+                savedSpecialist = props.specialistDeathChanceDefeat;
+                savedGovernor = props.governorDeathChanceDefeat;
+                props.residentDeathChanceDefeat = 1f;
+                props.specialistDeathChanceDefeat = 0f;
+                props.governorDeathChanceDefeat = 0f;
+
+                compA.AssignSpecialist(pawnA, null); // null role -> resident
+                if (compA.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
+
+                // Deploy op mirroring CreateDeployOp: targetObject is the player's own settlement,
+                // aggressor is the empire, and there is NO defender faction -> IsDefensive == false.
+                MilitaryOperation op = new MilitaryOperation(-9998, MilitaryJobDefOf.Deploy, a.Tile, a);
+                op.aggressor.faction = FindFC.EmpireFaction;
+                BattleResult result = new BattleResult(); // wasManualBattle == false
+
+                new SpecialistLifecycleHandler().OnBattleResolved(op, false, result);
+
+                TestAssert.AreEqual(1, compA.ResidentCount); // roll skipped -- resident survives
+                DestructiveTestUtil.AssertEmpireInvariants(f, "OnBattleResolved_DeployOpDoesNotRoll");
+            }
+            finally
+            {
+                if (props is object)
+                {
+                    props.residentDeathChanceDefeat = savedResident;
+                    props.specialistDeathChanceDefeat = savedSpecialist;
+                    props.governorDeathChanceDefeat = savedGovernor;
+                }
+                SpecDestructiveTestUtil.CleanupRoster(compA);
+                DestructiveTestUtil.SafeRemoveSettlement(a);
+            }
+        }
     }
 }
