@@ -96,9 +96,26 @@ namespace FactionColonies.Specialists
             return existing >= role.maxPerSettlement;
         }
 
-        public void AssignSpecialist(Pawn pawn, SpecialistRoleDef role)
+        /// <summary>
+        /// True if a specialist assignment for this role would be accepted right now. Residents
+        /// (null role) always fit. Mirrors the guards in <see cref="AssignSpecialist"/> so callers
+        /// can decide (before touching a caravan) whether the placement is guaranteed.
+        /// </summary>
+        public bool CanAssignSpecialist(SpecialistRoleDef role)
         {
-            if (pawn is null) return;
+            if (role is null) return true;
+            return SpecialistCount < MaxSpecialists && !RoleAtCap(role);
+        }
+
+        /// <summary>
+        /// True if a governor assignment would be accepted right now (the settlement has no governor).
+        /// Mirrors the guard in <see cref="AssignGovernor"/>.
+        /// </summary>
+        public bool CanAssignGovernor => governor is null;
+
+        public bool AssignSpecialist(Pawn pawn, SpecialistRoleDef role)
+        {
+            if (pawn is null) return false;
 
             if (role is object && SpecialistCount >= MaxSpecialists)
             {
@@ -106,7 +123,7 @@ namespace FactionColonies.Specialists
                 Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
                     pawn.LabelShort, role.LabelCap, Settlement.Name, MaxSpecialists),
                     MessageTypeDefOf.RejectInput);
-                return;
+                return false;
             }
 
             if (RoleAtCap(role))
@@ -115,7 +132,7 @@ namespace FactionColonies.Specialists
                 Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
                     pawn.LabelShort, role.LabelCap, Settlement.Name, role.maxPerSettlement),
                     MessageTypeDefOf.RejectInput);
-                return;
+                return false;
             }
 
             SettlementSpecialist entry = new SettlementSpecialist(pawn, role);
@@ -131,16 +148,17 @@ namespace FactionColonies.Specialists
 
             LogSG.Message($"Assigned {pawn.LabelShort} as {role?.LabelCap ?? "Resident"} to {Settlement.Name}");
             InvalidateAll();
+            return true;
         }
 
-        public void AssignGovernor(Pawn pawn, GovernorFocusDef focus)
+        public bool AssignGovernor(Pawn pawn, GovernorFocusDef focus)
         {
-            if (pawn is null || focus is null) return;
+            if (pawn is null || focus is null) return false;
 
             if (governor is object)
             {
                 LogSG.Warning("Settlement already has a governor");
-                return;
+                return false;
             }
 
             governor = new SettlementGovernor(pawn, focus);
@@ -155,6 +173,7 @@ namespace FactionColonies.Specialists
 
             LogSG.Message($"Assigned {pawn.LabelShort} as Governor ({focus.LabelCap}) to {Settlement.Name}");
             InvalidateAll();
+            return true;
         }
 
         public void RecallSpecialist(SettlementSpecialist entry)

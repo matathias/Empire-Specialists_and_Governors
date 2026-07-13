@@ -30,10 +30,15 @@ namespace FactionColonies.Specialists
             {
                 SpecialistRoleDef role = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f);
                 for (int i = 0; i < max; i++)
-                    comp.AssignSpecialist(pawns[i], role);
+                {
+                    TestAssert.IsTrue(comp.CanAssignSpecialist(role), "CanAssignSpecialist should be true below cap");
+                    TestAssert.IsTrue(comp.AssignSpecialist(pawns[i], role), "AssignSpecialist should return true below cap");
+                }
                 TestAssert.AreEqual(max, comp.SpecialistCount);
 
-                comp.AssignSpecialist(pawns[max], role); // one over the cap -> rejected
+                TestAssert.IsFalse(comp.CanAssignSpecialist(role), "CanAssignSpecialist should be false at cap");
+                TestAssert.IsTrue(comp.CanAssignSpecialist(null), "residents (null role) should always fit");
+                TestAssert.IsFalse(comp.AssignSpecialist(pawns[max], role), "AssignSpecialist over cap should return false");
                 TestAssert.AreEqual(max, comp.SpecialistCount);
                 DestructiveTestUtil.AssertEmpireInvariants(f, "AssignSpecialist_RespectsMaxSpecialists");
             }
@@ -60,9 +65,10 @@ namespace FactionColonies.Specialists
             try
             {
                 SpecialistRoleDef role = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f, maxPerSettlement: 2);
-                comp.AssignSpecialist(p1, role);
-                comp.AssignSpecialist(p2, role);
-                comp.AssignSpecialist(p3, role); // third of this role -> rejected by per-role cap
+                TestAssert.IsTrue(comp.AssignSpecialist(p1, role), "first of role should return true");
+                TestAssert.IsTrue(comp.AssignSpecialist(p2, role), "second of role should return true");
+                TestAssert.IsFalse(comp.CanAssignSpecialist(role), "CanAssignSpecialist should be false at per-role cap");
+                TestAssert.IsFalse(comp.AssignSpecialist(p3, role), "third of role should be rejected by per-role cap");
                 TestAssert.AreEqual(2, comp.Specialists.Count(x => x.role == role));
                 DestructiveTestUtil.AssertEmpireInvariants(f, "AssignSpecialist_RespectsPerRoleCap");
             }
@@ -84,11 +90,16 @@ namespace FactionColonies.Specialists
             GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
             if (focus is null) TestAssert.Skip("No GovernorFocusDef loaded");
             Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
-            if (p is null) TestAssert.Skip("No pawn");
+            Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
+            if (p is null || p2 is null) TestAssert.Skip("No pawn");
             try
             {
-                comp.AssignGovernor(p, focus);
+                TestAssert.IsTrue(comp.CanAssignGovernor, "CanAssignGovernor should be true with no governor");
+                TestAssert.IsTrue(comp.AssignGovernor(p, focus), "first governor assignment should return true");
                 TestAssert.IsTrue(comp.HasGovernor, "should have a governor");
+
+                TestAssert.IsFalse(comp.CanAssignGovernor, "CanAssignGovernor should be false once a governor exists");
+                TestAssert.IsFalse(comp.AssignGovernor(p2, focus), "second governor assignment should be rejected");
                 TestAssert.AreEqual(1, comp.TotalCount); // exactly one slot used by the governor
                 DestructiveTestUtil.AssertEmpireInvariants(f, "AssignGovernor_SingleSlot");
             }

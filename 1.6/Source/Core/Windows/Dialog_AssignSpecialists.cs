@@ -84,8 +84,6 @@ namespace FactionColonies.Specialists
             float totalHeight = entries.Count * (CardRowHeight + CardGap);
 
             bool hasGovernor = comp.HasGovernor;
-            int pendingNonResident = entries.Count(e => e.selected && e.role is object && !e.isGovernor);
-            bool capReached = (comp.SpecialistCount + pendingNonResident) >= comp.MaxSpecialists;
 
             Rect listInnerRect = ScrollUtil.BeginScrollView(listOuterRect, ref scrollPos, totalHeight);
 
@@ -95,7 +93,7 @@ namespace FactionColonies.Specialists
                 PawnEntry entry = entries[i];
                 Rect rowRect = new Rect(0f, curY, listInnerRect.width, CardRowHeight);
 
-                DrawPawnCard(rowRect, entry, i, hasGovernor, capReached);
+                DrawPawnCard(rowRect, entry, i, hasGovernor);
 
                 curY += CardRowHeight + CardGap;
             }
@@ -123,7 +121,7 @@ namespace FactionColonies.Specialists
             Text.WordWrap = prevWrap;
         }
 
-        private void DrawPawnCard(Rect rowRect, PawnEntry entry, int rowIdx, bool hasGovernor, bool capReached)
+        private void DrawPawnCard(Rect rowRect, PawnEntry entry, int rowIdx, bool hasGovernor)
         {
             // Alternating background
             if (rowIdx % 2 == 0) Widgets.DrawLightHighlight(rowRect);
@@ -189,12 +187,25 @@ namespace FactionColonies.Specialists
                 : (entry.role is object ? entry.role.LabelCap : "FCS_RoleResident".Translate());
             if (Widgets.ButtonText(new Rect(roleBtnX, roleBtnY, RoleBtnWidth, RoleBtnHeight), roleLabel))
             {
-                ShowRoleMenu(entry, hasGovernor, capReached);
+                ShowRoleMenu(entry, hasGovernor);
             }
         }
 
-        private void ShowRoleMenu(PawnEntry entry, bool hasGovernor, bool capReached)
+        private void ShowRoleMenu(PawnEntry entry, bool hasGovernor)
         {
+            // Count specialists queued in this same dialog (excluding the entry being edited) so
+            // the picker can disable roles that pending selections would fill — otherwise the
+            // player could queue past the caps and see the later pawns rejected on confirm.
+            int pendingSpecialists = 0;
+            Dictionary<SpecialistRoleDef, int> pendingRoleCounts = new Dictionary<SpecialistRoleDef, int>();
+            foreach (PawnEntry other in entries)
+            {
+                if (other == entry || !other.selected || other.isGovernor || other.role is null) continue;
+                pendingSpecialists++;
+                pendingRoleCounts.TryGetValue(other.role, out int count);
+                pendingRoleCounts[other.role] = count + 1;
+            }
+
             Find.WindowStack.Add(new Dialog_RolePicker(
                 entry.pawn,
                 comp,
@@ -222,7 +233,9 @@ namespace FactionColonies.Specialists
                 allowGovernor: !hasGovernor || IsAnyEntryGovernor() || entry.isGovernor,
                 currentRole: entry.isGovernor ? null : entry.role,
                 isCurrentlyGovernor: entry.isGovernor,
-                currentGovernorFocus: entry.governorFocus));
+                currentGovernorFocus: entry.governorFocus,
+                pendingSpecialists: pendingSpecialists,
+                pendingRoleCounts: pendingRoleCounts));
         }
 
         private void PreviewContribution(PawnEntry entry, out string text, out Color color)
@@ -316,9 +329,14 @@ namespace FactionColonies.Specialists
 
             foreach (PawnEntry entry in selected)
             {
-                caravan.RemovePawn(entry.pawn);
+                bool isGovAssign = entry.isGovernor && entry.governorFocus is object;
+                bool ok = isGovAssign ? comp.CanAssignGovernor : comp.CanAssignSpecialist(entry.role);
 
-                if (entry.isGovernor && entry.governorFocus is object)
+                // Remove from the caravan ONLY when placement is guaranteed. On rejection the pawn
+                // stays in the caravan (never stranded); the Assign* call still fires its message.
+                if (ok) caravan.RemovePawn(entry.pawn);
+
+                if (isGovAssign)
                 {
                     comp.AssignGovernor(entry.pawn, entry.governorFocus);
                 }

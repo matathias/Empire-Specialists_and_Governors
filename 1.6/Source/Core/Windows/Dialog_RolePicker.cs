@@ -19,6 +19,8 @@ namespace FactionColonies.Specialists
         private readonly bool isCurrentlyGovernor;
         private readonly GovernorFocusDef currentGovernorFocus;
         private readonly bool governorFocusOnly;
+        private readonly int pendingSpecialists;
+        private readonly Dictionary<SpecialistRoleDef, int> pendingRoleCounts;
 
         private Vector2 scrollPos;
         private int selectedTab;
@@ -70,7 +72,9 @@ namespace FactionColonies.Specialists
             bool allowGovernor,
             SpecialistRoleDef currentRole,
             bool isCurrentlyGovernor,
-            GovernorFocusDef currentGovernorFocus = null)
+            GovernorFocusDef currentGovernorFocus = null,
+            int pendingSpecialists = 0,
+            Dictionary<SpecialistRoleDef, int> pendingRoleCounts = null)
         {
             this.pawn = pawn;
             this.comp = comp;
@@ -80,6 +84,8 @@ namespace FactionColonies.Specialists
             this.currentRole = currentRole;
             this.isCurrentlyGovernor = isCurrentlyGovernor;
             this.currentGovernorFocus = currentGovernorFocus;
+            this.pendingSpecialists = pendingSpecialists;
+            this.pendingRoleCounts = pendingRoleCounts;
             this.governorFocusOnly = false;
             this.selectedTab = isCurrentlyGovernor ? 1 : 0;
 
@@ -151,7 +157,7 @@ namespace FactionColonies.Specialists
                     if (!isCurrent)
                     {
                         bool isAlreadySpecialist = !isCurrentlyGovernor && currentRole is object;
-                        if (!isAlreadySpecialist && comp.SpecialistCount >= comp.MaxSpecialists)
+                        if (!isAlreadySpecialist && comp.SpecialistCount + pendingSpecialists >= comp.MaxSpecialists)
                         {
                             disabledReason = "FCS_RoleCapReached".Translate(roleDef.LabelCap);
                         }
@@ -161,6 +167,11 @@ namespace FactionColonies.Specialists
                             int existing = 0;
                             foreach (SettlementSpecialist s in comp.Specialists)
                                 if (s.role == roleDef) existing++;
+                            if (pendingRoleCounts is object)
+                            {
+                                pendingRoleCounts.TryGetValue(roleDef, out int pendingForRole);
+                                existing += pendingForRole;
+                            }
                             if (existing >= roleDef.maxPerSettlement)
                             {
                                 disabledReason = "FCS_PickerPerSettlementCap".Translate(
