@@ -3,6 +3,7 @@
 
 	<!-- Settings -->
 	<FCS_SettingsCategory>Empire: Specialists &amp; Governors</FCS_SettingsCategory>
+	<FCS_ModVersion>Specialists &amp; Governors Version: {0}</FCS_ModVersion>
 	<FCS_SettingDebugLog>Enable debug logging</FCS_SettingDebugLog>
 	<FCS_SettingResetAll>Reset all to defaults</FCS_SettingResetAll>
 

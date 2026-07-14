@@ -93,6 +93,9 @@ namespace FactionColonies.Specialists
             ls.Begin(new Rect(viewRect.x, viewRect.y, viewRect.width, float.MaxValue));
             Listing_StandardExtensions.ResetRowStripe();
 
+            ls.Label("FCS_ModVersion".Translate(SpecialistsMod.GetModVersion()));
+            ls.Gap(10f);
+
             ls.CheckboxLabeled("FCS_SettingDebugLog".Translate(), ref printDebug);
             ls.GapLine();
 
@@ -207,6 +210,13 @@ namespace FactionColonies.Specialists
             {
                 LogSG.MessageForce($"v{modVersion}");
             }
+        }
+
+        public static string GetModVersion()
+        {
+            var mod = LoadedModManager.GetMod<SpecialistsMod>();
+            string version = mod?.Content?.ModMetaData?.ModVersion;
+            return version.NullOrEmpty() ? "Unknown" : version;
         }
 
         public override string SettingsCategory() => "FCS_SettingsCategory".Translate();
