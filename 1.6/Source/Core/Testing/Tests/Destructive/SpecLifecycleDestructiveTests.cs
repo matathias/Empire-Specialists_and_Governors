@@ -407,18 +407,20 @@ namespace FactionColonies.Specialists
             }
         }
 
-        /* DESTRUCTIVE: disband must clear EVERY member from the static roster, dead ones included.
-           A member killed without going through NotifyMemberDied leaves a dead entry still assigned in
-           the static SpecialistRoster; disband must recall it (no stale thingIDNumber) while returning
-           only the living to the player. */
+        /* DESTRUCTIVE: the catch-all Pawn.Kill patch (Patch_Kill_SpecialistDeath) guarantees roster
+           cleanup whenever an assigned member dies for ANY reason -- not just via the auto-resolve
+           roll. Killing an assigned specialist must remove it from both the comp roster and the static
+           SpecialistRoster (via FindOwningComp -> NotifyMemberDied), leaving no stale thingIDNumber.
+           (This is why the disband's dead-inclusion branch is effectively unreachable through Kill:
+           the patch has already removed the member before any disband could see it.) */
         [EmpireDestructiveTest("SG.Destructive.Lifecycle")]
-        public static void DisbandRosterOnRemoval_DeadMember_ClearedFromStaticRoster()
+        public static void PawnKill_AssignedMember_ClearedByCatchAllPatch()
         {
             FactionFC f = DestructiveTestUtil.RequireFaction();
 
             WorldSettlementFC a = null;
             WorldObjectComp_SettlementSpecialists comp = null;
-            Pawn deadPawn = null, livePawn = null;
+            Pawn pawn = null;
             try
             {
                 a = DestructiveTestUtil.CreateTransientSettlement();
@@ -429,39 +431,24 @@ namespace FactionColonies.Specialists
                 SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
                 if (role is null) TestAssert.Skip("No SpecialistRoleDef loaded");
 
-                deadPawn = SpecDestructiveTestUtil.MakeAssignable(6);
-                livePawn = SpecDestructiveTestUtil.MakeAssignable(6);
-                if (deadPawn is null || livePawn is null) TestAssert.Skip("No pawn");
+                pawn = SpecDestructiveTestUtil.MakeAssignable(6);
+                if (pawn is null) TestAssert.Skip("No pawn");
 
-                comp.AssignSpecialist(deadPawn, role);
-                comp.AssignSpecialist(livePawn, null); // resident survivor
+                comp.AssignSpecialist(pawn, role);
+                if (comp.SpecialistCount != 1) TestAssert.Skip("Roster setup failed");
+                TestAssert.IsTrue(SpecialistRoster.IsAssigned(pawn), "precondition: assigned before death");
 
-                // Kill the specialist WITHOUT NotifyMemberDied: leaves a dead entry still in the roster
-                // and still assigned in the static SpecialistRoster -- the leak the disband guards.
-                deadPawn.Kill(null);
-                if (!deadPawn.Dead) TestAssert.Skip("Could not kill test pawn");
-                TestAssert.IsTrue(SpecialistRoster.IsAssigned(deadPawn), "precondition: dead pawn still assigned pre-disband");
+                pawn.Kill(null);
+                if (!pawn.Dead) TestAssert.Skip("Could not kill test pawn");
 
-                comp.DisbandRosterOnRemoval();
-
-                TestAssert.IsFalse(SpecialistRoster.IsAssigned(deadPawn), "dead member should be cleared from the static roster");
-                TestAssert.IsFalse(SpecialistRoster.IsAssigned(livePawn), "survivor should be cleared from the static roster");
-                TestAssert.AreEqual(0, comp.TotalCount, "roster should be emptied");
-                TestAssert.IsTrue(livePawn.Faction == Faction.OfPlayer, "survivor should be returned to the player");
-                DestructiveTestUtil.AssertEmpireInvariants(f, "DisbandRosterOnRemoval_DeadMember_ClearedFromStaticRoster");
+                // The catch-all Kill patch routed the death through NotifyMemberDied.
+                TestAssert.AreEqual(0, comp.SpecialistCount, "dead member should leave the comp roster");
+                TestAssert.IsFalse(SpecialistRoster.IsAssigned(pawn), "dead member should leave the static roster");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "PawnKill_AssignedMember_ClearedByCatchAllPatch");
             }
             finally
             {
-                // The disband forms a caravan of the survivor(s); destroy it, then clear any residue.
-                if (a is object)
-                {
-                    List<Caravan> caravans = new List<Caravan>(Find.WorldObjects.Caravans);
-                    foreach (Caravan c in caravans)
-                        if (c is object && !c.Destroyed && c.Tile == a.Tile)
-                            c.Destroy();
-                }
-                if (deadPawn is object) SpecialistRoster.Recall(deadPawn);
-                if (livePawn is object) SpecialistRoster.Recall(livePawn);
+                if (pawn is object) SpecialistRoster.Recall(pawn);
                 SpecDestructiveTestUtil.CleanupRoster(comp);
                 DestructiveTestUtil.SafeRemoveSettlement(a);
             }
