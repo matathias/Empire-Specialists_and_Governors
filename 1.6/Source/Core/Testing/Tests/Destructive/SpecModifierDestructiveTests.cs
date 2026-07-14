@@ -246,12 +246,14 @@ namespace FactionColonies.Specialists
                 string full = comp.GetResourceAdditiveDesc(rfc);
                 TestAssert.IsNotNull(full, "expected a production breakdown");
                 TestAssert.IsFalse(full.Contains(satisfactionLabel), "no satisfaction line when satisfaction is 1");
+                double fullModifier = comp.GetResourceAdditiveModifier(rfc); // satisfaction == 1
 
-                // Damp satisfaction: the applied value drops and the breakdown must show the multiplier.
+                // Damp satisfaction: the applied value must drop by exactly the 0.5 factor (independent
+                // of any specialist-corps multiplier), and the breakdown must surface the multiplier.
                 comp.FoodSatisfaction = 0.5f;
                 double damped = comp.GetResourceAdditiveModifier(rfc);
-                double undamped = SpecUtil.SpecialistAdditiveForResource(comp.Specialists[0], rfc.def);
-                TestAssert.LessThan(damped, undamped, "satisfaction should reduce the applied bonus");
+                TestAssert.LessThan(damped, fullModifier, "satisfaction should reduce the applied bonus");
+                TestAssert.AreEqual(fullModifier * 0.5, damped, message: "0.5 food satisfaction should halve the applied additive");
                 string dampedDesc = comp.GetResourceAdditiveDesc(rfc);
                 TestAssert.IsTrue(dampedDesc.Contains(satisfactionLabel),
                     "breakdown should show the satisfaction multiplier when damped");

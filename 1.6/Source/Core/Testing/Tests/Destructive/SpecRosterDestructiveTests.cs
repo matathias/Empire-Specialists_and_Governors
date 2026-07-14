@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimWorld;
 using RimWorld.Planet;
 using Verse;
 
@@ -254,6 +255,54 @@ namespace FactionColonies.Specialists
                 TestAssert.AreEqual(1, comp.ResidentCount);
                 TestAssert.IsTrue(comp.Residents[0].role is null, "moved entry should have a null role");
                 DestructiveTestUtil.AssertEmpireInvariants(f, "ChangeRole_SpecialistToResident_MovesList");
+            }
+            finally
+            {
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(s);
+            }
+        }
+
+        /* DESTRUCTIVE: promoting a resident to a specialist role must be rejected when the settlement is
+           already at MaxSpecialists -- the resident stays a resident and the specialist count is
+           unchanged. Guards the ChangeRole capacity check (the only path that can breach MaxSpecialists
+           without going through AssignSpecialist). */
+        [EmpireDestructiveTest("SG.Destructive.Roster")]
+        public static void ChangeRole_ResidentToSpecialist_AtCap_Rejected()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+            WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
+            if (s is null) TestAssert.Skip("No valid tile");
+            WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) TestAssert.Skip("No specialists comp");
+            int max = comp.MaxSpecialists;
+            if (max < 1 || max > 8) TestAssert.Skip("MaxSpecialists out of testable range");
+            // Uncapped synthetic role so the MaxSpecialists guard (not a per-role cap) is what rejects.
+            SpecialistRoleDef fillRole = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f);
+            Pawn resPawn = SpecDestructiveTestUtil.MakeAssignable(8);
+            if (resPawn is null) TestAssert.Skip("No pawn");
+            List<Pawn> fillers = new List<Pawn>();
+            try
+            {
+                for (int i = 0; i < max; i++)
+                {
+                    Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+                    if (p is null) TestAssert.Skip("No pawn");
+                    fillers.Add(p);
+                    comp.AssignSpecialist(p, fillRole);
+                }
+                if (comp.SpecialistCount != max) TestAssert.Skip("Could not fill specialists to cap");
+
+                comp.AssignSpecialist(resPawn, null); // resident
+                SettlementSpecialist resEntry = comp.Residents.FirstOrDefault(r => r.pawn == resPawn);
+                if (resEntry is null) TestAssert.Skip("Resident setup failed");
+
+                comp.ChangeRole(resEntry, fillRole); // should be rejected: specialists at cap
+
+                TestAssert.AreEqual(max, comp.SpecialistCount, "specialist count should be unchanged");
+                TestAssert.AreEqual(1, comp.ResidentCount, "resident should remain a resident");
+                TestAssert.IsTrue(resEntry.role is null, "rejected entry should keep a null (resident) role");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "ChangeRole_ResidentToSpecialist_AtCap_Rejected");
             }
             finally
             {

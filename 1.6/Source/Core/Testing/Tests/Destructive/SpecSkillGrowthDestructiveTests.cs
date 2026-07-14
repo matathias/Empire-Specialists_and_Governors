@@ -51,5 +51,50 @@ namespace FactionColonies.Specialists
                 DestructiveTestUtil.SafeRemoveSettlement(a);
             }
         }
+
+        /* DESTRUCTIVE: a governor always gains Social XP on the daily tick, even when its focus does
+           not weight Social. Uses a synthetic focus weighted only on Plants and a large xpPerDay so the
+           Social level provably jumps. */
+        [EmpireDestructiveTest("SG.Destructive.SkillGrowth")]
+        public static void DailySkillTick_GovernorAlwaysGainsSocial()
+        {
+            FactionFC f = DestructiveTestUtil.RequireFaction();
+
+            WorldSettlementFC a = null;
+            WorldObjectComp_SettlementSpecialists comp = null;
+            float savedXp = FCSSettings.xpPerDay;
+            try
+            {
+                a = DestructiveTestUtil.CreateTransientSettlement();
+                if (a is null) TestAssert.Skip("No valid tile");
+                comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
+                if (comp is null) TestAssert.Skip("No specialists comp");
+
+                // Focus weighted only on Plants -- no Social weight -- so a Social gain can only come
+                // from the "governor always gets Social XP" clause.
+                GovernorFocusDef focus = SpecTestHelper.Focus(SkillDefOf.Plants, 1f, null, 0f);
+                Pawn govPawn = SpecDestructiveTestUtil.MakeAssignable(6);
+                if (govPawn is null) TestAssert.Skip("No pawn");
+
+                comp.AssignGovernor(govPawn, focus);
+                if (!comp.HasGovernor) TestAssert.Skip("Roster setup failed");
+
+                SkillRecord social = govPawn.skills.GetSkill(SkillDefOf.Social);
+                if (social is null || social.TotallyDisabled) TestAssert.Skip("Social skill unavailable on test pawn");
+                int before = social.Level;
+
+                FCSSettings.xpPerDay = 1_000_000f; // guarantees a level jump
+                comp.DoDailySkillTick();
+
+                TestAssert.IsTrue(social.Level > before, "governor should gain Social XP even without a Social focus weight");
+                DestructiveTestUtil.AssertEmpireInvariants(f, "DailySkillTick_GovernorAlwaysGainsSocial");
+            }
+            finally
+            {
+                FCSSettings.xpPerDay = savedXp;
+                SpecDestructiveTestUtil.CleanupRoster(comp);
+                DestructiveTestUtil.SafeRemoveSettlement(a);
+            }
+        }
     }
 }

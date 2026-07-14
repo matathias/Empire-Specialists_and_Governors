@@ -73,9 +73,7 @@ namespace FactionColonies.Specialists
             {
                 if (!s.IsAlive) continue;
                 // Garrison Doctrine: Commander specialists themselves die half as often.
-                float chance = specChance;
-                if (garrison && s.role == SpecialistRoleDefOf.Commander)
-                    chance *= 0.5f;
+                float chance = SpecUtil.EffectiveSpecialistDeathChance(s.role, specChance, garrison);
                 if (Rand.Chance(chance))
                     specToKill.Add(s);
             }

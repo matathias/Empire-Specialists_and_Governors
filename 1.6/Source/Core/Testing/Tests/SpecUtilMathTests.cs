@@ -182,5 +182,31 @@ namespace FactionColonies.Specialists
             SettlementSpecialist s = new SettlementSpecialist { pawn = null, role = null };
             TestAssert.AreEqual(0.0, SpecUtil.SpecialistUpkeep(s));
         }
+
+        /*-*-*- EffectiveSpecialistDeathChance: Garrison Doctrine halves a Commander's roll -*-*-*/
+
+        [EmpireTest("SG.Math")]
+        public static void EffectiveSpecialistDeathChance_GarrisonCommander_Halved()
+        {
+            if (SpecialistRoleDefOf.Commander is null) TestAssert.Skip("Commander role not loaded");
+            // Garrison active + Commander -> base * 0.5
+            TestAssert.AreEqual(0.5, SpecUtil.EffectiveSpecialistDeathChance(SpecialistRoleDefOf.Commander, 1.0f, true));
+        }
+
+        [EmpireTest("SG.Math")]
+        public static void EffectiveSpecialistDeathChance_GarrisonNonCommander_Unchanged()
+        {
+            if (SpecialistRoleDefOf.Generalist is null) TestAssert.Skip("Generalist role not loaded");
+            // Garrison active but not a Commander -> unchanged
+            TestAssert.AreEqual(1.0, SpecUtil.EffectiveSpecialistDeathChance(SpecialistRoleDefOf.Generalist, 1.0f, true));
+        }
+
+        [EmpireTest("SG.Math")]
+        public static void EffectiveSpecialistDeathChance_NoGarrison_Unchanged()
+        {
+            if (SpecialistRoleDefOf.Commander is null) TestAssert.Skip("Commander role not loaded");
+            // Garrison inactive -> even a Commander is unchanged
+            TestAssert.AreEqual(1.0, SpecUtil.EffectiveSpecialistDeathChance(SpecialistRoleDefOf.Commander, 1.0f, false));
+        }
     }
 }

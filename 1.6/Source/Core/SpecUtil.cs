@@ -166,6 +166,16 @@ namespace FactionColonies.Specialists
             return bonus;
         }
 
+        /* Garrison Doctrine: a Commander specialist holds the line and dies half as often in the
+           abstract battle death roll. Kept pure (garrison state passed in) so the per-member chance
+           the roll consumes stays deterministically testable. */
+        public static float EffectiveSpecialistDeathChance(SpecialistRoleDef role, float baseChance, bool garrisonActive)
+        {
+            if (garrisonActive && role == SpecialistRoleDefOf.Commander)
+                return baseChance * 0.5f;
+            return baseChance;
+        }
+
         public static double GovernorStatMultiplier(SettlementGovernor g, FCStatDef stat)
         {
             if (g is null || g.focus is null || g.focus.statModifiers is null || !g.HasUsableSkills) return 1.0;
