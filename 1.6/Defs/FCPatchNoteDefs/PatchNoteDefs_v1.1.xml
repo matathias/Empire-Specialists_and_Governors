@@ -13,4 +13,24 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_1_1_1</defName>
+		<label>Various Fixes</label>
+		<description>Various fixes and minor changes.</description>
+		<releaseDate>2026-07-13</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Bugfix: the role-assignment menu for caravans can strand pawns in the world void if the role they would be assigned to is already at its cap</li>
+		<li>Bugfix: a manual defense battle could unintentionally roll defeat death chances against each specialist</li>
+		<li>Bugfix: if an empire settlement is removed, the specialists within would be lost to the void</li>
+		<li>Bugfix: a cache invalidation issue caused specialist skill increases to not actually alter the bonuses they supply until after the game is saved and loaded</li>
+		<li>When recalling specialists from an orbital settlement, deliver them to the player by drop pod instead of forming a caravan in space</li>
+		<li>Revives the Professional Army and Garrison Doctrine traits that fell by the wayside during the 0.3 role rework. Flesh out Meritocratic</li>
+		<li>Add mod version to the mod settings</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>
