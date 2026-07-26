@@ -307,27 +307,49 @@ namespace FactionColonies.Specialists
         }
 
         /// <summary>
-        /// Return recalled/released pawns to the player, layer-aware: a caravan at the settlement tile
-        /// on caravan-capable layers (surface), or a drop pod to the player's home colony on layers
-        /// that can't form caravans (orbit) so the pawns are never stranded. The pawns are normalized
-        /// to player-faction world pawns first; DropThingsNear -> MakeDropPodAt then removes each from
-        /// WorldPawns on landing, releasing the KeepForever hold.
+        /// Return recalled/released pawns to the player, wherever each one currently is. A roster member
+        /// is an allied-faction world pawn, but an external mod (e.g. Hospitality) can pull it onto a map
+        /// as a visitor; each pawn is first released from any visitor Lord/guest state, then handed over.
+        /// A pawn already standing on one of the player's own maps is claimed in place (no pointless
+        /// teleport); every other pawn is detached from where it's held and delivered layer-aware: a
+        /// caravan at the settlement tile on caravan-capable layers (surface), or a drop
+        /// pod to the player's home colony on layers that can't form caravans (orbit) so it's never
+        /// stranded. DropThingsNear -> MakeDropPodAt removes each from WorldPawns on landing, releasing
+        /// the KeepForever hold.
         /// </summary>
         private void DeliverPawnsToPlayer(List<Pawn> pawns)
         {
             if (pawns is null || pawns.Count == 0) return;
 
+            List<Pawn> toDeliver = new List<Pawn>();
             foreach (Pawn pawn in pawns)
             {
+                if (pawn is null || pawn.Dead) continue; // dead members are cleaned up by the roster, never delivered
+
+                // Release any visitor Lord/guest-bed state before touching faction/location, with no
+                // goodwill penalty (no-op when the pawn isn't a spawned guest).
+                SpecUtil.ReleaseVisitorState(pawn);
+
+                // Already on one of the player's own maps: just hand it over where it stands instead of despawning and shipping it back.
+                if (pawn.Spawned && pawn.Map is object && pawn.Map.IsPlayerHome)
+                {
+                    pawn.SetFaction(Faction.OfPlayer);
+                    continue;
+                }
+
                 if (pawn.Spawned) pawn.DeSpawn();
+                else SpecUtil.DetachFromHolder(pawn); // un-hold from a caravan / container
                 pawn.SetFaction(Faction.OfPlayer);
                 if (!pawn.IsWorldPawn())
                     Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+                toDeliver.Add(pawn);
             }
+
+            if (toDeliver.Count == 0) return; // everyone was claimed in place (or filtered out)
 
             if (Settlement.Tile.LayerDef.canFormCaravans)
             {
-                CaravanMaker.MakeCaravan(pawns, Faction.OfPlayer, Settlement.Tile, false);
+                CaravanMaker.MakeCaravan(toDeliver, Faction.OfPlayer, Settlement.Tile, false);
                 return;
             }
 
@@ -337,17 +359,17 @@ namespace FactionColonies.Specialists
             if (map is object)
             {
                 IntVec3 cell = DropCellFinder.TradeDropSpot(map);
-                DropPodUtility.DropThingsNear(cell, map, pawns, 110, false, false, false, false);
+                DropPodUtility.DropThingsNear(cell, map, toDeliver, 110, false, false, false, false);
                 Find.LetterStack.ReceiveLetter(
                     "FCS_LetterRecallDropPodLabel".Translate(),
-                    "FCS_LetterRecallDropPodText".Translate(pawns.Count, Settlement.Name, map.Parent.Label),
+                    "FCS_LetterRecallDropPodText".Translate(toDeliver.Count, Settlement.Name, map.Parent.Label),
                     LetterDefOf.PositiveEvent);
                 return;
             }
 
             // No player home map at all: last-resort caravan so the pawns are never lost.
             LogSG.Warning($"DeliverPawnsToPlayer: no player home map; forming caravan at {Settlement.Name} tile as last resort");
-            CaravanMaker.MakeCaravan(pawns, Faction.OfPlayer, Settlement.Tile, false);
+            CaravanMaker.MakeCaravan(toDeliver, Faction.OfPlayer, Settlement.Tile, false);
         }
 
         /// <summary>

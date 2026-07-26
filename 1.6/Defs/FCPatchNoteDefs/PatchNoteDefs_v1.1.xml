@@ -33,4 +33,18 @@
 		<li>Matathias</li>
 		</authors>
 	</FactionColonies.PatchNoteDef>
+
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_1_1_2</defName>
+		<label>Visitors Update</label>
+		<description>A small patch to prevent potential issues or exploits when used alongside mods like Hospitality.</description>
+		<releaseDate>2026-07-26</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines>
+		<li>Bugfix: if a specialist is present on the player&apos;s map (e.g. a Hospitality visit), then recalling the specialist would have the potential for buggy behavior</li>
+		</patchNoteLines>
+		<authors>
+		<li>Matathias</li>
+		</authors>
+	</FactionColonies.PatchNoteDef>
 </Defs>

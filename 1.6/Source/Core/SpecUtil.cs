@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using RimWorld;
+using RimWorld.Planet;
 using Verse;
+using Verse.AI.Group;
 
 namespace FactionColonies.Specialists
 {
@@ -281,6 +283,40 @@ namespace FactionColonies.Specialists
                 if (comp.Governor is object && comp.Governor.pawn == pawn) return comp;
             }
             return null;
+        }
+
+        /* -*-*-*- Returning an assigned pawn: safe release from wherever it currently is -*-*-*- */
+
+        /* Roster members are allied-faction world pawns, but an external mod can pull one out of world
+           storage onto a map as a visitor: Hospitality, for instance, sources guests from allied
+           factions' world pawns, so a specialist can turn up spawned and owned by a visit Lord with a
+           claimed guest bed. Cleanly release such a pawn from that Lord/guest state before we recall it.
+           No-op when the pawn isn't spawned or isn't a guest.
+
+           PawnLostCondition.ExitedMap is what vanilla map-exit uses: it removes the pawn from the Lord's
+           ownedPawns and tears down its duty, and the host mod treats it as a clean departure (no
+           "lost entire group" faction-goodwill penalty, unlike the ChangedFaction a plain SetFaction
+           would raise). Because that clean-exit path skips the host mod's own bed release, we unclaim
+           the guest bed here. Guest status itself is cleared by the SetFaction that follows. */
+        public static void ReleaseVisitorState(Pawn pawn)
+        {
+            if (pawn is null || !pawn.Spawned) return;
+            pawn.GetLord()?.Notify_PawnLost(pawn, PawnLostCondition.ExitedMap);
+            pawn.ownership?.UnclaimBed();
+        }
+
+        /* Detach an unspawned pawn from a caravan / inventory / transport-pod container so it is safe to
+           re-faction and place into a fresh caravan or drop pod. Mirrors the assign side, which removes
+           the pawn from its caravan (and destroys a caravan it empties) before handing it over. No-op on
+           a spawned pawn — that path despawns instead. */
+        public static void DetachFromHolder(Pawn pawn)
+        {
+            if (pawn is null || pawn.Spawned) return;
+            Caravan caravan = pawn.GetCaravan();
+            if (pawn.holdingOwner is object)
+                pawn.holdingOwner.Remove(pawn);
+            if (caravan is object && !caravan.Destroyed && caravan.PawnsListForReading.Count == 0)
+                caravan.Destroy();
         }
 
         /* Top-N skills label, optionally filtered to a role's skillWeights */
