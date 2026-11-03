@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<FactionColonies.PatchNoteDef Name="SPPatchBase" Abstract="True">
+		<modId>matathias.empire.specialists</modId>
+		<bannerImagePath>UI/Banners/Banner-SpecialistsGovernors</bannerImagePath>
+
+		<links>
+			<li>https://discord.gg/f3zFQqA</li>
+			<li>https://github.com/matathias/Empire-Specialists_and_Governors</li>
+		</links>
+
+		<linkButtonImagePaths>
+			<li>GUI/Buttons/discordlogo</li>
+			<li>GUI/Buttons/githublogo</li>
+		</linkButtonImagePaths>
+
+		<linkButtonToolTips>
+			<li>Join the Empire discord!</li>
+			<li>Please raise any issues you find on the Github page.</li>
+		</linkButtonToolTips>
+
+		<additionalNotes>
+			<li>Please raise any issues you find on the Github page.</li>
+		</additionalNotes>
+	</FactionColonies.PatchNoteDef>
+
+	<!-- ========== TEMPLATE ==========
+	<FactionColonies.PatchNoteDef ParentName="SPPatchBase">
+		<defName>SP_0_1_0</defName>
+		<label>Short Title</label>
+		<description>One-line summary.</description>
+		<releaseDate>2026-01-01</releaseDate>
+		<patchNoteType>Patch</patchNoteType>
+		<patchNoteLines><li>Change here.</li></patchNoteLines>
+		<authors><li>YourName</li></authors>
+	</FactionColonies.PatchNoteDef>
+	========== END TEMPLATE ========== -->
+</Defs>
