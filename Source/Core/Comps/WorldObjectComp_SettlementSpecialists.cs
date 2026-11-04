@@ -47,10 +47,10 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     public IReadOnlyList<SettlementSpecialist> Specialists => specialists;
     public IReadOnlyList<SettlementSpecialist> Residents => residents;
     public SettlementGovernor Governor => governor;
-    public bool HasGovernor => governor is object && governor.IsAlive;
+    public bool HasGovernor => governor is not null && governor.IsAlive;
     public int SpecialistCount => specialists.Count;
     public int ResidentCount => residents.Count;
-    public int TotalCount => specialists.Count + residents.Count + (governor is object ? 1 : 0);
+    public int TotalCount => specialists.Count + residents.Count + (governor is not null ? 1 : 0);
 
     public int MaxSpecialists
     {
@@ -112,7 +112,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     {
         if (pawn is null) return false;
 
-        if (role is object && SpecialistCount >= MaxSpecialists)
+        if (role is not null && SpecialistCount >= MaxSpecialists)
         {
             LogSG.Message($"Cannot assign {pawn.LabelShort}: max specialists reached at {Settlement.Name}");
             Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
@@ -150,7 +150,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     {
         if (pawn is null || focus is null) return false;
 
-        if (governor is object)
+        if (governor is not null)
         {
             LogSG.Warning("Settlement already has a governor");
             return false;
@@ -163,7 +163,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         if (!pawn.IsWorldPawn())
             Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
 
-        if (governor.Behavior is object)
+        if (governor.Behavior is not null)
             governor.Behavior.OnFocusActivated(Settlement);
 
         LogSG.Message($"Assigned {pawn.LabelShort} as Governor ({focus.LabelCap}) to {Settlement.Name}");
@@ -188,11 +188,11 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     {
         if (governor is null) return;
         Pawn pawn = governor.pawn;
-        if (governor.Behavior is object)
+        if (governor.Behavior is not null)
             governor.Behavior.OnFocusDeactivated(Settlement);
         SpecialistRoster.Recall(pawn);
         governor = null;
-        if (pawn is object)
+        if (pawn is not null)
             DeliverRecalledPawn(pawn);
         LogSG.Message($"Recalled governor from {Settlement.Name}");
         ResetSatisfactionIfRosterEmpty();
@@ -209,10 +209,10 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         residents.Remove(entry);
 
         // Demote existing governor to resident (if any)
-        if (governor is object)
+        if (governor is not null)
         {
             Pawn oldGovPawn = governor.pawn;
-            if (governor.Behavior is object)
+            if (governor.Behavior is not null)
                 governor.Behavior.OnFocusDeactivated(Settlement);
             SpecialistRoster.Recall(oldGovPawn);
 
@@ -227,7 +227,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
         // Create new governor
         governor = new SettlementGovernor(pawn, focus);
-        if (governor.Behavior is object)
+        if (governor.Behavior is not null)
             governor.Behavior.OnFocusActivated(Settlement);
 
         LogSG.Message($"Promoted {pawn.LabelShort} to Governor ({focus.LabelCap}) at {Settlement.Name}");
@@ -246,7 +246,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         if (entry is null) return;
 
         // Check capacity when moving to a specialist role
-        if (newRole is object && entry.role is null && SpecialistCount >= MaxSpecialists)
+        if (newRole is not null && entry.role is null && SpecialistCount >= MaxSpecialists)
         {
             Messages.Message("FCS_CannotAssignSpecialistRole".Translate(
                 entry.pawn.LabelShort, newRole.LabelCap, Settlement.Name, MaxSpecialists),
@@ -255,12 +255,12 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         }
 
         // Moving between specialist and resident lists
-        if (entry.role is null && newRole is object)
+        if (entry.role is null && newRole is not null)
         {
             residents.Remove(entry);
             specialists.Add(entry);
         }
-        else if (entry.role is object && newRole is null)
+        else if (entry.role is not null && newRole is null)
         {
             specialists.Remove(entry);
             residents.Add(entry);
@@ -277,7 +277,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         if (entry is null) return;
         specialists.Remove(entry);
         residents.Remove(entry);
-        if (entry.pawn is object)
+        if (entry.pawn is not null)
             SpecialistRoster.Recall(entry.pawn);
         ResetSatisfactionIfRosterEmpty();
         InvalidateAll();
@@ -290,7 +290,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             if (s.IsAlive) result.Add(s.pawn);
         foreach (SettlementSpecialist r in residents)
             if (r.IsAlive) result.Add(r.pawn);
-        if (governor is object && governor.IsAlive)
+        if (governor is not null && governor.IsAlive)
             result.Add(governor.pawn);
         return result;
     }
@@ -326,7 +326,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             SpecUtil.ReleaseVisitorState(pawn);
 
             // Already on one of the player's own maps: just hand it over where it stands instead of despawning and shipping it back.
-            if (pawn.Spawned && pawn.Map is object && pawn.Map.IsPlayerHome)
+            if (pawn.Spawned && pawn.Map is not null && pawn.Map.IsPlayerHome)
             {
                 pawn.SetFaction(Faction.OfPlayer);
                 continue;
@@ -351,7 +351,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         // Non-caravan layer (orbit): drop-pod to the player's home colony, with a letter since the
         // pawns land off-screen.
         Map map = FindFC.TaxMap;
-        if (map is object)
+        if (map is not null)
         {
             IntVec3 cell = DropCellFinder.TradeDropSpot(map);
             DropPodUtility.DropThingsNear(cell, map, toDeliver, 110, false, false, false, false);
@@ -394,11 +394,11 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             SpecialistRoster.Recall(r.pawn);
             if (r.IsAlive) survivors.Add(r.pawn);
         }
-        if (governor is object)
+        if (governor is not null)
         {
-            if (governor.Behavior is object)
+            if (governor.Behavior is not null)
                 governor.Behavior.OnFocusDeactivated(Settlement);
-            if (governor.pawn is object)
+            if (governor.pawn is not null)
             {
                 SpecialistRoster.Recall(governor.pawn);
                 if (governor.IsAlive) survivors.Add(governor.pawn);
@@ -429,7 +429,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     {
         foreach (SettlementSpecialist s in specialists) s.DirtySkillScore();
         foreach (SettlementSpecialist r in residents) r.DirtySkillScore();
-        if (governor is object) governor.DirtySkillScore();
+        if (governor is not null) governor.DirtySkillScore();
         Settlement.InvalidateStatCache();
     }
 
@@ -517,7 +517,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         string roleLabel;
 
         SettlementSpecialist spec = specialists.Find(s => s.pawn == pawn);
-        if (spec is object)
+        if (spec is not null)
         {
             roleLabel = spec.role?.LabelCap ?? "Specialist";
             RemoveSpecialist(spec);
@@ -525,12 +525,12 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         else
         {
             SettlementSpecialist res = residents.Find(r => r.pawn == pawn);
-            if (res is object)
+            if (res is not null)
             {
                 roleLabel = "FCS_RoleResident".Translate();
                 RemoveSpecialist(res);
             }
-            else if (governor is object && governor.pawn == pawn)
+            else if (governor is not null && governor.pawn == pawn)
             {
                 roleLabel = "FCS_RoleGovernor".Translate();
                 governor.Behavior?.OnFocusDeactivated(Settlement);
@@ -584,7 +584,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             specialists.RemoveAll(s => s?.pawn is null);
             residents.RemoveAll(r => r?.pawn is null);
             deployedPawns.RemoveAll(p => p is null);
-            if (governor is object && governor.pawn is null) governor = null;
+            if (governor is not null && governor.pawn is null) governor = null;
         }
     }
 
@@ -618,23 +618,23 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             {
                 if (sw.skill is null) continue;
                 SkillRecord rec = s.pawn.skills.GetSkill(sw.skill);
-                if (rec is object && !rec.TotallyDisabled)
+                if (rec is not null && !rec.TotallyDisabled)
                     rec.Learn(xp * sw.weight, true);
             }
         }
 
-        if (governor is object && governor.HasUsableSkills && governor.focus?.skillWeights is object)
+        if (governor is not null && governor.HasUsableSkills && governor.focus?.skillWeights is not null)
         {
             foreach (SkillWeight sw in governor.focus.skillWeights)
             {
                 if (sw.skill is null) continue;
                 SkillRecord rec = governor.pawn.skills.GetSkill(sw.skill);
-                if (rec is object && !rec.TotallyDisabled)
+                if (rec is not null && !rec.TotallyDisabled)
                     rec.Learn(xp * sw.weight, true);
             }
             // Governor always gets Social XP
             SkillRecord social = governor.pawn.skills.GetSkill(SkillDefOf.Social);
-            if (social is object && !social.TotallyDisabled)
+            if (social is not null && !social.TotallyDisabled)
                 social.Learn(xp, true);
         }
 
@@ -762,7 +762,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         }
 
         // Governor stat multiplier
-        if (governor is object && governor.HasUsableSkills)
+        if (governor is not null && governor.HasUsableSkills)
         {
             double govMult = SpecUtil.GovernorStatMultiplier(governor, stat);
             if (Math.Abs(govMult - 1.0) > 0.001)
@@ -809,7 +809,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         }
 
         // Governor's additive stat contribution (mirrors the (govMult - 1.0) term in GetStatModifier)
-        if (governor is object && governor.HasUsableSkills)
+        if (governor is not null && governor.HasUsableSkills)
         {
             double govMult = SpecUtil.GovernorStatMultiplier(governor, stat);
             if (Math.Abs(govMult - 1.0) > 0.001)
@@ -862,7 +862,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         double total = 0;
         foreach (SettlementSpecialist s in specialists)
             total += SpecUtil.SpecialistUpkeep(s);
-        if (governor is object)
+        if (governor is not null)
             total += SpecUtil.GovernorUpkeep(governor);
         return total;
     }

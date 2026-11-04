@@ -436,8 +436,8 @@ public static class SpecRosterDestructiveTests
 
             // The surface delivery path must still form a player caravan carrying the pawn.
             Caravan caravan = Find.WorldObjects.Caravans.FirstOrDefault(
-                c => c is object && !c.Destroyed && c.Tile == s.Tile && c.PawnsListForReading.Contains(p));
-            TestAssert.IsTrue(caravan is object, "recall on a surface settlement should form a caravan carrying the pawn");
+                c => c is not null && !c.Destroyed && c.Tile == s.Tile && c.PawnsListForReading.Contains(p));
+            TestAssert.IsTrue(caravan is not null, "recall on a surface settlement should form a caravan carrying the pawn");
 
             DestructiveTestUtil.AssertEmpireInvariants(f, "RecallSpecialist_SurfaceFormsCaravan");
         }
@@ -445,7 +445,7 @@ public static class SpecRosterDestructiveTests
         {
             List<Caravan> caravans = new List<Caravan>(Find.WorldObjects.Caravans);
             foreach (Caravan c in caravans)
-                if (c is object && !c.Destroyed && c.Tile == s.Tile)
+                if (c is not null && !c.Destroyed && c.Tile == s.Tile)
                     c.Destroy();
             SpecDestructiveTestUtil.CleanupRoster(comp);
             DestructiveTestUtil.SafeRemoveSettlement(s);

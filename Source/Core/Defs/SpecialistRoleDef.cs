@@ -23,7 +23,7 @@ public class SpecialistRoleDef : Def
         {
             if (sw.skill is null) continue;
             SkillRecord rec = pawn.skills.GetSkill(sw.skill);
-            if (rec is object)
+            if (rec is not null)
                 score += SpecUtil.TaperedLevel(rec.Level) * sw.weight;
         }
         return score;
@@ -34,7 +34,7 @@ public class SpecialistRoleDef : Def
         foreach (string err in base.ConfigErrors())
             yield return err;
 
-        if (skillWeights is object)
+        if (skillWeights is not null)
         {
             for (int i = 0; i < skillWeights.Count; i++)
             {
@@ -43,7 +43,7 @@ public class SpecialistRoleDef : Def
             }
         }
 
-        if (resourceBonuses is object)
+        if (resourceBonuses is not null)
         {
             for (int i = 0; i < resourceBonuses.Count; i++)
             {
@@ -52,7 +52,7 @@ public class SpecialistRoleDef : Def
             }
         }
 
-        if (statModifiers is object)
+        if (statModifiers is not null)
         {
             foreach (string err in FCStatModifier.ConfigErrors(statModifiers, defName))
                 yield return err;
@@ -62,7 +62,7 @@ public class SpecialistRoleDef : Def
             // settlements is silently dead here, so flag it at load.
             for (int i = 0; i < statModifiers.Count; i++)
             {
-                if (statModifiers[i].stat is object && !statModifiers[i].stat.appliesToSettlements)
+                if (statModifiers[i].stat is not null && !statModifiers[i].stat.appliesToSettlements)
                     yield return defName + ": statModifiers[" + i + "] stat '" + statModifiers[i].stat.defName
                         + "' is not appliesToSettlements, so it can never apply to a specialist role";
             }

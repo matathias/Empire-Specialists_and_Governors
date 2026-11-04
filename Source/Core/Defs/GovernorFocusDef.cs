@@ -17,7 +17,7 @@ public class GovernorFocusDef : Def
         float score = 0f;
         bool socialHandled = false;
 
-        if (skillWeights is object)
+        if (skillWeights is not null)
         {
             foreach (SkillWeight sw in skillWeights)
             {
@@ -41,7 +41,7 @@ public class GovernorFocusDef : Def
         if (!socialHandled)
         {
             SkillRecord social = pawn.skills.GetSkill(SkillDefOf.Social);
-            if (social is object)
+            if (social is not null)
                 score += SpecUtil.TaperedLevel(social.Level) * 1f;
         }
 
@@ -53,7 +53,7 @@ public class GovernorFocusDef : Def
         foreach (string err in base.ConfigErrors())
             yield return err;
 
-        if (skillWeights is object)
+        if (skillWeights is not null)
         {
             for (int i = 0; i < skillWeights.Count; i++)
             {
@@ -62,7 +62,7 @@ public class GovernorFocusDef : Def
             }
         }
 
-        if (resourceBonuses is object)
+        if (resourceBonuses is not null)
         {
             for (int i = 0; i < resourceBonuses.Count; i++)
             {
@@ -71,7 +71,7 @@ public class GovernorFocusDef : Def
             }
         }
 
-        if (statModifiers is object)
+        if (statModifiers is not null)
         {
             foreach (string err in FCStatModifier.ConfigErrors(statModifiers, defName))
                 yield return err;
@@ -81,7 +81,7 @@ public class GovernorFocusDef : Def
             // settlements is silently dead here, so flag it at load.
             for (int i = 0; i < statModifiers.Count; i++)
             {
-                if (statModifiers[i].stat is object && !statModifiers[i].stat.appliesToSettlements)
+                if (statModifiers[i].stat is not null && !statModifiers[i].stat.appliesToSettlements)
                     yield return defName + ": statModifiers[" + i + "] stat '" + statModifiers[i].stat.defName
                         + "' is not appliesToSettlements, so it can never apply to a governor focus";
             }

@@ -44,7 +44,7 @@ public class SpecialistLifecycleHandler : IMilitaryOperationListener, ISettlemen
             settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
         if (comp is null || comp.TotalCount == 0) return;
         if (comp.PawnsDeployedToBattle) return;
-        if (result is object && result.wasManualBattle) return; // only auto-resolved battles roll
+        if (result is not null && result.wasManualBattle) return; // only auto-resolved battles roll
 
         WorldObjectCompProperties_SettlementSpecialists props = comp.Props;
 

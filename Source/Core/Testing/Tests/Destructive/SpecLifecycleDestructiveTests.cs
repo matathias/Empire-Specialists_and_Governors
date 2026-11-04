@@ -85,7 +85,7 @@ public static class SpecLifecycleDestructiveTests
         }
         finally
         {
-            if (props is object)
+            if (props is not null)
             {
                 props.residentDeathChanceDefeat = savedResident;
                 props.specialistDeathChanceDefeat = savedSpecialist;
@@ -148,7 +148,7 @@ public static class SpecLifecycleDestructiveTests
         }
         finally
         {
-            if (props is object)
+            if (props is not null)
             {
                 props.residentDeathChanceDefeat = savedResident;
                 props.specialistDeathChanceDefeat = savedSpecialist;
@@ -213,11 +213,11 @@ public static class SpecLifecycleDestructiveTests
         {
             // The disband forms a caravan of the survivors at the tile; destroy it so the pawns
             // don't linger, then clear any static-roster residue and remove the settlement.
-            if (a is object)
+            if (a is not null)
             {
                 List<Caravan> caravans = new List<Caravan>(Find.WorldObjects.Caravans);
                 foreach (Caravan c in caravans)
-                    if (c is object && !c.Destroyed && c.Tile == a.Tile)
+                    if (c is not null && !c.Destroyed && c.Tile == a.Tile)
                         c.Destroy();
             }
             SpecialistRoster.Recall(specPawn);
@@ -290,7 +290,7 @@ public static class SpecLifecycleDestructiveTests
         }
         finally
         {
-            if (props is object)
+            if (props is not null)
             {
                 props.residentDeathChanceDefeat = savedResident;
                 props.specialistDeathChanceDefeat = savedSpecialist;
@@ -345,7 +345,7 @@ public static class SpecLifecycleDestructiveTests
         }
         finally
         {
-            if (props is object) props.governorDeathChanceDefeat = savedGovernor;
+            if (props is not null) props.governorDeathChanceDefeat = savedGovernor;
             SpecDestructiveTestUtil.CleanupRoster(comp);
             DestructiveTestUtil.SafeRemoveSettlement(a);
         }
@@ -392,7 +392,7 @@ public static class SpecLifecycleDestructiveTests
         }
         finally
         {
-            if (props is object)
+            if (props is not null)
             {
                 props.residentDeathChanceVictory = savedResVictory;
                 props.residentDeathChanceDefeat = savedResDefeat;
@@ -443,7 +443,7 @@ public static class SpecLifecycleDestructiveTests
         }
         finally
         {
-            if (pawn is object) SpecialistRoster.Recall(pawn);
+            if (pawn is not null) SpecialistRoster.Recall(pawn);
             SpecDestructiveTestUtil.CleanupRoster(comp);
             DestructiveTestUtil.SafeRemoveSettlement(a);
         }

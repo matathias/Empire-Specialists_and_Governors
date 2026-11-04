@@ -21,7 +21,7 @@ public class CodexProvider_SG_Governors : ICodexDynamicProvider
             if (comp is null || !comp.HasGovernor) continue;
 
             SettlementGovernor gov = comp.Governor;
-            string focusLabel = gov.focus is object
+            string focusLabel = gov.focus is not null
                 ? gov.focus.LabelCap.ToString()
                 : "FCS_FocusNone".Translate().ToString();
 

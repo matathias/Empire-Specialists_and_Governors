@@ -4,7 +4,7 @@ namespace FactionColonies.Specialists;
    Residents are uncapped. */
 public class WorldObjectComp_PawnArrival_Resident : WorldObjectComp_SpecialistArrivalBase
 {
-    public override FloatMenuAcceptanceReport CanReceive => Roster is object;
+    public override FloatMenuAcceptanceReport CanReceive => Roster is not null;
 
     public override string ArrivalMenuLabel => "FCS_ArrivalResident".Translate(Settlement.Label);
 

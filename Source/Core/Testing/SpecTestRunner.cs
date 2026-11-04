@@ -67,7 +67,7 @@ public static class SpecTestRunner
     public static void RunTests(string category, bool destructive = false)
     {
         var tests = DiscoverTests().Where(t => t.attr.Destructive == destructive);
-        if (category is object)
+        if (category is not null)
             tests = tests.Where(t => t.attr.Category == category);
         var list = tests.ToList();
 
@@ -105,7 +105,7 @@ public static class SpecTestRunner
             }
         }
 
-        string label = (category is object ? $"[{category}]" : "[All]")
+        string label = (category is not null ? $"[{category}]" : "[All]")
             + (destructive ? " DESTRUCTIVE" : "");
         LogSG.MessageForce($"Test results {label}: {passed} passed, {failed} failed, {errors} errors, {skipped} skipped (of {list.Count} total)");
         if (failDetails.Count > 0)
@@ -136,7 +136,7 @@ public static class SpecTestRunner
             .GetTypes()
             .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
             .Select(m => (method: m, attr: m.GetCustomAttribute<EmpireTestAttribute>()))
-            .Where(pair => pair.attr is object)
+            .Where(pair => pair.attr is not null)
             .OrderBy(pair => pair.attr.Category)
             .ThenBy(pair => pair.method.Name)
             .ToList();

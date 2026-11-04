@@ -7,13 +7,13 @@ public static class SpecialistRoster
 
     public static void Assign(Pawn pawn, SpecialistRoleDef role)
     {
-        if (pawn is object)
+        if (pawn is not null)
             assignments[pawn.thingIDNumber] = role;
     }
 
     public static void AssignGovernor(Pawn pawn)
     {
-        if (pawn is object)
+        if (pawn is not null)
             governors.Add(pawn.thingIDNumber);
     }
 
@@ -26,14 +26,14 @@ public static class SpecialistRoster
 
     public static SpecialistRoleDef GetRole(Pawn pawn)
     {
-        if (pawn is object && assignments.TryGetValue(pawn.thingIDNumber, out SpecialistRoleDef role))
+        if (pawn is not null && assignments.TryGetValue(pawn.thingIDNumber, out SpecialistRoleDef role))
             return role;
         return null;
     }
 
     public static bool IsGovernor(Pawn pawn)
     {
-        return pawn is object && governors.Contains(pawn.thingIDNumber);
+        return pawn is not null && governors.Contains(pawn.thingIDNumber);
     }
 
     public static bool IsAssigned(Pawn pawn)
@@ -97,7 +97,7 @@ public class RecordWorker_FCS_TimeAsSpecialist : RecordWorker_SpecialistBase
     public override bool ShouldMeasureTimeNow(Pawn pawn)
     {
         SpecialistRoleDef role = SpecialistRoster.GetRole(pawn);
-        return role is object && !SpecialistRoster.IsGovernor(pawn);
+        return role is not null && !SpecialistRoster.IsGovernor(pawn);
     }
 }
 

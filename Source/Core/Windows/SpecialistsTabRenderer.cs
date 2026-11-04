@@ -146,7 +146,7 @@ internal class SpecialistsTabRenderer
         float y = contentRect.y + GovPanelPad;
 
         SettlementGovernor gov = comp.Governor;
-        bool hasGov = gov is object && gov.IsAlive;
+        bool hasGov = gov is not null && gov.IsAlive;
 
         if (!hasGov)
         {
@@ -237,7 +237,7 @@ internal class SpecialistsTabRenderer
         string upkeepText = "FCS_UpkeepDisplay".Translate(hasGov ? upkeep.ToString("F1") : "\u2014");
         Rect upkeepRect = new Rect(textX, lineY, textW, 22f);
         Widgets.Label(upkeepRect, upkeepText);
-        if (hasGov && gov.focus is object)
+        if (hasGov && gov.focus is not null)
         {
             double mult = SpecUtil.GovernorUpkeepMultiplier;
             string upkeepTip = "FCS_TooltipUpkeepGovFlat".Translate(
@@ -316,13 +316,13 @@ internal class SpecialistsTabRenderer
         // Focus selector button
         if (hasGov)
         {
-            string focusLabel = gov.focus is object ? gov.focus.LabelCap : "FCS_FocusNoFocus".Translate();
+            string focusLabel = gov.focus is not null ? gov.focus.LabelCap : "FCS_FocusNoFocus".Translate();
             Rect focusBtnRect = new Rect(ix, iy, iw, BtnHeight);
             if (Widgets.ButtonText(focusBtnRect, "FCS_FocusSingleLabel".Translate(focusLabel)))
             {
                 ShowGovernorFocusMenu(gov);
             }
-            string focusTip = "FCS_TooltipFocusCurrent".Translate(gov.focus is object ? (string)gov.focus.LabelCap : "\u2014");
+            string focusTip = "FCS_TooltipFocusCurrent".Translate(gov.focus is not null ? (string)gov.focus.LabelCap : "\u2014");
             TooltipHandler.TipRegion(focusBtnRect, focusTip);
         }
         else
@@ -338,7 +338,7 @@ internal class SpecialistsTabRenderer
         float scrollAreaH = rect.yMax - iy - GovPanelPad - reservedBottom;
 
         // Scrollable description + bonus lines area
-        if (hasGov && gov.focus is object && scrollAreaH > 0f)
+        if (hasGov && gov.focus is not null && scrollAreaH > 0f)
         {
             // Compute inner content height
             float innerH = 0f;
@@ -351,7 +351,7 @@ internal class SpecialistsTabRenderer
 
             float score = gov.SkillScore;
             int bonusLineCount = 0;
-            if (gov.focus.resourceBonuses is object)
+            if (gov.focus.resourceBonuses is not null)
             {
                 foreach (ResourceProductionBonus rpb in gov.focus.resourceBonuses)
                 {
@@ -366,7 +366,7 @@ internal class SpecialistsTabRenderer
                 double baseMult = 1.0 + gov.focus.baselineProductionValue * score;
                 if (Math.Abs(baseMult - 1.0) > 0.001) bonusLineCount++;
             }
-            if (gov.focus.statModifiers is object)
+            if (gov.focus.statModifiers is not null)
             {
                 foreach (FCStatModifier mod in gov.focus.statModifiers)
                 {
@@ -398,7 +398,7 @@ internal class SpecialistsTabRenderer
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleLeft;
 
-            if (gov.focus.resourceBonuses is object)
+            if (gov.focus.resourceBonuses is not null)
             {
                 foreach (ResourceProductionBonus rpb in gov.focus.resourceBonuses)
                 {
@@ -425,7 +425,7 @@ internal class SpecialistsTabRenderer
                 }
             }
 
-            if (gov.focus.statModifiers is object)
+            if (gov.focus.statModifiers is not null)
             {
                 foreach (FCStatModifier mod in gov.focus.statModifiers)
                 {
@@ -493,7 +493,7 @@ internal class SpecialistsTabRenderer
         if (hasGov)
         {
             string multSummary = BuildGovMultiplierSummary();
-            if (multSummary is object)
+            if (multSummary is not null)
             {
                 Text.Anchor = TextAnchor.MiddleRight;
                 GUI.color = new Color(0.85f, 0.75f, 0.5f);
@@ -590,7 +590,7 @@ internal class SpecialistsTabRenderer
             if (hasGov && Math.Abs(bonus) > 0.001)
             {
                 string tip = BuildGovResourceTooltip(res, gov);
-                if (tip is object) TooltipHandler.TipRegion(rowRect, tip);
+                if (tip is not null) TooltipHandler.TipRegion(rowRect, tip);
             }
 
             Text.Anchor = TextAnchor.UpperLeft;
@@ -763,7 +763,7 @@ internal class SpecialistsTabRenderer
         Text.Anchor = TextAnchor.MiddleLeft;
         Rect nameRect = new Rect(textX, rowRect.y + 2f, textW, 22f);
         string nameText = s.pawn.LabelShort;
-        if (s.role is object)
+        if (s.role is not null)
             nameText += " \u2014 " + s.role.LabelCap;
         Widgets.Label(nameRect, nameText);
 
@@ -795,7 +795,7 @@ internal class SpecialistsTabRenderer
 
                 // Contribution tooltip
                 string contribTip = BuildContributionTooltip(s);
-                if (contribTip is object)
+                if (contribTip is not null)
                 {
                     TooltipHandler.TipRegion(contribRect, contribTip);
                 }
@@ -834,7 +834,7 @@ internal class SpecialistsTabRenderer
             parts.Add(title);
         }
         parts.Add("FCS_IdentityAge".Translate(pawn.ageTracker.AgeBiologicalYears));
-        if (ModsConfig.BiotechActive && pawn.genes?.Xenotype is object)
+        if (ModsConfig.BiotechActive && pawn.genes?.Xenotype is not null)
         {
             parts.Add(pawn.genes.XenotypeLabelCap);
         }
@@ -879,7 +879,7 @@ internal class SpecialistsTabRenderer
 
         // Check if this is a defense-type role (has stat modifiers but no resource bonuses)
         if ((s.role.resourceBonuses is null || s.role.resourceBonuses.Count == 0)
-            && s.role.statModifiers is object && s.role.statModifiers.Count > 0)
+            && s.role.statModifiers is not null && s.role.statModifiers.Count > 0)
             return DefenseContribColor;
 
         double bestBonus = 0;
@@ -1006,7 +1006,7 @@ internal class SpecialistsTabRenderer
         }
 
         // If no resource bonuses but has stat modifiers, show actual stat values
-        if (s.role.statModifiers is object && s.role.statModifiers.Count > 0)
+        if (s.role.statModifiers is not null && s.role.statModifiers.Count > 0)
         {
             float score = s.SkillScore;
             StringBuilder statSb = new StringBuilder();

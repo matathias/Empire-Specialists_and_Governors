@@ -40,7 +40,7 @@ public static class SpecDestructiveTestUtil
             comp.RemoveSpecialist(s);
         foreach (SettlementSpecialist r in comp.Residents.ToList())
             comp.RemoveSpecialist(r);
-        if (comp.HasGovernor && comp.Governor?.pawn is object)
+        if (comp.HasGovernor && comp.Governor?.pawn is not null)
             SpecialistRoster.Recall(comp.Governor.pawn);
     }
 }

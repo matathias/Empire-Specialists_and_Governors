@@ -28,7 +28,7 @@ public class WorldObjectComp_PawnArrival_Specialist : WorldObjectComp_Specialist
         int residents = 0;
         for (int i = 0; i < pawns.Count; i++)
         {
-            if (roster is object && IsSpecialist(roster, pawns[i]))
+            if (roster is not null && IsSpecialist(roster, pawns[i]))
                 specialists++;
             else
                 residents++;

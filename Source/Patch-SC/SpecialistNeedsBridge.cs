@@ -100,7 +100,7 @@ public class WorldObjectComp_SpecialistNeeds : WorldObjectComp, INeedProvider
         }
 
         WorldSettlementFC ws = parent as WorldSettlementFC;
-        if (ws is object)
+        if (ws is not null)
         {
             ws.InvalidateStatCache();
         }

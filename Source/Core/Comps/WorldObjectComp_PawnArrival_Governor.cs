@@ -11,7 +11,7 @@ public class WorldObjectComp_PawnArrival_Governor : WorldObjectComp_SpecialistAr
         {
             WorldObjectComp_SettlementSpecialists roster = Roster;
             if (roster is null) return false;
-            if (roster.Governor is object)
+            if (roster.Governor is not null)
                 return FloatMenuAcceptanceReport.WithFailReason("FCS_ArrivalGovernorTaken".Translate());
             return true;
         }
@@ -28,13 +28,13 @@ public class WorldObjectComp_PawnArrival_Governor : WorldObjectComp_SpecialistAr
         int residents = 0;
         for (int i = 0; i < pawns.Count; i++)
         {
-            if (roster is object && roster.Governor is object && roster.Governor.pawn == pawns[i])
+            if (roster is not null && roster.Governor is not null && roster.Governor.pawn == pawns[i])
                 governor = pawns[i];
             else
                 residents++;
         }
 
-        if (governor is object && residents == 0)
+        if (governor is not null && residents == 0)
             return "FCS_ArrivalGovernorDone".Translate(governor.LabelShortCap, Settlement.Label);
         if (governor is null)
             return "FCS_ArrivalResidentDone".Translate(residents, Settlement.Label);

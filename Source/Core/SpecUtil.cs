@@ -26,7 +26,7 @@ public static class SpecUtil
        plus IsColonist since pod cargo isn't pre-filtered to caravan colonists). */
     public static bool IsAssignablePawn(Pawn p)
     {
-        return p is object
+        return p is not null
             && p.RaceProps.Humanlike
             && p.IsColonist
             && !p.Downed
@@ -46,10 +46,10 @@ public static class SpecUtil
         foreach (SpecialistRoleDef role in DefDatabase<SpecialistRoleDef>.AllDefs)
         {
             if (role.isGeneralist) continue;
-            if (roster is object && roster.RoleAtCap(role)) continue;
+            if (roster is not null && roster.RoleAtCap(role)) continue;
             float score = role.ComputeSkillScore(pawn);
             if (score > bestScore
-                || (score == bestScore && best is object && string.CompareOrdinal(role.defName, best.defName) < 0))
+                || (score == bestScore && best is not null && string.CompareOrdinal(role.defName, best.defName) < 0))
             {
                 bestScore = score;
                 best = role;
@@ -67,7 +67,7 @@ public static class SpecUtil
         {
             float score = focus.ComputeSkillScore(pawn);
             if (score > bestScore
-                || (score == bestScore && best is object && string.CompareOrdinal(focus.defName, best.defName) < 0))
+                || (score == bestScore && best is not null && string.CompareOrdinal(focus.defName, best.defName) < 0))
             {
                 bestScore = score;
                 best = focus;
@@ -82,7 +82,7 @@ public static class SpecUtil
         float score = s.SkillScore;
         double bonus = 0;
 
-        if (s.role.resourceBonuses is object)
+        if (s.role.resourceBonuses is not null)
         {
             foreach (ResourceProductionBonus rpb in s.role.resourceBonuses)
             {
@@ -110,7 +110,7 @@ public static class SpecUtil
         float score = g.SkillScore;
         double multiplier = 1.0;
 
-        if (g.focus.resourceBonuses is object)
+        if (g.focus.resourceBonuses is not null)
         {
             foreach (ResourceProductionBonus rpb in g.focus.resourceBonuses)
             {
@@ -208,7 +208,7 @@ public static class SpecUtil
 
     public static bool HasTrait(FCPolicyDef def)
     {
-        return def is object && (FindFC.PolicyManager?.HasTrait(def) ?? false);
+        return def is not null && (FindFC.PolicyManager?.HasTrait(def) ?? false);
     }
 
     public static float XPPerDay()
@@ -231,10 +231,10 @@ public static class SpecUtil
             bonus += s.SkillScore * ext.healRatePerSkillPoint;
         }
 
-        if (governor is object && governor.HasUsableSkills)
+        if (governor is not null && governor.HasUsableSkills)
         {
             SkillRecord govMed = governor.pawn.skills.GetSkill(SkillDefOf.Medicine);
-            if (govMed is object && govMed.Level > 0)
+            if (govMed is not null && govMed.Level > 0)
                 bonus += TaperedLevel(govMed.Level) * FCSSettings.healRatePerLevelGovernor;
         }
 
@@ -275,7 +275,7 @@ public static class SpecUtil
             foreach (SettlementSpecialist r in comp.Residents)
                 if (r.pawn == pawn) return comp;
             // Match on identity, not HasGovernor: a just-killed governor is already !IsAlive.
-            if (comp.Governor is object && comp.Governor.pawn == pawn) return comp;
+            if (comp.Governor is not null && comp.Governor.pawn == pawn) return comp;
         }
         return null;
     }
@@ -308,9 +308,9 @@ public static class SpecUtil
     {
         if (pawn is null || pawn.Spawned) return;
         Caravan caravan = pawn.GetCaravan();
-        if (pawn.holdingOwner is object)
+        if (pawn.holdingOwner is not null)
             pawn.holdingOwner.Remove(pawn);
-        if (caravan is object && !caravan.Destroyed && caravan.PawnsListForReading.Count == 0)
+        if (caravan is not null && !caravan.Destroyed && caravan.PawnsListForReading.Count == 0)
             caravan.Destroy();
     }
 
@@ -318,12 +318,12 @@ public static class SpecUtil
     public static string TopRoleSkillsLabel(Pawn pawn, SpecialistRoleDef role, int count = 2)
     {
         HashSet<SkillDef> relevant = null;
-        if (role is object && role.skillWeights is object && role.skillWeights.Count > 0)
+        if (role is not null && role.skillWeights is not null && role.skillWeights.Count > 0)
         {
             relevant = new HashSet<SkillDef>();
             foreach (SkillWeight sw in role.skillWeights)
             {
-                if (sw.skill is object) relevant.Add(sw.skill);
+                if (sw.skill is not null) relevant.Add(sw.skill);
             }
             if (relevant.Count == 0) relevant = null;
         }
@@ -334,14 +334,14 @@ public static class SpecUtil
     public static string TopFocusSkillsLabel(Pawn pawn, GovernorFocusDef focus, int count = 2)
     {
         HashSet<SkillDef> relevant = null;
-        if (focus is object)
+        if (focus is not null)
         {
             relevant = new HashSet<SkillDef>();
-            if (focus.skillWeights is object)
+            if (focus.skillWeights is not null)
             {
                 foreach (SkillWeight sw in focus.skillWeights)
                 {
-                    if (sw.skill is object) relevant.Add(sw.skill);
+                    if (sw.skill is not null) relevant.Add(sw.skill);
                 }
             }
             relevant.Add(SkillDefOf.Social);
@@ -359,7 +359,7 @@ public static class SpecUtil
         foreach (SkillRecord sk in pawn.skills.skills)
         {
             if (sk.TotallyDisabled) continue;
-            if (relevant is object && !relevant.Contains(sk.def)) continue;
+            if (relevant is not null && !relevant.Contains(sk.def)) continue;
             if (best is null || sk.Level > best.Level)
             {
                 second = best;
@@ -373,7 +373,7 @@ public static class SpecUtil
 
         if (best is null) return "";
         string result = best.def.skillLabel.CapitalizeFirst() + " " + best.Level;
-        if (count >= 2 && second is object)
+        if (count >= 2 && second is not null)
         {
             result += ", " + second.def.skillLabel.CapitalizeFirst() + " " + second.Level;
         }

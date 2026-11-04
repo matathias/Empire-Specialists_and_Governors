@@ -182,7 +182,7 @@ public class Dialog_AssignSpecialists : Window
         float roleBtnY = rowRect.y + (CardRowHeight - RoleBtnHeight) / 2f;
         string roleLabel = entry.isGovernor
             ? "FCS_RoleGovernor".Translate()
-            : (entry.role is object ? entry.role.LabelCap : "FCS_RoleResident".Translate());
+            : (entry.role is not null ? entry.role.LabelCap : "FCS_RoleResident".Translate());
         if (Widgets.ButtonText(new Rect(roleBtnX, roleBtnY, RoleBtnWidth, RoleBtnHeight), roleLabel))
         {
             ShowRoleMenu(entry, hasGovernor);
@@ -257,7 +257,7 @@ public class Dialog_AssignSpecialists : Window
         }
 
         // Governor preview
-        if (entry.isGovernor && entry.governorFocus is object)
+        if (entry.isGovernor && entry.governorFocus is not null)
         {
             GovernorFocusDef focus = entry.governorFocus;
             // Create a temporary governor to compute skill score and multiplier
@@ -287,7 +287,7 @@ public class Dialog_AssignSpecialists : Window
         }
 
         // Specialist preview
-        if (entry.role is object)
+        if (entry.role is not null)
         {
             SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.role);
 
@@ -327,7 +327,7 @@ public class Dialog_AssignSpecialists : Window
 
         foreach (PawnEntry entry in selected)
         {
-            bool isGovAssign = entry.isGovernor && entry.governorFocus is object;
+            bool isGovAssign = entry.isGovernor && entry.governorFocus is not null;
             bool ok = isGovAssign ? comp.CanAssignGovernor : comp.CanAssignSpecialist(entry.role);
 
             // Remove from the caravan ONLY when placement is guaranteed. On rejection the pawn

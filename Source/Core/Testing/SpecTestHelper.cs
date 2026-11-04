@@ -28,7 +28,7 @@ public static class SpecTestHelper
                 new SkillWeight { skill = weightSkill, weight = weight }
             }
         };
-        if (res is object)
+        if (res is not null)
             role.resourceBonuses = new List<ResourceProductionBonus>
             {
                 new ResourceProductionBonus { resource = res, baseValue = resBaseValue }
@@ -101,7 +101,7 @@ public static class SpecTestHelper
                 new SkillWeight { skill = weightSkill, weight = weight }
             }
         };
-        if (res is object)
+        if (res is not null)
             focus.resourceBonuses = new List<ResourceProductionBonus>
             {
                 new ResourceProductionBonus { resource = res, baseValue = resBaseValue }
@@ -204,7 +204,7 @@ public static class SpecTestHelper
     {
         if (p?.story is null) return;
 
-        if (p.story.traits is object)
+        if (p.story.traits is not null)
         {
             List<Trait> disabling = new List<Trait>();
             foreach (Trait t in p.story.traits.allTraits)
@@ -220,8 +220,8 @@ public static class SpecTestHelper
             noDisableAdulthood = DefDatabase<BackstoryDef>.AllDefsListForReading.Find(b =>
                 b.slot == BackstorySlot.Adulthood && b.workDisables == WorkTags.None);
 
-        if (noDisableChildhood is object) p.story.Childhood = noDisableChildhood;
-        if (noDisableAdulthood is object) p.story.Adulthood = noDisableAdulthood;
+        if (noDisableChildhood is not null) p.story.Childhood = noDisableChildhood;
+        if (noDisableAdulthood is not null) p.story.Adulthood = noDisableAdulthood;
 
         // Refresh the lazily-cached disable state so the now-enabled skills report correctly.
         p.Notify_DisabledWorkTypesChanged();

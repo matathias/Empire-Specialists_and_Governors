@@ -19,15 +19,15 @@ public class SettlementGovernor : IExposable
         this.assignedTick = Find.TickManager.TicksGame;
     }
 
-    public bool IsAlive => pawn is object && !pawn.Dead;
-    public bool HasUsableSkills => pawn?.skills is object && !pawn.Dead;
+    public bool IsAlive => pawn is not null && !pawn.Dead;
+    public bool HasUsableSkills => pawn?.skills is not null && !pawn.Dead;
 
     public float SkillScore
     {
         get
         {
             if (cachedSkillScore >= 0f) return cachedSkillScore;
-            cachedSkillScore = focus is object ? focus.ComputeSkillScore(pawn) : 0f;
+            cachedSkillScore = focus is not null ? focus.ComputeSkillScore(pawn) : 0f;
             return cachedSkillScore;
         }
     }
@@ -51,7 +51,7 @@ public class SettlementGovernor : IExposable
 
     public void SetFocus(GovernorFocusDef newFocus, WorldSettlementFC settlement)
     {
-        if (Behavior is object && settlement is object)
+        if (Behavior is not null && settlement is not null)
             Behavior.OnFocusDeactivated(settlement);
 
         focus = newFocus;
@@ -59,7 +59,7 @@ public class SettlementGovernor : IExposable
         behavior = null;
         DirtySkillScore();
 
-        if (Behavior is object && settlement is object)
+        if (Behavior is not null && settlement is not null)
             Behavior.OnFocusActivated(settlement);
     }
 

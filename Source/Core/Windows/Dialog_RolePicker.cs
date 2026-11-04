@@ -151,7 +151,7 @@ public class Dialog_RolePicker : Window
                 // Cap checks
                 if (!isCurrent)
                 {
-                    bool isAlreadySpecialist = !isCurrentlyGovernor && currentRole is object;
+                    bool isAlreadySpecialist = !isCurrentlyGovernor && currentRole is not null;
                     if (!isAlreadySpecialist && comp.SpecialistCount + pendingSpecialists >= comp.MaxSpecialists)
                     {
                         disabledReason = "FCS_RoleCapReached".Translate(roleDef.LabelCap);
@@ -162,7 +162,7 @@ public class Dialog_RolePicker : Window
                         int existing = 0;
                         foreach (SettlementSpecialist s in comp.Specialists)
                             if (s.role == roleDef) existing++;
-                        if (pendingRoleCounts is object)
+                        if (pendingRoleCounts is not null)
                         {
                             pendingRoleCounts.TryGetValue(roleDef, out int pendingForRole);
                             existing += pendingForRole;
@@ -361,7 +361,7 @@ public class Dialog_RolePicker : Window
         }
 
         // Bonus lines
-        int lineCount = entry.bonusLines is object ? entry.bonusLines.Count : 0;
+        int lineCount = entry.bonusLines is not null ? entry.bonusLines.Count : 0;
         if (lineCount > 0)
         {
             height += lineCount * BonusLineHeight + 2f;
@@ -372,7 +372,7 @@ public class Dialog_RolePicker : Window
         }
 
         // Disabled reason
-        if (!entry.enabled && entry.disabledReason is object)
+        if (!entry.enabled && entry.disabledReason is not null)
         {
             height += DescHeight;
         }
@@ -426,7 +426,7 @@ public class Dialog_RolePicker : Window
 
         // Upkeep on right side of name row
         string upkeepText = GetUpkeepText(entry);
-        if (upkeepText is object)
+        if (upkeepText is not null)
         {
             Text.Font = GameFont.Tiny;
             Text.Anchor = TextAnchor.MiddleRight;
@@ -460,7 +460,7 @@ public class Dialog_RolePicker : Window
         // Bonus lines
         Text.Font = GameFont.Tiny;
         Text.Anchor = TextAnchor.MiddleLeft;
-        if (entry.bonusLines is object && entry.bonusLines.Count > 0)
+        if (entry.bonusLines is not null && entry.bonusLines.Count > 0)
         {
             GUI.color = entry.enabled ? Color.white : DisabledColor;
             foreach (TaggedString line in entry.bonusLines)
@@ -479,7 +479,7 @@ public class Dialog_RolePicker : Window
         }
 
         // Disabled reason
-        if (!entry.enabled && entry.disabledReason is object)
+        if (!entry.enabled && entry.disabledReason is not null)
         {
             GUI.color = new Color(0.8f, 0.2f, 0.2f);
             Text.Font = GameFont.Tiny;
@@ -503,13 +503,13 @@ public class Dialog_RolePicker : Window
         switch (entry.type)
         {
             case RoleEntryType.Resident:
-                if (onSelectRole is object) onSelectRole(null);
+                if (onSelectRole is not null) onSelectRole(null);
                 break;
             case RoleEntryType.Specialist:
-                if (onSelectRole is object) onSelectRole(entry.roleDef);
+                if (onSelectRole is not null) onSelectRole(entry.roleDef);
                 break;
             case RoleEntryType.GovernorFocus:
-                if (onSelectGovernor is object) onSelectGovernor(entry.focusDef);
+                if (onSelectGovernor is not null) onSelectGovernor(entry.focusDef);
                 break;
         }
     }
@@ -525,13 +525,13 @@ public class Dialog_RolePicker : Window
             return lines;
         }
 
-        if (entry.type == RoleEntryType.Specialist && entry.roleDef is object)
+        if (entry.type == RoleEntryType.Specialist && entry.roleDef is not null)
         {
             SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.roleDef);
             float score = tempSpec.SkillScore;
 
             // Resource bonuses
-            if (settlement is object && entry.roleDef.resourceBonuses is object)
+            if (settlement is not null && entry.roleDef.resourceBonuses is not null)
             {
                 foreach (ResourceProductionBonus rpb in entry.roleDef.resourceBonuses)
                 {
@@ -547,7 +547,7 @@ public class Dialog_RolePicker : Window
             }
 
             // Generalist baseline (shows for all resources)
-            if (entry.roleDef.providesBaselineProduction && settlement is object
+            if (entry.roleDef.providesBaselineProduction && settlement is not null
                 && (entry.roleDef.resourceBonuses is null || entry.roleDef.resourceBonuses.Count == 0))
             {
                 double baseline = entry.roleDef.baselineProductionValue * score;
@@ -560,7 +560,7 @@ public class Dialog_RolePicker : Window
             }
 
             // Stat modifiers
-            if (entry.roleDef.statModifiers is object)
+            if (entry.roleDef.statModifiers is not null)
             {
                 foreach (FCStatModifier mod in entry.roleDef.statModifiers)
                 {
@@ -584,7 +584,7 @@ public class Dialog_RolePicker : Window
 
             // Death reduction from the Commander role's behavior
             RoleBehaviorExt_Defense defExt = entry.roleDef.GetModExtension<RoleBehaviorExt_Defense>();
-            if (defExt is object)
+            if (defExt is not null)
             {
                 double reduction = score * defExt.baseReductionPerSkillPoint * 100.0;
                 if (reduction >= 0.01)
@@ -599,13 +599,13 @@ public class Dialog_RolePicker : Window
             return lines;
         }
 
-        if (entry.type == RoleEntryType.GovernorFocus && entry.focusDef is object)
+        if (entry.type == RoleEntryType.GovernorFocus && entry.focusDef is not null)
         {
             SettlementGovernor tempGov = new SettlementGovernor(pawn, entry.focusDef);
             float score = tempGov.SkillScore;
 
             // Resource multipliers
-            if (settlement is object && entry.focusDef.resourceBonuses is object)
+            if (settlement is not null && entry.focusDef.resourceBonuses is not null)
             {
                 foreach (ResourceProductionBonus rpb in entry.focusDef.resourceBonuses)
                 {
@@ -634,7 +634,7 @@ public class Dialog_RolePicker : Window
             }
 
             // Stat modifiers
-            if (entry.focusDef.statModifiers is object)
+            if (entry.focusDef.statModifiers is not null)
             {
                 foreach (FCStatModifier mod in entry.focusDef.statModifiers)
                 {
@@ -667,14 +667,14 @@ public class Dialog_RolePicker : Window
         if (entry.type == RoleEntryType.Resident)
             return null;
 
-        if (entry.type == RoleEntryType.Specialist && entry.roleDef is object)
+        if (entry.type == RoleEntryType.Specialist && entry.roleDef is not null)
         {
             SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.roleDef);
             double upkeep = SpecUtil.SpecialistUpkeep(tempSpec);
             return "FCS_PickerUpkeep".Translate(upkeep.ToString("F1"));
         }
 
-        if (entry.type == RoleEntryType.GovernorFocus && entry.focusDef is object)
+        if (entry.type == RoleEntryType.GovernorFocus && entry.focusDef is not null)
         {
             double upkeep = SpecUtil.GovernorUpkeep(new SettlementGovernor(pawn, entry.focusDef));
             return "FCS_PickerUpkeep".Translate(upkeep.ToString("F1"));

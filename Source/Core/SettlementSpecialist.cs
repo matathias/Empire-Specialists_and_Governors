@@ -19,8 +19,8 @@ public class SettlementSpecialist : IExposable
         this.assignedTick = Find.TickManager.TicksGame;
     }
 
-    public bool IsAlive => pawn is object && !pawn.Dead;
-    public bool HasUsableSkills => pawn?.skills is object && !pawn.Dead;
+    public bool IsAlive => pawn is not null && !pawn.Dead;
+    public bool HasUsableSkills => pawn?.skills is not null && !pawn.Dead;
     public bool IsResident => role is null;
 
     public SpecialistRoleBehavior Behavior
@@ -63,7 +63,7 @@ public class SettlementSpecialist : IExposable
         {
             if (sw.skill is null) continue;
             SkillRecord rec = pawn.skills.GetSkill(sw.skill);
-            if (rec is object)
+            if (rec is not null)
                 score += SpecUtil.TaperedLevel(rec.Level) * sw.weight;
         }
         return score;

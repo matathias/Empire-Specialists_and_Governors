@@ -32,7 +32,7 @@ public static class Patch_ZoomIntoTile_InjectSpecialists
 
         Lord defenseLord = op.defender.pawns
             .Select(p => p?.GetLord())
-            .FirstOrDefault(l => l is object);
+            .FirstOrDefault(l => l is not null);
         if (defenseLord is null) return;
 
         specComp.DeployToBattle(map, defenseLord);
@@ -75,7 +75,7 @@ public static class Patch_Kill_SpecialistDeath
             : SpecDeathCause.Other;
         // Append the base-game cause of death only when a real one exists (otherwise the helper
         // returns the redundant "<pawn> has died.", which our base letter line already says).
-        string causeText = (dinfo.HasValue || exactCulprit is object)
+        string causeText = (dinfo.HasValue || exactCulprit is not null)
             ? (string)HealthUtility.GetDiedLetterText(__instance, dinfo, exactCulprit)
             : null;
         comp.NotifyMemberDied(__instance, cause, causeText);
