@@ -1,6 +1,4 @@
-﻿using RimWorld;
-
-namespace FactionColonies.Specialists;
+﻿namespace FactionColonies.Specialists;
 
 [DefOf]
 public static class SpecPolicyDefOf

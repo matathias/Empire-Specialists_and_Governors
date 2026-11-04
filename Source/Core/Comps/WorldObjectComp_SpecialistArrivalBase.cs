@@ -1,5 +1,3 @@
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* Shared base for the submod's transport-pod arrival comps (resident / specialist / governor).

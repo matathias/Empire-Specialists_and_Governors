@@ -1,5 +1,3 @@
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* DESTRUCTIVE: roster reconstruction consistency (the load-time rebuild path).

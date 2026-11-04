@@ -1,8 +1,4 @@
-using System.Collections.Generic;
 using FactionColonies.SupplyChain;
-using RimWorld.Planet;
-using RimWorld;
-using Verse;
 
 namespace FactionColonies.Specialists.SC;
 

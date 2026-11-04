@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using RimWorld;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* Transport-pod arrival: add the pod's colonists as residents (worker bonus, no role).

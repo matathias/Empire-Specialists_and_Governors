@@ -1,6 +1,3 @@
-using FactionColonies;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 public static class LogSG

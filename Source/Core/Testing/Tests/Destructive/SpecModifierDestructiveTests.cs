@@ -1,6 +1,3 @@
-using RimWorld;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* DESTRUCTIVE: the comp's interface modifiers reflect the live roster. Production / stat / upkeep

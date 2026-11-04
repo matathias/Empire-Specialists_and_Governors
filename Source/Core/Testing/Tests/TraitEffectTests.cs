@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using FactionColonies.util;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /// <summary>

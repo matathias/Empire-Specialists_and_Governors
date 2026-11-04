@@ -1,8 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using RimWorld;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* DESTRUCTIVE: transport-pod arrival overflow. The arrival comps place pawns into the roster and

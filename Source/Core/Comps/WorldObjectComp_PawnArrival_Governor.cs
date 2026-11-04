@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using RimWorld;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* Transport-pod arrival: install the pod's colonist as governor, with an auto-picked focus that

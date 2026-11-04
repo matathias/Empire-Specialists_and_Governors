@@ -1,6 +1,4 @@
-using System.Linq;
 using HarmonyLib;
-using Verse;
 using Verse.AI.Group;
 
 namespace FactionColonies.Specialists;

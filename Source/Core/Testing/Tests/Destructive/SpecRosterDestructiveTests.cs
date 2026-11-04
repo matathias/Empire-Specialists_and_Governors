@@ -1,9 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using RimWorld;
-using RimWorld.Planet;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* DESTRUCTIVE: roster mutation on a real comp -- assign / recall / promote / change. Each test

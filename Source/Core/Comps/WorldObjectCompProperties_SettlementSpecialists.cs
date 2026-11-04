@@ -1,5 +1,3 @@
-using RimWorld;
-
 namespace FactionColonies.Specialists;
 
 public class WorldObjectCompProperties_SettlementSpecialists : WorldObjectCompProperties

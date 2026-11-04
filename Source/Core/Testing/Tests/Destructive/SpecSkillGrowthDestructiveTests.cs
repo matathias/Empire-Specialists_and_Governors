@@ -1,6 +1,3 @@
-using RimWorld;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 /* DESTRUCTIVE regression guard for H4: the daily skill tick raises levels but must also dirty the

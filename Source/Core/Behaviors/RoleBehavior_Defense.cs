@@ -1,6 +1,3 @@
-using System;
-using Verse;
-
 namespace FactionColonies.Specialists;
 
 public class RoleBehaviorExt_Defense : SpecialistRoleBehaviorExtension
