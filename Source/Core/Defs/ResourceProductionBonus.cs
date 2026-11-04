@@ -1,8 +1,7 @@
-namespace FactionColonies.Specialists
+namespace FactionColonies.Specialists;
+
+public class ResourceProductionBonus
 {
-    public class ResourceProductionBonus
-    {
-        public ResourceTypeDef resource;
-        public float baseValue;
-    }
+    public ResourceTypeDef resource;
+    public float baseValue;
 }

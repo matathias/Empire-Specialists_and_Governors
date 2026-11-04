@@ -1,76 +1,75 @@
 using RimWorld;
 using Verse;
 
-namespace FactionColonies.Specialists
+namespace FactionColonies.Specialists;
+
+public class SettlementGovernor : IExposable
 {
-    public class SettlementGovernor : IExposable
+    public Pawn pawn;
+    public GovernorFocusDef focus;
+    public int assignedTick;
+
+    [Unsaved] private GovernorFocusBehavior behavior;
+    [Unsaved] private bool behaviorResolved = false;
+    [Unsaved] private float cachedSkillScore = -1f;
+
+    public SettlementGovernor() { }
+
+    public SettlementGovernor(Pawn pawn, GovernorFocusDef focus)
     {
-        public Pawn pawn;
-        public GovernorFocusDef focus;
-        public int assignedTick;
+        this.pawn = pawn;
+        this.focus = focus;
+        this.assignedTick = Find.TickManager.TicksGame;
+    }
 
-        [Unsaved] private GovernorFocusBehavior behavior;
-        [Unsaved] private bool behaviorResolved = false;
-        [Unsaved] private float cachedSkillScore = -1f;
+    public bool IsAlive => pawn is object && !pawn.Dead;
+    public bool HasUsableSkills => pawn?.skills is object && !pawn.Dead;
 
-        public SettlementGovernor() { }
-
-        public SettlementGovernor(Pawn pawn, GovernorFocusDef focus)
+    public float SkillScore
+    {
+        get
         {
-            this.pawn = pawn;
-            this.focus = focus;
-            this.assignedTick = Find.TickManager.TicksGame;
+            if (cachedSkillScore >= 0f) return cachedSkillScore;
+            cachedSkillScore = focus is object ? focus.ComputeSkillScore(pawn) : 0f;
+            return cachedSkillScore;
         }
+    }
 
-        public bool IsAlive => pawn is object && !pawn.Dead;
-        public bool HasUsableSkills => pawn?.skills is object && !pawn.Dead;
+    public void DirtySkillScore() { cachedSkillScore = -1f; }
 
-        public float SkillScore
+    public GovernorFocusBehavior Behavior
+    {
+        get
         {
-            get
+            if (!behaviorResolved)
             {
-                if (cachedSkillScore >= 0f) return cachedSkillScore;
-                cachedSkillScore = focus is object ? focus.ComputeSkillScore(pawn) : 0f;
-                return cachedSkillScore;
+                behaviorResolved = true;
+                GovernorFocusBehaviorExtension ext =
+                    focus?.GetModExtension<GovernorFocusBehaviorExtension>();
+                behavior = ext?.CreateBehavior();
             }
+            return behavior;
         }
+    }
 
-        public void DirtySkillScore() { cachedSkillScore = -1f; }
+    public void SetFocus(GovernorFocusDef newFocus, WorldSettlementFC settlement)
+    {
+        if (Behavior is object && settlement is object)
+            Behavior.OnFocusDeactivated(settlement);
 
-        public GovernorFocusBehavior Behavior
-        {
-            get
-            {
-                if (!behaviorResolved)
-                {
-                    behaviorResolved = true;
-                    GovernorFocusBehaviorExtension ext =
-                        focus?.GetModExtension<GovernorFocusBehaviorExtension>();
-                    behavior = ext?.CreateBehavior();
-                }
-                return behavior;
-            }
-        }
+        focus = newFocus;
+        behaviorResolved = false;
+        behavior = null;
+        DirtySkillScore();
 
-        public void SetFocus(GovernorFocusDef newFocus, WorldSettlementFC settlement)
-        {
-            if (Behavior is object && settlement is object)
-                Behavior.OnFocusDeactivated(settlement);
+        if (Behavior is object && settlement is object)
+            Behavior.OnFocusActivated(settlement);
+    }
 
-            focus = newFocus;
-            behaviorResolved = false;
-            behavior = null;
-            DirtySkillScore();
-
-            if (Behavior is object && settlement is object)
-                Behavior.OnFocusActivated(settlement);
-        }
-
-        public void ExposeData()
-        {
-            Scribe_References.Look(ref pawn, "pawn");
-            Scribe_Defs.Look(ref focus, "focus");
-            Scribe_Values.Look(ref assignedTick, "assignedTick");
-        }
+    public void ExposeData()
+    {
+        Scribe_References.Look(ref pawn, "pawn");
+        Scribe_Defs.Look(ref focus, "focus");
+        Scribe_Values.Look(ref assignedTick, "assignedTick");
     }
 }
