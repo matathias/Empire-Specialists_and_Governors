@@ -864,7 +864,4 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         if (total <= 0) return null;
         return $"+{Math.Round(total, 2)} - {"FCS_UpkeepSettlementLine".Translate()}";
     }
-
-    public double GetDailyIncomeContribution() { return 0; }
-    public string GetDailyIncomeContributionDesc() { return null; }
 }

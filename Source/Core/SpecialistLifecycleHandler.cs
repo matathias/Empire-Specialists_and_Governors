@@ -2,9 +2,6 @@ namespace FactionColonies.Specialists;
 
 public class SpecialistLifecycleHandler : IMilitaryOperationListener, ISettlementListener
 {
-    public void OnOperationCreated(MilitaryOperation op) { }
-    public void OnOperationResolved(MilitaryOperation op) { }
-
     // ── ISettlementListener ──
     // Only removal matters: release the roster so its pawns don't leak (see DisbandRosterOnRemoval).
     public void OnSettlementRemoved(WorldSettlementFC settlement)
@@ -15,12 +12,7 @@ public class SpecialistLifecycleHandler : IMilitaryOperationListener, ISettlemen
         comp?.DisbandRosterOnRemoval();
     }
 
-    public void OnSettlementCreated(WorldSettlementFC settlement) { }
-    public void OnSettlementUpgraded(WorldSettlementFC settlement, int oldLevel, int newLevel) { }
-    public void OnSettlementTypeChanged(WorldSettlementFC settlement, WorldSettlementDef oldDef, WorldSettlementDef newDef) { }
-    public void OnBuildingConstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot) { }
-    public void OnBuildingDeconstructed(WorldSettlementFC settlement, BuildingFCDef building, int slot) { }
-
+    // IMilitaryOperationListener
     public void OnBattleResolved(MilitaryOperation op, bool victory, BattleResult result)
     {
         if (op is null) return;
