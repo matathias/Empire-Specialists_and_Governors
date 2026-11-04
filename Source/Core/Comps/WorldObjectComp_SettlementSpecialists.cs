@@ -479,7 +479,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         }
 
         pawnsDeployedToBattle = true;
-        LogSG.Message("Deployed " + deployedPawns.Count + " specialists to defend " + Settlement.Name);
+        LogSG.Message($"Deployed {deployedPawns.Count} specialists to defend {Settlement.Name}");
     }
 
     public void RecoverFromBattle()
@@ -502,7 +502,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         deployedPawns.Clear();
         pawnsDeployedToBattle = false;
         InvalidateAll();
-        LogSG.Message("Recovered specialists from battle at " + Settlement.Name);
+        LogSG.Message($"Recovered specialists from battle at {Settlement.Name}");
     }
 
     /* Single funnel for every roster-member death, regardless of cause. Removes the member from
