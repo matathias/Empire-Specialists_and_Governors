@@ -6,7 +6,7 @@ public class Dialog_AssignSpecialists : Window
 {
     private readonly Caravan caravan;
     private readonly WorldObjectComp_SettlementSpecialists comp;
-    private readonly List<PawnEntry> entries = new List<PawnEntry>();
+    private readonly List<PawnEntry> entries = [];
     private Vector2 scrollPos;
 
     private const float CardRowHeight = 80f;
@@ -18,8 +18,8 @@ public class Dialog_AssignSpecialists : Window
     private const float CheckboxSize = 24f;
     private const float AccentBarWidth = 3f;
     private const float margin = 10f;
-    private static readonly Color SelectedAccent = new Color(0.3f, 0.7f, 0.3f, 0.5f);
-    private static readonly Color GovColor = new Color(0.85f, 0.75f, 0.5f);
+    private static readonly Color SelectedAccent = new(0.3f, 0.7f, 0.3f, 0.5f);
+    private static readonly Color GovColor = new(0.85f, 0.75f, 0.5f);
 
     public override Vector2 InitialSize
     {
@@ -66,7 +66,7 @@ public class Dialog_AssignSpecialists : Window
 
         // Title
         Text.Font = GameFont.Medium;
-        Rect titleRect = new Rect(inRect.x, inRect.y, inRect.width, 35f);
+        Rect titleRect = new(inRect.x, inRect.y, inRect.width, 35f);
         Widgets.Label(titleRect, "FCS_AssignTitle".Translate(comp.Settlement.Name));
         Text.Font = GameFont.Small;
 
@@ -74,7 +74,7 @@ public class Dialog_AssignSpecialists : Window
         float buttonHeight = 35f;
         float listHeight = inRect.height - 45f - buttonHeight - margin;
 
-        Rect listOuterRect = new Rect(inRect.x, headerY, inRect.width, listHeight);
+        Rect listOuterRect = new(inRect.x, headerY, inRect.width, listHeight);
         float totalHeight = entries.Count * (CardRowHeight + CardGap);
 
         bool hasGovernor = comp.HasGovernor;
@@ -85,7 +85,7 @@ public class Dialog_AssignSpecialists : Window
         for (int i = 0; i < entries.Count; i++)
         {
             PawnEntry entry = entries[i];
-            Rect rowRect = new Rect(0f, curY, listInnerRect.width, CardRowHeight);
+            Rect rowRect = new(0f, curY, listInnerRect.width, CardRowHeight);
 
             DrawPawnCard(rowRect, entry, i, hasGovernor);
 
@@ -95,7 +95,7 @@ public class Dialog_AssignSpecialists : Window
         ScrollUtil.EndScrollView();
 
         // Confirm button
-        Rect confirmRect = new Rect(inRect.x + inRect.width - 150f, inRect.yMax - buttonHeight, 150f, buttonHeight);
+        Rect confirmRect = new(inRect.x + inRect.width - 150f, inRect.yMax - buttonHeight, 150f, buttonHeight);
         int selectedCount = entries.Count(e => e.selected);
 
         if (selectedCount == 0)
@@ -129,7 +129,7 @@ public class Dialog_AssignSpecialists : Window
         // Portrait
         float portraitX = rowRect.x + CardPadding + AccentBarWidth;
         float portraitY = rowRect.y + (CardRowHeight - PortraitSize) / 2f;
-        Rect portraitRect = new Rect(portraitX, portraitY, PortraitSize, PortraitSize);
+        Rect portraitRect = new(portraitX, portraitY, PortraitSize, PortraitSize);
         UIUtil.DrawPawnPortrait(portraitRect, entry.pawn);
 
         // Text area
@@ -141,7 +141,7 @@ public class Dialog_AssignSpecialists : Window
         Text.Font = GameFont.Small;
         Text.Anchor = TextAnchor.MiddleLeft;
         // Reserve the checkbox column on the right so no text line draws under it.
-        Rect nameRect = new Rect(textX, rowRect.y + 2f, textW, 18f);
+        Rect nameRect = new(textX, rowRect.y + 2f, textW, 18f);
         Widgets.Label(nameRect, TextUtil.ClampWithEllipsis(nameRect, entry.pawn.LabelShort, CheckboxSize + 8f));
 
         // Line 2: Identity (title, age, xenotype)
@@ -149,12 +149,12 @@ public class Dialog_AssignSpecialists : Window
         Text.WordWrap = false;
         GUI.color = Color.gray;
         string identity = SpecialistsTabRenderer.BuildIdentityLine(entry.pawn);
-        Rect identityRect = new Rect(textX, rowRect.y + 18f, textW, 16f);
+        Rect identityRect = new(textX, rowRect.y + 18f, textW, 16f);
         Widgets.Label(identityRect, TextUtil.ClampWithEllipsis(identityRect, identity, CheckboxSize + 8f));
 
         // Line 3: Skills
         string skills = GetTopSkills(entry.pawn, 3);
-        Rect skillsRect = new Rect(textX, rowRect.y + 34f, textW, 16f);
+        Rect skillsRect = new(textX, rowRect.y + 34f, textW, 16f);
         Widgets.Label(skillsRect, TextUtil.ClampWithEllipsis(skillsRect, skills, CheckboxSize + 8f));
         GUI.color = Color.white;
 
@@ -164,7 +164,7 @@ public class Dialog_AssignSpecialists : Window
         PreviewContribution(entry, out bonusText, out bonusColor);
 
         GUI.color = bonusColor;
-        Rect bonusRect = new Rect(textX, rowRect.y + 50f, textW - CheckboxSize - 8f, 16f);
+        Rect bonusRect = new(textX, rowRect.y + 50f, textW - CheckboxSize - 8f, 16f);
         Widgets.Label(bonusRect, bonusText);
         GUI.color = Color.white;
 
@@ -195,7 +195,7 @@ public class Dialog_AssignSpecialists : Window
         // the picker can disable roles that pending selections would fill — otherwise the
         // player could queue past the caps and see the later pawns rejected on confirm.
         int pendingSpecialists = 0;
-        Dictionary<SpecialistRoleDef, int> pendingRoleCounts = new Dictionary<SpecialistRoleDef, int>();
+        Dictionary<SpecialistRoleDef, int> pendingRoleCounts = [];
         foreach (PawnEntry other in entries)
         {
             if (other == entry || !other.selected || other.isGovernor || other.role is null) continue;
@@ -261,7 +261,7 @@ public class Dialog_AssignSpecialists : Window
         {
             GovernorFocusDef focus = entry.governorFocus;
             // Create a temporary governor to compute skill score and multiplier
-            SettlementGovernor tempGov = new SettlementGovernor(pawn, focus);
+            SettlementGovernor tempGov = new(pawn, focus);
 
             double bestMult = 0;
             string bestLabel = "";
@@ -289,7 +289,7 @@ public class Dialog_AssignSpecialists : Window
         // Specialist preview
         if (entry.role is not null)
         {
-            SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.role);
+            SettlementSpecialist tempSpec = new(pawn, entry.role);
 
             double bestBonus = 0;
             string bestLabel = "";

@@ -85,7 +85,7 @@ public class FCSSettings : ModSettings
 
     public void DoWindowContents(Rect inRect)
     {
-        Listing_Standard ls = new Listing_Standard();
+        Listing_Standard ls = new();
         Rect viewRect = ScrollUtil.BeginScrollView(inRect, ref scrollPos, contentHeight);
         ls.Begin(new Rect(viewRect.x, viewRect.y, viewRect.width, float.MaxValue));
         Listing_StandardExtensions.ResetRowStripe();
@@ -175,7 +175,7 @@ public class FCSSettings : ModSettings
 [StaticConstructorOnStartup]
 public static class SpecialistsStartup
 {
-    private static readonly SpecialistLifecycleHandler _lifecycleHandler = new SpecialistLifecycleHandler();
+    private static readonly SpecialistLifecycleHandler _lifecycleHandler = new();
 
     static SpecialistsStartup()
     {

@@ -64,7 +64,7 @@ public class SpecialistLifecycleHandler : IMilitaryOperationListener, ISettlemen
 
         // Snapshot lists before mutation
         bool garrison = SpecUtil.HasTrait(SpecPolicyDefOf.FCSgarrisonDoctrine);
-        List<SettlementSpecialist> specToKill = new List<SettlementSpecialist>();
+        List<SettlementSpecialist> specToKill = [];
         foreach (SettlementSpecialist s in comp.Specialists)
         {
             if (!s.IsAlive) continue;
@@ -74,7 +74,7 @@ public class SpecialistLifecycleHandler : IMilitaryOperationListener, ISettlemen
                 specToKill.Add(s);
         }
 
-        List<SettlementSpecialist> residentsToKill = new List<SettlementSpecialist>();
+        List<SettlementSpecialist> residentsToKill = [];
         foreach (SettlementSpecialist r in comp.Residents)
         {
             if (!r.IsAlive) continue;

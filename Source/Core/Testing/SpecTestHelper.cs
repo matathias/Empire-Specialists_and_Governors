@@ -16,23 +16,23 @@ public static class SpecTestHelper
         ResourceTypeDef res, float resBaseValue,
         float baseUpkeep = 0f, float upkeepScaling = 0f, int maxPerSettlement = 0)
     {
-        SpecialistRoleDef role = new SpecialistRoleDef
+        SpecialistRoleDef role = new()
         {
             defName = "TEST_Role",
             label = "test role",
             baseUpkeepSilver = baseUpkeep,
             skillUpkeepScaling = upkeepScaling,
             maxPerSettlement = maxPerSettlement,
-            skillWeights = new List<SkillWeight>
-            {
-                new SkillWeight { skill = weightSkill, weight = weight }
-            }
+            skillWeights =
+            [
+                new() { skill = weightSkill, weight = weight }
+            ]
         };
         if (res is not null)
-            role.resourceBonuses = new List<ResourceProductionBonus>
-            {
-                new ResourceProductionBonus { resource = res, baseValue = resBaseValue }
-            };
+            role.resourceBonuses =
+            [
+                new() { resource = res, baseValue = resBaseValue }
+            ];
         return role;
     }
 
@@ -45,10 +45,10 @@ public static class SpecTestHelper
             label = "test baseline role",
             providesBaselineProduction = true,
             baselineProductionValue = baselineValue,
-            skillWeights = new List<SkillWeight>
-            {
-                new SkillWeight { skill = weightSkill, weight = weight }
-            }
+            skillWeights =
+            [
+                new() { skill = weightSkill, weight = weight }
+            ]
         };
     }
 
@@ -59,11 +59,11 @@ public static class SpecTestHelper
         {
             defName = "TEST_StatRole",
             label = "test stat role",
-            statModifiers = new List<FCStatModifier> { new FCStatModifier { stat = stat, value = value } },
-            skillWeights = new List<SkillWeight>
-            {
-                new SkillWeight { skill = weightSkill, weight = weight }
-            }
+            statModifiers = [new() { stat = stat, value = value }],
+            skillWeights =
+            [
+                new() { skill = weightSkill, weight = weight }
+            ]
         };
     }
 
@@ -74,14 +74,14 @@ public static class SpecTestHelper
         {
             defName = "TEST_ApothRole",
             label = "test apothecary role",
-            skillWeights = new List<SkillWeight>
-            {
-                new SkillWeight { skill = weightSkill, weight = weight }
-            },
-            modExtensions = new List<DefModExtension>
-            {
+            skillWeights =
+            [
+                new() { skill = weightSkill, weight = weight }
+            ],
+            modExtensions =
+            [
                 new RoleBehaviorExt_Apothecary { healRatePerSkillPoint = healPerPoint }
-            }
+            ]
         };
     }
 
@@ -90,22 +90,22 @@ public static class SpecTestHelper
         ResourceTypeDef res, float resBaseValue,
         float baseUpkeep = 0f, float upkeepScaling = 0f)
     {
-        GovernorFocusDef focus = new GovernorFocusDef
+        GovernorFocusDef focus = new()
         {
             defName = "TEST_Focus",
             label = "test focus",
             baseUpkeepSilver = baseUpkeep,
             skillUpkeepScaling = upkeepScaling,
-            skillWeights = new List<SkillWeight>
-            {
-                new SkillWeight { skill = weightSkill, weight = weight }
-            }
+            skillWeights =
+            [
+                new() { skill = weightSkill, weight = weight }
+            ]
         };
         if (res is not null)
-            focus.resourceBonuses = new List<ResourceProductionBonus>
-            {
-                new ResourceProductionBonus { resource = res, baseValue = resBaseValue }
-            };
+            focus.resourceBonuses =
+            [
+                new() { resource = res, baseValue = resBaseValue }
+            ];
         return focus;
     }
 
@@ -116,11 +116,11 @@ public static class SpecTestHelper
         {
             defName = "TEST_FocusStat",
             label = "test focus stat",
-            statModifiers = new List<FCStatModifier> { new FCStatModifier { stat = stat, value = value } },
-            skillWeights = new List<SkillWeight>
-            {
-                new SkillWeight { skill = weightSkill, weight = weight }
-            }
+            statModifiers = [new() { stat = stat, value = value }],
+            skillWeights =
+            [
+                new() { skill = weightSkill, weight = weight }
+            ]
         };
     }
 
@@ -131,10 +131,10 @@ public static class SpecTestHelper
         {
             defName = "TEST_SocialFocus",
             label = "test social focus",
-            skillWeights = new List<SkillWeight>
-            {
-                new SkillWeight { skill = SkillDefOf.Social, weight = socialWeight }
-            }
+            skillWeights =
+            [
+                new() { skill = SkillDefOf.Social, weight = socialWeight }
+            ]
         };
     }
 
@@ -168,7 +168,7 @@ public static class SpecTestHelper
         {
             // canGeneratePawnRelations: false keeps the throwaway pawn from wiring social
             // relations onto existing colonists (which would leak references to it).
-            PawnGenerationRequest req = new PawnGenerationRequest(
+            PawnGenerationRequest req = new(
                 PawnKindDefOf.Colonist, faction,
                 forceGenerateNewPawn: true,
                 canGeneratePawnRelations: false,
@@ -206,19 +206,17 @@ public static class SpecTestHelper
 
         if (p.story.traits is not null)
         {
-            List<Trait> disabling = new List<Trait>();
+            List<Trait> disabling = [];
             foreach (Trait t in p.story.traits.allTraits)
                 if (t.def.disabledWorkTags != WorkTags.None) disabling.Add(t);
             foreach (Trait t in disabling) p.story.traits.RemoveTrait(t);
         }
 
-        if (noDisableChildhood is null)
-            noDisableChildhood = DefDatabase<BackstoryDef>.AllDefsListForReading.Find(b =>
-                b.slot == BackstorySlot.Childhood && b.workDisables == WorkTags.None
-                && (b.spawnCategories is null || !b.spawnCategories.Contains("Child")));
-        if (noDisableAdulthood is null)
-            noDisableAdulthood = DefDatabase<BackstoryDef>.AllDefsListForReading.Find(b =>
-                b.slot == BackstorySlot.Adulthood && b.workDisables == WorkTags.None);
+        noDisableChildhood ??= DefDatabase<BackstoryDef>.AllDefsListForReading.Find(b =>
+            b.slot == BackstorySlot.Childhood && b.workDisables == WorkTags.None
+            && (b.spawnCategories is null || !b.spawnCategories.Contains("Child")));
+        noDisableAdulthood ??= DefDatabase<BackstoryDef>.AllDefsListForReading.Find(b =>
+            b.slot == BackstorySlot.Adulthood && b.workDisables == WorkTags.None);
 
         if (noDisableChildhood is not null) p.story.Childhood = noDisableChildhood;
         if (noDisableAdulthood is not null) p.story.Adulthood = noDisableAdulthood;

@@ -320,7 +320,7 @@ public static class SpecUtil
         HashSet<SkillDef> relevant = null;
         if (role is not null && role.skillWeights is not null && role.skillWeights.Count > 0)
         {
-            relevant = new HashSet<SkillDef>();
+            relevant = [];
             foreach (SkillWeight sw in role.skillWeights)
             {
                 if (sw.skill is not null) relevant.Add(sw.skill);
@@ -336,7 +336,7 @@ public static class SpecUtil
         HashSet<SkillDef> relevant = null;
         if (focus is not null)
         {
-            relevant = new HashSet<SkillDef>();
+            relevant = [];
             if (focus.skillWeights is not null)
             {
                 foreach (SkillWeight sw in focus.skillWeights)

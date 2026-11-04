@@ -11,8 +11,8 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     ISettlementWindowOverview, IStatModifierProvider, IResourceProductionModifier, IProfitContributor
 {
     // ── Roster ──
-    private List<SettlementSpecialist> specialists = new List<SettlementSpecialist>();
-    private List<SettlementSpecialist> residents = new List<SettlementSpecialist>();
+    private List<SettlementSpecialist> specialists = [];
+    private List<SettlementSpecialist> residents = [];
     private SettlementGovernor governor;
 
     // ── Supply chain satisfaction ──
@@ -34,7 +34,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     // ── Battle state ──
     private bool pawnsDeployedToBattle = false;
     public bool PawnsDeployedToBattle => pawnsDeployedToBattle;
-    private List<Pawn> deployedPawns = new List<Pawn>();
+    private List<Pawn> deployedPawns = [];
 
     // ── Properties shortcut ──
     public WorldObjectCompProperties_SettlementSpecialists Props =>
@@ -130,7 +130,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             return false;
         }
 
-        SettlementSpecialist entry = new SettlementSpecialist(pawn, role);
+        SettlementSpecialist entry = new(pawn, role);
         if (role is null)
             residents.Add(entry);
         else
@@ -216,7 +216,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
                 governor.Behavior.OnFocusDeactivated(Settlement);
             SpecialistRoster.Recall(oldGovPawn);
 
-            SettlementSpecialist demoted = new SettlementSpecialist(oldGovPawn, null);
+            SettlementSpecialist demoted = new(oldGovPawn, null);
             residents.Add(demoted);
             SpecialistRoster.Assign(oldGovPawn, null);
         }
@@ -285,7 +285,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
     public List<Pawn> AllPawnsSnapshot()
     {
-        List<Pawn> result = new List<Pawn>();
+        List<Pawn> result = [];
         foreach (SettlementSpecialist s in specialists)
             if (s.IsAlive) result.Add(s.pawn);
         foreach (SettlementSpecialist r in residents)
@@ -298,7 +298,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     private void DeliverRecalledPawn(Pawn pawn)
     {
         if (pawn is null) return;
-        DeliverPawnsToPlayer(new List<Pawn> { pawn });
+        DeliverPawnsToPlayer([pawn]);
     }
 
     /// <summary>
@@ -316,7 +316,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     {
         if (pawns is null || pawns.Count == 0) return;
 
-        List<Pawn> toDeliver = new List<Pawn>();
+        List<Pawn> toDeliver = [];
         foreach (Pawn pawn in pawns)
         {
             if (pawn is null || pawn.Dead) continue; // dead members are cleaned up by the roster, never delivered
@@ -381,7 +381,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
         // Recall EVERY member (dead included) from the static roster so no stale thingIDNumber
         // survives, and collect the living for delivery.
-        List<Pawn> survivors = new List<Pawn>();
+        List<Pawn> survivors = [];
         foreach (SettlementSpecialist s in specialists)
         {
             if (s.pawn is null) continue;
@@ -472,8 +472,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
                     out loc))
                 loc = map.Center;
             GenSpawn.Spawn(pawn, loc, map);
-            if (pawn.drafter is null)
-                pawn.drafter = new Pawn_DraftController(pawn);
+            pawn.drafter ??= new Pawn_DraftController(pawn);
 
             defenseLord.AddPawn(pawn);
             deployedPawns.Add(pawn);
@@ -545,19 +544,12 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             }
         }
 
-        string body;
-        switch (cause)
+        string body = cause switch
         {
-            case SpecDeathCause.AutoBattle:
-                body = "FCS_LetterDeathAttack".Translate(pawn.LabelShort, roleLabel, Settlement.Name);
-                break;
-            case SpecDeathCause.ManualBattle:
-                body = "FCS_LetterDeathDefending".Translate(pawn.LabelShort, roleLabel, Settlement.Name);
-                break;
-            default:
-                body = "FCS_LetterDeathGeneric".Translate(pawn.LabelShort, roleLabel, Settlement.Name);
-                break;
-        }
+            SpecDeathCause.AutoBattle => "FCS_LetterDeathAttack".Translate(pawn.LabelShort, roleLabel, Settlement.Name),
+            SpecDeathCause.ManualBattle => "FCS_LetterDeathDefending".Translate(pawn.LabelShort, roleLabel, Settlement.Name),
+            _ => "FCS_LetterDeathGeneric".Translate(pawn.LabelShort, roleLabel, Settlement.Name),
+        };
         if (!causeText.NullOrEmpty())
             body += "\n\n" + causeText;
         SpecUtil.SendDeathLetter(roleLabel, body);
@@ -578,9 +570,9 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
         if (Scribe.mode == LoadSaveMode.PostLoadInit)
         {
-            if (specialists is null) specialists = new List<SettlementSpecialist>();
-            if (residents is null) residents = new List<SettlementSpecialist>();
-            if (deployedPawns is null) deployedPawns = new List<Pawn>();
+            specialists ??= [];
+            residents ??= [];
+            deployedPawns ??= [];
             specialists.RemoveAll(s => s?.pawn is null);
             residents.RemoveAll(r => r?.pawn is null);
             deployedPawns.RemoveAll(p => p is null);
@@ -663,8 +655,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
     private SpecialistsTabRenderer tabRenderer;
 
-    private SpecialistsTabRenderer TabRenderer =>
-        tabRenderer ?? (tabRenderer = new SpecialistsTabRenderer(this));
+    private SpecialistsTabRenderer TabRenderer => tabRenderer ??= new SpecialistsTabRenderer(this);
 
     public void PreOpenWindow(WorldSettlementFC settlement) { TabRenderer.PreOpenWindow(settlement); }
     public void OnTabSwitch() { TabRenderer.OnTabSwitch(); }
@@ -706,7 +697,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
     public string GetResourceAdditiveDesc(ResourceFC resource)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         double total = 0;
         foreach (SettlementSpecialist s in specialists)
         {
@@ -782,7 +773,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
     public string GetStatModifierDesc(FCStatDef stat)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         // Whether any satisfaction-scaled contribution was added. The resident worker bonus below
         // is NOT satisfaction-scaled, but no shipped role/focus modifies workerBaseMax, so it never
         // coexists with the scaled contributions on the same stat.

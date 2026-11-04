@@ -121,7 +121,7 @@ public static class SpecUtilMathTests
     [EmpireTest("SG.Math")]
     public static void SpecialistAdditive_NullRole_ReturnsZero()
     {
-        SettlementSpecialist s = new SettlementSpecialist { pawn = null, role = null };
+        SettlementSpecialist s = new() { pawn = null, role = null };
         TestAssert.AreEqual(0.0, SpecUtil.SpecialistAdditiveForResource(s, null));
     }
 
@@ -129,7 +129,7 @@ public static class SpecUtilMathTests
     public static void SpecialistAdditive_NoUsableSkills_ReturnsZero()
     {
         // role set, but pawn null -> HasUsableSkills false -> guarded to 0
-        SettlementSpecialist s = new SettlementSpecialist
+        SettlementSpecialist s = new()
         {
             pawn = null,
             role = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f)
@@ -146,7 +146,7 @@ public static class SpecUtilMathTests
     [EmpireTest("SG.Math")]
     public static void GovernorMultiplier_NoUsableSkills_ReturnsOne()
     {
-        SettlementGovernor g = new SettlementGovernor
+        SettlementGovernor g = new()
         {
             pawn = null,
             focus = SpecTestHelper.Focus(SkillDefOf.Intellectual, 1f, null, 0f)
@@ -157,14 +157,14 @@ public static class SpecUtilMathTests
     [EmpireTest("SG.Math")]
     public static void SpecialistStatBonus_NullRole_ReturnsZero()
     {
-        SettlementSpecialist s = new SettlementSpecialist { pawn = null, role = null };
+        SettlementSpecialist s = new() { pawn = null, role = null };
         TestAssert.AreEqual(0.0, SpecUtil.SpecialistStatBonus(s, null));
     }
 
     [EmpireTest("SG.Math")]
     public static void GovernorStatMultiplier_NullFocus_ReturnsOne()
     {
-        SettlementGovernor g = new SettlementGovernor { pawn = null, focus = null };
+        SettlementGovernor g = new() { pawn = null, focus = null };
         TestAssert.AreEqual(1.0, SpecUtil.GovernorStatMultiplier(g, null));
     }
 
@@ -177,7 +177,7 @@ public static class SpecUtilMathTests
     [EmpireTest("SG.Math")]
     public static void SpecialistUpkeep_NullRole_ReturnsZero()
     {
-        SettlementSpecialist s = new SettlementSpecialist { pawn = null, role = null };
+        SettlementSpecialist s = new() { pawn = null, role = null };
         TestAssert.AreEqual(0.0, SpecUtil.SpecialistUpkeep(s));
     }
 

@@ -17,7 +17,7 @@ public class CodexProvider_SG_Roles : ICodexDynamicProvider
             .OrderBy(r => r.label ?? r.defName).ToList();
         if (roles.Count == 0) return null;
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         foreach (SpecialistRoleDef role in roles)
             sb.AppendLine(CodexSGFormat.Label(role) + " - " + Summarize(role));
 
@@ -26,7 +26,7 @@ public class CodexProvider_SG_Roles : ICodexDynamicProvider
 
     private static string Summarize(SpecialistRoleDef role)
     {
-        List<string> parts = new List<string>();
+        List<string> parts = [];
 
         if (role.isGeneralist || role.providesBaselineProduction)
             parts.Add("FCS_CodexAllProduction".Translate());

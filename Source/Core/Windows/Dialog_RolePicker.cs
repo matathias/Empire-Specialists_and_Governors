@@ -32,23 +32,23 @@ public class Dialog_RolePicker : Window
     private const float DescHeight = 18f;
     private const float MinRowHeight = 60f;
 
-    private static readonly Color ResidentAccent = new Color(0.35f, 0.50f, 0.80f);
-    private static readonly Color SpecialistAccent = new Color(0.45f, 0.75f, 0.35f);
-    private static readonly Color GovernorAccent = new Color(0.85f, 0.75f, 0.5f);
-    private static readonly Color DisabledColor = new Color(0.5f, 0.5f, 0.5f);
-    private static readonly Color SeparatorColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-    private static readonly Color CurrentHighlight = new Color(1f, 1f, 1f, 0.08f);
+    private static readonly Color ResidentAccent = new(0.35f, 0.50f, 0.80f);
+    private static readonly Color SpecialistAccent = new(0.45f, 0.75f, 0.35f);
+    private static readonly Color GovernorAccent = new(0.85f, 0.75f, 0.5f);
+    private static readonly Color DisabledColor = new(0.5f, 0.5f, 0.5f);
+    private static readonly Color SeparatorColor = new(0.3f, 0.3f, 0.3f, 0.5f);
+    private static readonly Color CurrentHighlight = new(1f, 1f, 1f, 0.08f);
 
     private readonly string[] tabLabels =
-    {
+    [
         "FCS_SubSpecialists".Translate(),
         "FCS_SubGovernor".Translate()
-    };
+    ];
     private static readonly Color[] tabColors =
-    {
+    [
         SpecialistAccent,
         GovernorAccent
-    };
+    ];
 
     public override Vector2 InitialSize
     {
@@ -122,14 +122,14 @@ public class Dialog_RolePicker : Window
 
     private void BuildEntries()
     {
-        specialistEntries = new List<RoleEntry>();
-        governorEntries = new List<RoleEntry>();
+        specialistEntries = [];
+        governorEntries = [];
 
         if (!governorFocusOnly)
         {
             // Resident entry
             bool isResidentCurrent = !isCurrentlyGovernor && currentRole is null;
-            RoleEntry residentEntry = new RoleEntry
+            RoleEntry residentEntry = new()
             {
                 type = RoleEntryType.Resident,
                 label = "FCS_RoleResident".Translate(),
@@ -175,7 +175,7 @@ public class Dialog_RolePicker : Window
                     }
                 }
 
-                RoleEntry specEntry = new RoleEntry
+                RoleEntry specEntry = new()
                 {
                     type = RoleEntryType.Specialist,
                     roleDef = roleDef,
@@ -222,7 +222,7 @@ public class Dialog_RolePicker : Window
             {
                 bool isCurrent = isCurrentlyGovernor && currentGovernorFocus == focusDef;
 
-                RoleEntry govEntry = new RoleEntry
+                RoleEntry govEntry = new()
                 {
                     type = RoleEntryType.GovernorFocus,
                     focusDef = focusDef,
@@ -270,10 +270,10 @@ public class Dialog_RolePicker : Window
         {
             float tabAreaW = inRect.width - TabMarginRight;
             float tabW = tabAreaW / 2f;
-            Rect chosenRect = new Rect();
+            Rect chosenRect = new();
             for (int i = 0; i < 2; i++)
             {
-                Rect tabRect = new Rect(tabW * i, listTop, tabW, TabHeight);
+                Rect tabRect = new(tabW * i, listTop, tabW, TabHeight);
                 if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: selectedTab == i))
                 {
                     if (selectedTab != i)
@@ -293,7 +293,7 @@ public class Dialog_RolePicker : Window
         // Scroll view
         List<RoleEntry> entries = ActiveEntries;
         float listHeight = inRect.height - listTop;
-        Rect scrollOutRect = new Rect(0, listTop, inRect.width, listHeight);
+        Rect scrollOutRect = new(0, listTop, inRect.width, listHeight);
 
         float contentWidth = scrollOutRect.width - (ScrollUtil.ScrollbarWidth + 1f);
         float totalHeight = 0f;
@@ -310,7 +310,7 @@ public class Dialog_RolePicker : Window
         {
             RoleEntry entry = entries[i];
             float rowHeight = GetRowHeight(entry, contentWidth);
-            Rect rowRect = new Rect(0, curY, contentWidth, rowHeight);
+            Rect rowRect = new(0, curY, contentWidth, rowHeight);
 
             // Visibility culling
             if (rowRect.yMax >= scrollPos.y && rowRect.y <= scrollPos.y + listHeight)
@@ -516,7 +516,7 @@ public class Dialog_RolePicker : Window
 
     private List<TaggedString> GetBonusLines(RoleEntry entry)
     {
-        List<TaggedString> lines = new List<TaggedString>();
+        List<TaggedString> lines = [];
         WorldSettlementFC settlement = comp.Settlement;
 
         if (entry.type == RoleEntryType.Resident)
@@ -527,7 +527,7 @@ public class Dialog_RolePicker : Window
 
         if (entry.type == RoleEntryType.Specialist && entry.roleDef is not null)
         {
-            SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.roleDef);
+            SettlementSpecialist tempSpec = new(pawn, entry.roleDef);
             float score = tempSpec.SkillScore;
 
             // Resource bonuses
@@ -601,7 +601,7 @@ public class Dialog_RolePicker : Window
 
         if (entry.type == RoleEntryType.GovernorFocus && entry.focusDef is not null)
         {
-            SettlementGovernor tempGov = new SettlementGovernor(pawn, entry.focusDef);
+            SettlementGovernor tempGov = new(pawn, entry.focusDef);
             float score = tempGov.SkillScore;
 
             // Resource multipliers
@@ -669,7 +669,7 @@ public class Dialog_RolePicker : Window
 
         if (entry.type == RoleEntryType.Specialist && entry.roleDef is not null)
         {
-            SettlementSpecialist tempSpec = new SettlementSpecialist(pawn, entry.roleDef);
+            SettlementSpecialist tempSpec = new(pawn, entry.roleDef);
             double upkeep = SpecUtil.SpecialistUpkeep(tempSpec);
             return "FCS_PickerUpkeep".Translate(upkeep.ToString("F1"));
         }

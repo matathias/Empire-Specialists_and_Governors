@@ -14,7 +14,7 @@ public class CodexProvider_SG_Residents : ICodexDynamicProvider
     {
         if (faction is null || faction.settlements is null) return null;
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         foreach (WorldSettlementFC s in faction.settlements)
         {
             WorldObjectComp_SettlementSpecialists comp =

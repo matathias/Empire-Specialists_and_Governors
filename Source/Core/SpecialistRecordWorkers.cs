@@ -2,8 +2,8 @@ namespace FactionColonies.Specialists;
 
 public static class SpecialistRoster
 {
-    private static Dictionary<int, SpecialistRoleDef> assignments = new Dictionary<int, SpecialistRoleDef>();
-    private static HashSet<int> governors = new HashSet<int>();
+    private static Dictionary<int, SpecialistRoleDef> assignments = [];
+    private static HashSet<int> governors = [];
 
     public static void Assign(Pawn pawn, SpecialistRoleDef role)
     {

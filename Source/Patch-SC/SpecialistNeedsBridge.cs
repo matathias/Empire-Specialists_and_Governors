@@ -20,27 +20,24 @@ public class WorldObjectComp_SpecialistNeeds : WorldObjectComp, INeedProvider
 {
     private WorldObjectComp_SettlementSpecialists specialistsComp;
 
-    private WorldObjectComp_SettlementSpecialists Specialists => specialistsComp ??
-                                                                 (specialistsComp = parent.GetComponent<WorldObjectComp_SettlementSpecialists>());
+    private WorldObjectComp_SettlementSpecialists Specialists => specialistsComp ??= parent.GetComponent<WorldObjectComp_SettlementSpecialists>();
 
     private static FCStatDef happinessLostStat;
-    private static FCStatDef HappinessLostStat => happinessLostStat ??
-        (happinessLostStat = DefDatabase<FCStatDef>.GetNamedSilentFail("happinessLostBase"));
+    private static FCStatDef HappinessLostStat => happinessLostStat ??= DefDatabase<FCStatDef>.GetNamedSilentFail("happinessLostBase");
 
     // Built fresh per collection so the food/medicine penalty sliders take effect live (no restart).
     private static List<NeedPenalty> BuildPenalties(float penaltyPerUnit)
     {
         FCStatDef stat = HappinessLostStat;
         if (stat is null) return null;
-        return new List<NeedPenalty>
-        {
-            new NeedPenalty
-            {
+        return
+        [
+            new() {
                 stat = stat,
                 penaltyPerUnit = penaltyPerUnit,
                 label = "FCSRR_happinesspenalty".Translate()
             }
-        };
+        ];
     }
 
     public void CollectNeeds(WorldSettlementFC settlement, List<NeedEntry> needs)

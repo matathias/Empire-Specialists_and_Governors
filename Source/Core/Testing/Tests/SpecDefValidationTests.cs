@@ -13,11 +13,11 @@ public static class SpecDefValidationTests
     [EmpireTest("SG.Defs")]
     public static void RoleDef_NullSkill_YieldsError()
     {
-        SpecialistRoleDef role = new SpecialistRoleDef
+        SpecialistRoleDef role = new()
         {
             defName = "TEST_NullSkill",
             label = "test",
-            skillWeights = new List<SkillWeight> { new SkillWeight { skill = null } }
+            skillWeights = [new() { skill = null }]
         };
         List<string> errs = Errors(role);
         TestAssert.IsTrue(errs.Any(e => e.Contains("skillWeights[0] has null skill")),
@@ -27,14 +27,14 @@ public static class SpecDefValidationTests
     [EmpireTest("SG.Defs")]
     public static void RoleDef_NullResource_YieldsError()
     {
-        SpecialistRoleDef role = new SpecialistRoleDef
+        SpecialistRoleDef role = new()
         {
             defName = "TEST_NullRes",
             label = "test",
-            resourceBonuses = new List<ResourceProductionBonus>
-            {
-                new ResourceProductionBonus { resource = null }
-            }
+            resourceBonuses =
+            [
+                new() { resource = null }
+            ]
         };
         List<string> errs = Errors(role);
         TestAssert.IsTrue(errs.Any(e => e.Contains("resourceBonuses[0] has null resource")),
@@ -56,11 +56,11 @@ public static class SpecDefValidationTests
     [EmpireTest("SG.Defs")]
     public static void FocusDef_NullSkill_YieldsError()
     {
-        GovernorFocusDef focus = new GovernorFocusDef
+        GovernorFocusDef focus = new()
         {
             defName = "TEST_FocusNullSkill",
             label = "test",
-            skillWeights = new List<SkillWeight> { new SkillWeight { skill = null } }
+            skillWeights = [new() { skill = null }]
         };
         List<string> errs = Errors(focus);
         TestAssert.IsTrue(errs.Any(e => e.Contains("skillWeights[0] has null skill")),
@@ -70,14 +70,14 @@ public static class SpecDefValidationTests
     [EmpireTest("SG.Defs")]
     public static void FocusDef_NullResource_YieldsError()
     {
-        GovernorFocusDef focus = new GovernorFocusDef
+        GovernorFocusDef focus = new()
         {
             defName = "TEST_FocusNullRes",
             label = "test",
-            resourceBonuses = new List<ResourceProductionBonus>
-            {
-                new ResourceProductionBonus { resource = null }
-            }
+            resourceBonuses =
+            [
+                new() { resource = null }
+            ]
         };
         List<string> errs = Errors(focus);
         TestAssert.IsTrue(errs.Any(e => e.Contains("resourceBonuses[0] has null resource")),
@@ -117,12 +117,12 @@ public static class SpecDefValidationTests
     [EmpireTest("SG.Defs")]
     public static void FocusDef_NonSettlementStat_YieldsError()
     {
-        FCStatDef squadOnly = new FCStatDef { defName = "TEST_FocusSquadOnlyStat", appliesToSettlements = false };
-        GovernorFocusDef focus = new GovernorFocusDef
+        FCStatDef squadOnly = new() { defName = "TEST_FocusSquadOnlyStat", appliesToSettlements = false };
+        GovernorFocusDef focus = new()
         {
             defName = "TEST_FocusNonSettlementStat",
             label = "test",
-            statModifiers = new List<FCStatModifier> { new FCStatModifier { stat = squadOnly, value = 1.0 } }
+            statModifiers = [new() { stat = squadOnly, value = 1.0 }]
         };
         TestAssert.IsTrue(Errors(focus).Any(e => e.Contains("is not appliesToSettlements")),
             "Expected an appliesToSettlements ConfigError");
@@ -131,12 +131,12 @@ public static class SpecDefValidationTests
     [EmpireTest("SG.Defs")]
     public static void RoleDef_NonSettlementStat_YieldsError()
     {
-        FCStatDef squadOnly = new FCStatDef { defName = "TEST_RoleSquadOnlyStat", appliesToSettlements = false };
-        SpecialistRoleDef role = new SpecialistRoleDef
+        FCStatDef squadOnly = new() { defName = "TEST_RoleSquadOnlyStat", appliesToSettlements = false };
+        SpecialistRoleDef role = new()
         {
             defName = "TEST_RoleNonSettlementStat",
             label = "test",
-            statModifiers = new List<FCStatModifier> { new FCStatModifier { stat = squadOnly, value = 1.0 } }
+            statModifiers = [new() { stat = squadOnly, value = 1.0 }]
         };
         TestAssert.IsTrue(Errors(role).Any(e => e.Contains("is not appliesToSettlements")),
             "Expected an appliesToSettlements ConfigError");

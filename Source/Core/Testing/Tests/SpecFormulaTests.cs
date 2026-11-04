@@ -241,7 +241,7 @@ public static class SpecFormulaTests
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
                 SpecTestHelper.ApothecaryRole(0.02f, SkillDefOf.Medicine, 1f));
-            List<SettlementSpecialist> list = new List<SettlementSpecialist> { s };
+            List<SettlementSpecialist> list = [s];
             // score * healRatePerSkillPoint = 10 * 0.02 = 0.2
             TestAssert.AreEqual(0.2, SpecUtil.MedicalHealRateBonus(list, null));
         });
@@ -255,7 +255,7 @@ public static class SpecFormulaTests
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementGovernor g = SpecTestHelper.Governor(p, null); // focus not needed for this branch
-            List<SettlementSpecialist> empty = new List<SettlementSpecialist>();
+            List<SettlementSpecialist> empty = [];
             // TaperedLevel(10) * healRatePerLevelGovernor (recomputed from live setting)
             double expected = 10.0 * FCSSettings.healRatePerLevelGovernor;
             TestAssert.AreEqual(expected, SpecUtil.MedicalHealRateBonus(empty, g));

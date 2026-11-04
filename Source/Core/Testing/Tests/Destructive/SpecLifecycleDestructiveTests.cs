@@ -72,10 +72,10 @@ public static class SpecLifecycleDestructiveTests
             if (compA.ResidentCount != 1 || compB.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
 
             // Attacked settlement is A (targetObject); the defending squad's home is overwritten to B.
-            MilitaryOperation op = new MilitaryOperation(-9999, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
+            MilitaryOperation op = new(-9999, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
             op.defender.faction = FindFC.EmpireFaction;
             op.defender.homeSettlement = b;
-            BattleResult result = new BattleResult(); // wasManualBattle == false -> auto-resolved roll runs
+            BattleResult result = new(); // wasManualBattle == false -> auto-resolved roll runs
 
             new SpecialistLifecycleHandler().OnBattleResolved(op, false, result);
 
@@ -137,9 +137,9 @@ public static class SpecLifecycleDestructiveTests
 
             // Deploy op mirroring CreateDeployOp: targetObject is the player's own settlement,
             // aggressor is the empire, and there is NO defender faction -> IsDefensive == false.
-            MilitaryOperation op = new MilitaryOperation(-9998, MilitaryJobDefOf.Deploy, a.Tile, a);
+            MilitaryOperation op = new(-9998, MilitaryJobDefOf.Deploy, a.Tile, a);
             op.aggressor.faction = FindFC.EmpireFaction;
-            BattleResult result = new BattleResult(); // wasManualBattle == false
+            BattleResult result = new(); // wasManualBattle == false
 
             new SpecialistLifecycleHandler().OnBattleResolved(op, false, result);
 
@@ -215,7 +215,7 @@ public static class SpecLifecycleDestructiveTests
             // don't linger, then clear any static-roster residue and remove the settlement.
             if (a is not null)
             {
-                List<Caravan> caravans = new List<Caravan>(Find.WorldObjects.Caravans);
+                List<Caravan> caravans = new(Find.WorldObjects.Caravans);
                 foreach (Caravan c in caravans)
                     if (c is not null && !c.Destroyed && c.Tile == a.Tile)
                         c.Destroy();
@@ -263,23 +263,23 @@ public static class SpecLifecycleDestructiveTests
             props.governorDeathChanceDefeat = 1f;
 
             // Specialist whose role carries the spy behavior + a resident as the observable control.
-            SpecialistRoleDef spyRole = new SpecialistRoleDef
+            SpecialistRoleDef spyRole = new()
             {
                 defName = "TEST_SpyRole",
                 label = "spy role",
-                modExtensions = new List<DefModExtension>
-                {
+                modExtensions =
+                [
                     new SpecialistRoleBehaviorExtension { behaviorClass = typeof(SpecSpyRoleBehavior) }
-                }
+                ]
             };
             SpecSpyRoleBehavior.InvokeCount = 0;
             comp.AssignSpecialist(specPawn, spyRole);
             comp.AssignSpecialist(resPawn, null);
             if (comp.SpecialistCount != 1 || comp.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
 
-            MilitaryOperation op = new MilitaryOperation(-9996, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
+            MilitaryOperation op = new(-9996, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
             op.defender.faction = FindFC.EmpireFaction;
-            BattleResult result = new BattleResult(); // wasManualBattle == false -> auto-resolved roll runs
+            BattleResult result = new(); // wasManualBattle == false -> auto-resolved roll runs
 
             new SpecialistLifecycleHandler().OnBattleResolved(op, false, result);
 
@@ -332,9 +332,9 @@ public static class SpecLifecycleDestructiveTests
             comp.AssignGovernor(govPawn, focus);
             if (!comp.HasGovernor) TestAssert.Skip("Roster setup failed");
 
-            MilitaryOperation op = new MilitaryOperation(-9995, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
+            MilitaryOperation op = new(-9995, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
             op.defender.faction = FindFC.EmpireFaction;
-            BattleResult result = new BattleResult();
+            BattleResult result = new();
 
             new SpecialistLifecycleHandler().OnBattleResolved(op, false, result);
 
@@ -381,9 +381,9 @@ public static class SpecLifecycleDestructiveTests
             comp.AssignSpecialist(resPawn, null); // resident
             if (comp.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
 
-            MilitaryOperation op = new MilitaryOperation(-9994, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
+            MilitaryOperation op = new(-9994, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
             op.defender.faction = FindFC.EmpireFaction;
-            BattleResult result = new BattleResult();
+            BattleResult result = new();
 
             new SpecialistLifecycleHandler().OnBattleResolved(op, true, result); // victory
 

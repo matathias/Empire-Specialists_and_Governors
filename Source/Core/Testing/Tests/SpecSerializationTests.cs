@@ -12,7 +12,7 @@ public static class SpecSerializationTests
     public static void Specialist_ValueFields_HoldExactly()
     {
         SpecialistRoleDef role = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f);
-        SettlementSpecialist s = new SettlementSpecialist { assignedTick = 12345, role = role };
+        SettlementSpecialist s = new() { assignedTick = 12345, role = role };
         // These are the fields PostExposeData persists via Scribe_Values / Scribe_Defs.
         TestAssert.AreEqual(12345, s.assignedTick);
         TestAssert.IsTrue(s.role == role, "role reference should be retained");
@@ -22,14 +22,14 @@ public static class SpecSerializationTests
     [EmpireTest("SG.Serialization")]
     public static void Resident_NullRole_IsResident()
     {
-        SettlementSpecialist r = new SettlementSpecialist { assignedTick = 7, role = null };
+        SettlementSpecialist r = new() { assignedTick = 7, role = null };
         TestAssert.IsTrue(r.IsResident, "null role means resident");
     }
 
     [EmpireTest("SG.Serialization")]
     public static void Comp_FoodSatisfaction_Clamps01()
     {
-        WorldObjectComp_SettlementSpecialists c = new WorldObjectComp_SettlementSpecialists();
+        WorldObjectComp_SettlementSpecialists c = new();
         c.FoodSatisfaction = 2f;
         TestAssert.AreEqual(1.0, c.FoodSatisfaction);
         c.FoodSatisfaction = -1f;
@@ -41,7 +41,7 @@ public static class SpecSerializationTests
     [EmpireTest("SG.Serialization")]
     public static void Comp_MedicineSatisfaction_Clamps01()
     {
-        WorldObjectComp_SettlementSpecialists c = new WorldObjectComp_SettlementSpecialists();
+        WorldObjectComp_SettlementSpecialists c = new();
         c.MedicineSatisfaction = 5f;
         TestAssert.AreEqual(1.0, c.MedicineSatisfaction);
         c.MedicineSatisfaction = -0.5f;
@@ -51,7 +51,7 @@ public static class SpecSerializationTests
     [EmpireTest("SG.Serialization")]
     public static void Comp_FreshInstance_EmptyRoster()
     {
-        WorldObjectComp_SettlementSpecialists c = new WorldObjectComp_SettlementSpecialists();
+        WorldObjectComp_SettlementSpecialists c = new();
         TestAssert.AreEqual(0, c.SpecialistCount);
         TestAssert.AreEqual(0, c.ResidentCount);
         TestAssert.IsFalse(c.HasGovernor, "fresh comp has no governor");

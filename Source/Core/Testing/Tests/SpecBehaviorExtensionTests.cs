@@ -14,7 +14,7 @@ public static class SpecBehaviorExtensionTests
     [EmpireTest("SG.Behavior")]
     public static void RoleBehaviorExt_NullClass_YieldsError()
     {
-        SpecialistRoleBehaviorExtension ext = new SpecialistRoleBehaviorExtension { behaviorClass = null };
+        SpecialistRoleBehaviorExtension ext = new() { behaviorClass = null };
         TestAssert.IsTrue(Errors(ext).Any(e => e.Contains("behaviorClass is null")),
             "Expected a null-behaviorClass ConfigError");
     }
@@ -23,7 +23,7 @@ public static class SpecBehaviorExtensionTests
     public static void RoleBehaviorExt_NonSubclass_YieldsError()
     {
         // A type that does not extend SpecialistRoleBehavior must be rejected.
-        SpecialistRoleBehaviorExtension ext = new SpecialistRoleBehaviorExtension { behaviorClass = typeof(string) };
+        SpecialistRoleBehaviorExtension ext = new() { behaviorClass = typeof(string) };
         TestAssert.IsTrue(Errors(ext).Any(e => e.Contains("must extend SpecialistRoleBehavior")),
             "Expected a wrong-base-type ConfigError");
     }
@@ -31,7 +31,7 @@ public static class SpecBehaviorExtensionTests
     [EmpireTest("SG.Behavior")]
     public static void RoleBehaviorExt_ValidClass_NoSubmodError()
     {
-        SpecialistRoleBehaviorExtension ext = new SpecialistRoleBehaviorExtension
+        SpecialistRoleBehaviorExtension ext = new()
         {
             behaviorClass = typeof(RoleBehavior_Defense)
         };
@@ -43,7 +43,7 @@ public static class SpecBehaviorExtensionTests
     [EmpireTest("SG.Behavior")]
     public static void CreateBehavior_ValidClass_WiresExtension()
     {
-        SpecialistRoleBehaviorExtension ext = new SpecialistRoleBehaviorExtension
+        SpecialistRoleBehaviorExtension ext = new()
         {
             behaviorClass = typeof(RoleBehavior_Defense)
         };
@@ -58,16 +58,16 @@ public static class SpecBehaviorExtensionTests
     [EmpireTest("SG.Behavior")]
     public static void DirtySkillScore_InvalidatesCachedBehavior()
     {
-        SpecialistRoleDef role = new SpecialistRoleDef
+        SpecialistRoleDef role = new()
         {
             defName = "TEST_BehaviorRole",
             label = "test behavior role",
-            modExtensions = new List<DefModExtension>
-            {
+            modExtensions =
+            [
                 new SpecialistRoleBehaviorExtension { behaviorClass = typeof(RoleBehavior_Defense) }
-            }
+            ]
         };
-        SettlementSpecialist s = new SettlementSpecialist { role = role };
+        SettlementSpecialist s = new() { role = role };
 
         SpecialistRoleBehavior first = s.Behavior;
         TestAssert.IsNotNull(first, "expected a behavior from the role extension");

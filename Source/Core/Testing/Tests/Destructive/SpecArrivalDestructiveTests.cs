@@ -22,7 +22,7 @@ public static class SpecArrivalDestructiveTests
         if (p1 is null || p2 is null) TestAssert.Skip("No pawn");
         try
         {
-            arrival.ReceivePawns(new List<Pawn> { p1, p2 });
+            arrival.ReceivePawns([p1, p2]);
 
             TestAssert.IsTrue(comp.HasGovernor && comp.Governor.pawn == p1, "first pawn should become governor");
             TestAssert.AreEqual(1, comp.ResidentCount, "the extra pawn should overflow to a resident");
@@ -62,7 +62,7 @@ public static class SpecArrivalDestructiveTests
             }
             if (comp.SpecialistCount != max) TestAssert.Skip("Could not fill specialists to cap");
 
-            arrival.ReceivePawns(new List<Pawn> { extra });
+            arrival.ReceivePawns([extra]);
 
             TestAssert.AreEqual(max, comp.SpecialistCount, "specialist count should stay at the cap");
             TestAssert.AreEqual(1, comp.ResidentCount, "the over-cap pawn should overflow to a resident");

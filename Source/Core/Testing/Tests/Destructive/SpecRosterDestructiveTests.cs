@@ -275,7 +275,7 @@ public static class SpecRosterDestructiveTests
         SpecialistRoleDef fillRole = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f);
         Pawn resPawn = SpecDestructiveTestUtil.MakeAssignable(8);
         if (resPawn is null) TestAssert.Skip("No pawn");
-        List<Pawn> fillers = new List<Pawn>();
+        List<Pawn> fillers = [];
         try
         {
             for (int i = 0; i < max; i++)
@@ -443,7 +443,7 @@ public static class SpecRosterDestructiveTests
         }
         finally
         {
-            List<Caravan> caravans = new List<Caravan>(Find.WorldObjects.Caravans);
+            List<Caravan> caravans = new(Find.WorldObjects.Caravans);
             foreach (Caravan c in caravans)
                 if (c is not null && !c.Destroyed && c.Tile == s.Tile)
                     c.Destroy();

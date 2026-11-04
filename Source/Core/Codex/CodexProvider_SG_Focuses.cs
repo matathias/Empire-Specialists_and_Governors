@@ -17,7 +17,7 @@ public class CodexProvider_SG_Focuses : ICodexDynamicProvider
             .OrderBy(f => f.label ?? f.defName).ToList();
         if (focuses.Count == 0) return null;
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         foreach (GovernorFocusDef focus in focuses)
             sb.AppendLine(CodexSGFormat.Label(focus) + " - " + Summarize(focus));
 
@@ -26,7 +26,7 @@ public class CodexProvider_SG_Focuses : ICodexDynamicProvider
 
     private static string Summarize(GovernorFocusDef focus)
     {
-        List<string> parts = new List<string>();
+        List<string> parts = [];
 
         if (focus.providesBaselineProduction)
             parts.Add("FCS_CodexAllProduction".Translate());

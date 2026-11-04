@@ -28,8 +28,8 @@ internal class SpecialistsTabRenderer
     private const float SectionHeaderHeight = 26f;
     private const float InfoCardBtnSize = 24f;
     private const float AccentBarWidth = 3f;
-    private static readonly Color DefenseContribColor = new Color(0.9f, 0.4f, 0.4f);
-    private static readonly Color PawnBG = new Color(0.12f, 0.12f, 0.12f);
+    private static readonly Color DefenseContribColor = new(0.9f, 0.4f, 0.4f);
+    private static readonly Color PawnBG = new(0.12f, 0.12f, 0.12f);
 
     // Governor dashboard layout constants
     private const float GovPanelPad = 6f;
@@ -42,20 +42,20 @@ internal class SpecialistsTabRenderer
     private const float GovGridHeaderH = 30f;
     private const float GovResRowH = 26f;
     private const float GovResNameW = 80f;
-    private static readonly Color GovFocusTint = new Color(0.4f, 0.35f, 0.15f, 0.3f);
-    private static readonly Color GovBarBg = new Color(0.15f, 0.15f, 0.15f);
-    private static readonly Color GovEmptyOverlay = new Color(0f, 0f, 0f, 0.45f);
-    private static readonly Color GovGreyedOut = new Color(1f, 1f, 1f, 0.35f);
-    private static readonly Color GovGreyedOutText = new Color(0.5f, 0.5f, 0.5f, 0.35f);
+    private static readonly Color GovFocusTint = new(0.4f, 0.35f, 0.15f, 0.3f);
+    private static readonly Color GovBarBg = new(0.15f, 0.15f, 0.15f);
+    private static readonly Color GovEmptyOverlay = new(0f, 0f, 0f, 0.45f);
+    private static readonly Color GovGreyedOut = new(1f, 1f, 1f, 0.35f);
+    private static readonly Color GovGreyedOutText = new(0.5f, 0.5f, 0.5f, 0.35f);
 
     // Resolved per window-open (in PreOpenWindow) so a mid-session language change is picked up.
     private string[] tabLabels;
     private static readonly Color[] tabColors =
-    {
-        new Color(0.85f, 0.75f, 0.5f),
-        new Color(0.45f, 0.75f, 0.35f),
-        new Color(0.35f, 0.50f, 0.80f)
-    };
+    [
+        new(0.85f, 0.75f, 0.5f),
+        new(0.45f, 0.75f, 0.35f),
+        new(0.35f, 0.50f, 0.80f)
+    ];
 
     public SpecialistsTabRenderer(WorldObjectComp_SettlementSpecialists comp)
     {
@@ -65,12 +65,12 @@ internal class SpecialistsTabRenderer
     public void PreOpenWindow(WorldSettlementFC settlement)
     {
         uiSettlement = settlement;
-        tabLabels = new[]
-        {
+        tabLabels =
+        [
             (string)"FCS_SubGovernor".Translate(),
             (string)"FCS_SubSpecialists".Translate(),
             (string)"FCS_SubResidents".Translate()
-        };
+        ];
         subTab = 0;
         scrollPosSpec = Vector2.zero;
         scrollPosRes = Vector2.zero;
@@ -96,10 +96,10 @@ internal class SpecialistsTabRenderer
         // --- Sub-tab bar ---
         float tabW = boundingBox.width / 3f;
 
-        Rect chosenRect = new Rect();
+        Rect chosenRect = new();
         for (int i = 0; i < 3; i++)
         {
-            Rect tabRect = new Rect(boundingBox.x + tabW * i, boundingBox.y, tabW, SubTabHeight);
+            Rect tabRect = new(boundingBox.x + tabW * i, boundingBox.y, tabW, SubTabHeight);
             if (UIUtil.ButtonFlat(tabRect, tabLabels[i], highlighted: subTab == i))
                 subTab = i;
             if (subTab == i)
@@ -110,7 +110,7 @@ internal class SpecialistsTabRenderer
         UIUtil.DrawTabDecoratorHorizontalTop(chosenRect, boundingBox, tabColors[subTab]);
 
         // --- Content area below sub-tabs ---
-        Rect contentRect = new Rect(boundingBox.x, boundingBox.y + SubTabHeight,
+        Rect contentRect = new(boundingBox.x, boundingBox.y + SubTabHeight,
             boundingBox.width, boundingBox.height - SubTabHeight);
 
         UIUtil.DrawColoredHighlight(contentRect, tabColors[subTab]);
@@ -192,7 +192,7 @@ internal class SpecialistsTabRenderer
 
         float px = rect.x + GovPanelPad;
         float py = rect.y + (rect.height - GovPortraitH) / 2f;
-        Rect portraitRect = new Rect(px, py, GovPortraitW, GovPortraitH);
+        Rect portraitRect = new(px, py, GovPortraitW, GovPortraitH);
 
         Widgets.DrawBoxSolid(portraitRect, PawnBG);
         if (hasGov)
@@ -235,7 +235,7 @@ internal class SpecialistsTabRenderer
         // Upkeep
         double upkeep = hasGov ? SpecUtil.GovernorUpkeep(gov) : 0;
         string upkeepText = "FCS_UpkeepDisplay".Translate(hasGov ? upkeep.ToString("F1") : "\u2014");
-        Rect upkeepRect = new Rect(textX, lineY, textW, 22f);
+        Rect upkeepRect = new(textX, lineY, textW, 22f);
         Widgets.Label(upkeepRect, upkeepText);
         if (hasGov && gov.focus is not null)
         {
@@ -267,7 +267,7 @@ internal class SpecialistsTabRenderer
             float govC, specC, resC, baseGov, baseSpec, baseRes;
             string reductionTip;
             ComputeDeathChances(out govC, out specC, out resC, out baseGov, out baseSpec, out baseRes, out reductionTip);
-            Rect deathRect = new Rect(textX, lineY, textW, 16f);
+            Rect deathRect = new(textX, lineY, textW, 16f);
             DrawDeathChanceLine(deathRect, baseGov, govC, reductionTip);
         }
 
@@ -306,7 +306,7 @@ internal class SpecialistsTabRenderer
         Text.Font = GameFont.Small;
         Text.Anchor = TextAnchor.MiddleCenter;
         GUI.color = hasGov ? new Color(0.85f, 0.75f, 0.5f) : GovGreyedOutText;
-        Rect headerRect = new Rect(ix, iy, iw, 20f);
+        Rect headerRect = new(ix, iy, iw, 20f);
         Widgets.DrawHighlight(headerRect);
         Widgets.Label(headerRect, "FCS_GovFocusHeader".Translate());
         iy += 24f;
@@ -317,7 +317,7 @@ internal class SpecialistsTabRenderer
         if (hasGov)
         {
             string focusLabel = gov.focus is not null ? gov.focus.LabelCap : "FCS_FocusNoFocus".Translate();
-            Rect focusBtnRect = new Rect(ix, iy, iw, BtnHeight);
+            Rect focusBtnRect = new(ix, iy, iw, BtnHeight);
             if (Widgets.ButtonText(focusBtnRect, "FCS_FocusSingleLabel".Translate(focusLabel)))
             {
                 ShowGovernorFocusMenu(gov);
@@ -377,7 +377,7 @@ internal class SpecialistsTabRenderer
             }
             innerH += bonusLineCount * 16f;
 
-            Rect scrollOuter = new Rect(ix, iy, iw, scrollAreaH);
+            Rect scrollOuter = new(ix, iy, iw, scrollAreaH);
             Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosFocus, innerH);
             float scrollContentW = scrollView.width;
             float sy = 0f;
@@ -523,7 +523,7 @@ internal class SpecialistsTabRenderer
         float contentH = totalRows * GovResRowH;
         float scrollAreaH = rect.yMax - y;
 
-        Rect scrollOuter = new Rect(x, y, w, scrollAreaH);
+        Rect scrollOuter = new(x, y, w, scrollAreaH);
         Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosGovRes, contentH);
         float colW = scrollView.width / 2f;
         int leftCount = (resources.Count + 1) / 2;
@@ -536,7 +536,7 @@ internal class SpecialistsTabRenderer
             float rowX = isLeft ? 0f : colW;
             float rowY = row * GovResRowH;
 
-            Rect rowRect = new Rect(rowX, rowY, colW, GovResRowH);
+            Rect rowRect = new(rowX, rowY, colW, GovResRowH);
 
             // Alternating row tint
             if (row % 2 == 1)
@@ -568,7 +568,7 @@ internal class SpecialistsTabRenderer
             float pctW = 42f;
             float barW = rowX + cw - cx - pctW - 4f;
             if (barW < 10f) barW = 10f;
-            Rect barRect = new Rect(cx, rowY + (GovResRowH - GovResBarH) / 2f, barW, GovResBarH);
+            Rect barRect = new(cx, rowY + (GovResRowH - GovResBarH) / 2f, barW, GovResBarH);
             Color barColor = hasFocusBonus
                 ? new Color(0.85f, 0.75f, 0.3f)
                 : AccentUtil.Income;
@@ -639,7 +639,7 @@ internal class SpecialistsTabRenderer
         {
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = Color.gray;
-            Rect emptyRect = new Rect(x, y, w, contentRect.yMax - y);
+            Rect emptyRect = new(x, y, w, contentRect.yMax - y);
             Widgets.Label(emptyRect, "FCS_NoSpecialists".Translate());
             GUI.color = Color.white;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -648,18 +648,18 @@ internal class SpecialistsTabRenderer
 
         // Scrollable card list
         float scrollH = contentRect.yMax - y;
-        Rect scrollOuter = new Rect(x, y, w, scrollH);
+        Rect scrollOuter = new(x, y, w, scrollH);
         float innerH = totalCards * (CardHeight + CardGap);
 
         Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosSpec, innerH);
         float sy = 0f;
         int rowIdx = 0;
-        List<SettlementSpecialist> specSnapshot = new List<SettlementSpecialist>(comp.Specialists);
+        List<SettlementSpecialist> specSnapshot = new(comp.Specialists);
         foreach (SettlementSpecialist s in specSnapshot)
         {
             if (s.pawn is null) continue;
 
-            Rect rowRect = new Rect(0f, sy, scrollView.width, CardHeight);
+            Rect rowRect = new(0f, sy, scrollView.width, CardHeight);
             DrawSpecialistCard(rowRect, s, true, rowIdx);
             sy += CardHeight + CardGap;
             rowIdx++;
@@ -700,7 +700,7 @@ internal class SpecialistsTabRenderer
         {
             Text.Anchor = TextAnchor.MiddleCenter;
             GUI.color = Color.gray;
-            Rect emptyRect = new Rect(x, y, w, contentRect.yMax - y);
+            Rect emptyRect = new(x, y, w, contentRect.yMax - y);
             Widgets.Label(emptyRect, "FCS_NoResidents".Translate());
             GUI.color = Color.white;
             Text.Anchor = TextAnchor.UpperLeft;
@@ -709,18 +709,18 @@ internal class SpecialistsTabRenderer
 
         // Scrollable card list
         float scrollH = contentRect.yMax - y;
-        Rect scrollOuter = new Rect(x, y, w, scrollH);
+        Rect scrollOuter = new(x, y, w, scrollH);
         float innerH = resCount * (CardHeight + CardGap);
 
         Rect scrollView = ScrollUtil.BeginScrollView(scrollOuter, ref scrollPosRes, innerH);
         float sy = 0f;
         int rowIdx = 0;
-        List<SettlementSpecialist> resSnapshot = new List<SettlementSpecialist>(comp.Residents);
+        List<SettlementSpecialist> resSnapshot = new(comp.Residents);
         foreach (SettlementSpecialist s in resSnapshot)
         {
             if (s.pawn is null) continue;
 
-            Rect rowRect = new Rect(0f, sy, scrollView.width, CardHeight);
+            Rect rowRect = new(0f, sy, scrollView.width, CardHeight);
             DrawSpecialistCard(rowRect, s, false, rowIdx);
             sy += CardHeight + CardGap;
             rowIdx++;
@@ -748,7 +748,7 @@ internal class SpecialistsTabRenderer
         // Portrait
         float portraitX = rowRect.x + CardPadding + (showContribution ? AccentBarWidth : 0f);
         float portraitY = rowRect.y + (CardHeight - PortraitSize) / 2f;
-        Rect portraitRect = new Rect(portraitX, portraitY, PortraitSize, PortraitSize);
+        Rect portraitRect = new(portraitX, portraitY, PortraitSize, PortraitSize);
         Widgets.DrawBoxSolid(portraitRect, PawnBG);
         UIUtil.DrawPawnPortrait(portraitRect, s.pawn);
 
@@ -761,7 +761,7 @@ internal class SpecialistsTabRenderer
         // Line 1: Name + Role
         Text.Font = GameFont.Small;
         Text.Anchor = TextAnchor.MiddleLeft;
-        Rect nameRect = new Rect(textX, rowRect.y + 2f, textW, 22f);
+        Rect nameRect = new(textX, rowRect.y + 2f, textW, 22f);
         string nameText = s.pawn.LabelShort;
         if (s.role is not null)
             nameText += " \u2014 " + s.role.LabelCap;
@@ -771,12 +771,12 @@ internal class SpecialistsTabRenderer
         Text.Font = GameFont.Tiny;
         GUI.color = Color.gray;
         string identity = BuildIdentityLine(s.pawn);
-        Rect identityRect = new Rect(textX, rowRect.y + 22f, textW, 16f);
+        Rect identityRect = new(textX, rowRect.y + 22f, textW, 16f);
         Widgets.Label(identityRect, identity);
 
         // Line 3: Skills
         string topSkill = GetTopSkillLabel(s);
-        Rect skillRect = new Rect(textX, rowRect.y + 38f, textW, 16f);
+        Rect skillRect = new(textX, rowRect.y + 38f, textW, 16f);
         Widgets.Label(skillRect, topSkill);
         GUI.color = Color.white;
 
@@ -790,7 +790,7 @@ internal class SpecialistsTabRenderer
             if (contrib.Length > 0)
             {
                 accentColor.a = 1f;
-                Rect contribRect = new Rect(textX, rowRect.y + 54f, textFullW, 34f);
+                Rect contribRect = new(textX, rowRect.y + 54f, textFullW, 34f);
                 UIUtil.DrawColoredLabel(contribRect, contrib, accentColor);
 
                 // Contribution tooltip
@@ -827,7 +827,7 @@ internal class SpecialistsTabRenderer
 
     internal static string BuildIdentityLine(Pawn pawn)
     {
-        List<string> parts = new List<string>();
+        List<string> parts = [];
         string title = pawn.story?.TitleShortCap;
         if (!string.IsNullOrEmpty(title))
         {
@@ -847,7 +847,7 @@ internal class SpecialistsTabRenderer
 
         if (uiSettlement is null) return null;
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         double bestBonus = 0;
         string bestLabel = "";
         foreach (ResourceFC resource in uiSettlement.Resources)
@@ -903,7 +903,7 @@ internal class SpecialistsTabRenderer
         double mult = SpecUtil.GovernorMultiplierForResource(gov, resource.def);
         if (Math.Abs(mult - 1.0) < 0.001) return null;
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine("FCS_GovResTooltipHeader".Translate(resource.def.LabelCap));
         sb.AppendLine("-------------------------");
 
@@ -984,7 +984,7 @@ internal class SpecialistsTabRenderer
         if (uiSettlement is null) return "";
 
         // Collect all resource bonuses, sorted descending
-        List<KeyValuePair<string, double>> bonuses = new List<KeyValuePair<string, double>>();
+        List<KeyValuePair<string, double>> bonuses = [];
         foreach (ResourceFC resource in uiSettlement.Resources)
         {
             double resBonus = SpecUtil.SpecialistAdditiveForResource(s, resource.def);
@@ -996,7 +996,7 @@ internal class SpecialistsTabRenderer
         if (bonuses.Count > 0)
         {
             bonuses.Sort((a, b) => b.Value.CompareTo(a.Value));
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             for (int i = 0; i < bonuses.Count; i++)
             {
                 if (i > 0) sb.Append(", ");
@@ -1009,7 +1009,7 @@ internal class SpecialistsTabRenderer
         if (s.role.statModifiers is not null && s.role.statModifiers.Count > 0)
         {
             float score = s.SkillScore;
-            StringBuilder statSb = new StringBuilder();
+            StringBuilder statSb = new();
             foreach (FCStatModifier mod in s.role.statModifiers)
             {
                 if (mod.stat is null) continue;
@@ -1029,7 +1029,7 @@ internal class SpecialistsTabRenderer
         // Check for death reduction even without stat modifiers
         {
             float score = s.SkillScore;
-            StringBuilder defSb = new StringBuilder();
+            StringBuilder defSb = new();
             AppendDeathReduction(defSb, s.role, score);
             if (defSb.Length > 0) return defSb.ToString();
         }
@@ -1058,7 +1058,7 @@ internal class SpecialistsTabRenderer
         baseSpec = specChance;
         baseRes = resChance;
 
-        StringBuilder tipSb = new StringBuilder();
+        StringBuilder tipSb = new();
         foreach (SettlementSpecialist s in comp.Specialists)
         {
             if (s.role is null || !s.HasUsableSkills) continue;

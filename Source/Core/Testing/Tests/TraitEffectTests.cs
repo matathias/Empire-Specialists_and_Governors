@@ -47,7 +47,7 @@ public static class TraitEffectTests
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p, commander);
-            List<SettlementSpecialist> list = new List<SettlementSpecialist> { s };
+            List<SettlementSpecialist> list = [s];
             double expected = SpecUtil.HasTrait(SpecPolicyDefOf.FCSgarrisonDoctrine)
                 ? s.SkillScore * SpecUtil.GarrisonHappinessPerSkill
                 : 0.0;
@@ -69,7 +69,7 @@ public static class TraitEffectTests
         if (FindFC.FactionComp is null) TestAssert.Skip("No active faction (policy state unavailable)");
         if (SpecPolicyDefOf.FCSpatrician is null) TestAssert.Skip("FCSpatrician def not loaded");
 
-        PolicyManager pm = new PolicyManager();
+        PolicyManager pm = new();
         pm.factionTraits[0] = new FCPolicy(SpecPolicyDefOf.FCSpatrician);
         TestAssert.IsTrue(pm.HasTrait(SpecPolicyDefOf.FCSpatrician), "precondition: trait adopted");
 

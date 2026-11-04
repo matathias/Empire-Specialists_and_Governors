@@ -14,7 +14,7 @@ public static class SpecCapacityDestructiveTests
         int max = comp.MaxSpecialists;
         if (max <= 0 || max > 12) TestAssert.Skip("MaxSpecialists out of testable range: " + max);
 
-        List<Pawn> pawns = new List<Pawn>();
+        List<Pawn> pawns = [];
         for (int i = 0; i < max + 1; i++)
         {
             Pawn pw = SpecDestructiveTestUtil.MakeAssignable(5);
