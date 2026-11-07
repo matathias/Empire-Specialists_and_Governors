@@ -10,15 +10,11 @@ public static class SpecModifierDestructiveTests
     public static void GetResourceAdditiveModifier_ReflectsSpecialist()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
-        if (s.Resources is null || s.Resources.Count == 0) TestAssert.Skip("Settlement has no resources");
-        ResourceFC rfc = s.Resources[0];
-        if (rfc?.def is null) TestAssert.Skip("Resource has no def");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        TestAssert.IsTrue(s.Resources is not null && s.Resources.Count > 0, "A new settlement has no resources");
+        ResourceFC rfc = TestAssert.NotNull(s.Resources[0], "Settlement resource [0] is null");
+        TestAssert.NotNull(rfc.def, "Settlement resource [0] has no def");
         Pawn p = SpecDestructiveTestUtil.MakeAssignable(10);
-        if (p is null) TestAssert.Skip("No pawn");
         try
         {
             comp.AssignSpecialist(p, SpecTestHelper.Role(SkillDefOf.Plants, 1f, rfc.def, 0.05f));
@@ -46,13 +42,10 @@ public static class SpecModifierDestructiveTests
     public static void GetResourceMultiplierModifier_NoGovernor_ReturnsOne()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
-        if (s.Resources is null || s.Resources.Count == 0) TestAssert.Skip("Settlement has no resources");
-        ResourceFC rfc = s.Resources[0];
-        if (rfc?.def is null) TestAssert.Skip("Resource has no def");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        TestAssert.IsTrue(s.Resources is not null && s.Resources.Count > 0, "A new settlement has no resources");
+        ResourceFC rfc = TestAssert.NotNull(s.Resources[0], "Settlement resource [0] is null");
+        TestAssert.NotNull(rfc.def, "Settlement resource [0] has no def");
         try
         {
             TestAssert.AreEqual(1.0, comp.GetResourceMultiplierModifier(rfc));
@@ -68,13 +61,9 @@ public static class SpecModifierDestructiveTests
     public static void GetStatModifier_WorkerBonusFromResidents()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(8);
         Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
-        if (p1 is null || p2 is null) TestAssert.Skip("No pawn");
         int origRpw = FCSSettings.residentsPerWorker;
         try
         {
@@ -100,15 +89,10 @@ public static class SpecModifierDestructiveTests
     public static void GetDailyUpkeepContribution_SumsSpecialistsAndGovernor()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
-        if (focus is null) TestAssert.Skip("No GovernorFocusDef loaded");
         Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(10);
         Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(10);
-        if (p1 is null || p2 is null) TestAssert.Skip("No pawn");
         try
         {
             comp.AssignSpecialist(p1, SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f, baseUpkeep: 5f, upkeepScaling: 0.3f));
@@ -130,10 +114,7 @@ public static class SpecModifierDestructiveTests
     public static void GetDailyUpkeepContribution_Empty_Zero()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         try
         {
             TestAssert.AreEqual(0.0, comp.GetDailyUpkeepContribution());
@@ -152,22 +133,17 @@ public static class SpecModifierDestructiveTests
     public static void GovernorMilitaryFocus_FeedsDefendingStatAtSettlementScope()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        FCStatDef stat = FCStatDefOf.militaryLevelBonusDefending;
-        if (stat is null) TestAssert.Skip("militaryLevelBonusDefending not loaded");
-        if (!stat.appliesToSettlements) TestAssert.Skip("stat is not settlement-scoped (M2 flip missing)");
-        GovernorFocusDef mil = DefDatabase<GovernorFocusDef>.GetNamedSilentFail("Military");
-        if (mil is null) TestAssert.Skip("Military focus not loaded");
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        FCStatDef stat = TestAssert.NotNull(FCStatDefOf.militaryLevelBonusDefending, "militaryLevelBonusDefending not loaded");
+        TestAssert.IsTrue(stat.appliesToSettlements, "militaryLevelBonusDefending is not settlement-scoped");
+        GovernorFocusDef mil = TestAssert.NotNull(DefDatabase<GovernorFocusDef>.GetNamedSilentFail("Military"),
+            "Military governor focus not loaded");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         Pawn p = SpecDestructiveTestUtil.MakeAssignable(12);
-        if (p is null) TestAssert.Skip("No pawn");
         try
         {
             comp.AssignGovernor(p, mil);
-            if (comp.GetStatModifier(stat) <= stat.IdentityValue)
-                TestAssert.Skip("Governor produced no defending contribution (skills disabled?)");
+            TestAssert.GreaterThan(comp.GetStatModifier(stat), stat.IdentityValue,
+                "a skill-12 Military governor should contribute to militaryLevelBonusDefending");
 
             double factionOnly = f.GetStatValue(stat, null);
             double withSettlement = f.GetStatValue(stat, s);
@@ -188,21 +164,16 @@ public static class SpecModifierDestructiveTests
     public static void GetStatModifierDesc_IncludesGovernorLine()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        FCStatDef stat = FCStatDefOf.militaryLevelBonusDefending;
-        if (stat is null) TestAssert.Skip("militaryLevelBonusDefending not loaded");
-        GovernorFocusDef mil = DefDatabase<GovernorFocusDef>.GetNamedSilentFail("Military");
-        if (mil is null) TestAssert.Skip("Military focus not loaded");
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        FCStatDef stat = TestAssert.NotNull(FCStatDefOf.militaryLevelBonusDefending, "militaryLevelBonusDefending not loaded");
+        GovernorFocusDef mil = TestAssert.NotNull(DefDatabase<GovernorFocusDef>.GetNamedSilentFail("Military"),
+            "Military governor focus not loaded");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         Pawn p = SpecDestructiveTestUtil.MakeAssignable(12);
-        if (p is null) TestAssert.Skip("No pawn");
         try
         {
             comp.AssignGovernor(p, mil);
-            if (comp.GetStatModifier(stat) <= stat.IdentityValue)
-                TestAssert.Skip("Governor produced no contribution (skills disabled?)");
+            TestAssert.GreaterThan(comp.GetStatModifier(stat), stat.IdentityValue,
+                "a skill-12 Military governor should contribute to militaryLevelBonusDefending");
 
             string desc = comp.GetStatModifierDesc(stat);
             TestAssert.IsNotNull(desc, "expected a stat breakdown");
@@ -223,21 +194,17 @@ public static class SpecModifierDestructiveTests
     public static void GetResourceAdditiveDesc_ShowsSatisfactionWhenDamped()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
-        if (s.Resources is null || s.Resources.Count == 0) TestAssert.Skip("Settlement has no resources");
-        ResourceFC rfc = s.Resources[0];
-        if (rfc?.def is null) TestAssert.Skip("Resource has no def");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        TestAssert.IsTrue(s.Resources is not null && s.Resources.Count > 0, "A new settlement has no resources");
+        ResourceFC rfc = TestAssert.NotNull(s.Resources[0], "Settlement resource [0] is null");
+        TestAssert.NotNull(rfc.def, "Settlement resource [0] has no def");
         Pawn p = SpecDestructiveTestUtil.MakeAssignable(10);
-        if (p is null) TestAssert.Skip("No pawn");
         string satisfactionLabel = "FCS_SatisfactionLabel".Translate();
         try
         {
             comp.AssignSpecialist(p, SpecTestHelper.Role(SkillDefOf.Plants, 1f, rfc.def, 0.05f));
-            if (SpecUtil.SpecialistAdditiveForResource(comp.Specialists[0], rfc.def) <= 0.001)
-                TestAssert.Skip("Specialist adds no production (skills disabled?)");
+            TestAssert.GreaterThan(SpecUtil.SpecialistAdditiveForResource(comp.Specialists[0], rfc.def), 0.001,
+                "a skill-10 specialist should add production");
 
             // Fresh comp: satisfaction == 1, so no satisfaction line.
             string full = comp.GetResourceAdditiveDesc(rfc);

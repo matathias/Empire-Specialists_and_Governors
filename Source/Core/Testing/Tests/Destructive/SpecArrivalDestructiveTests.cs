@@ -10,16 +10,12 @@ public static class SpecArrivalDestructiveTests
     public static void Arrival_Governor_OverflowsExtraPawnsToResidents()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         WorldObjectComp_PawnArrival_Governor arrival = s.GetComponent<WorldObjectComp_PawnArrival_Governor>();
-        if (arrival is null) TestAssert.Skip("No governor-arrival comp");
-        if (SpecDestructiveTestUtil.AnyFocus() is null) TestAssert.Skip("No GovernorFocusDef loaded");
+        TestAssert.NotNull(arrival, "No governor-arrival comp (injected by InjectComp.xml)");
+        SpecDestructiveTestUtil.AnyFocus(); // the governor arrival assigns a shipped focus
         Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(8);
         Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
-        if (p1 is null || p2 is null) TestAssert.Skip("No pawn");
         try
         {
             arrival.ReceivePawns([p1, p2]);
@@ -40,27 +36,22 @@ public static class SpecArrivalDestructiveTests
     public static void Arrival_Specialist_OverflowsToResidents_WhenFull()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         WorldObjectComp_PawnArrival_Specialist arrival = s.GetComponent<WorldObjectComp_PawnArrival_Specialist>();
-        if (arrival is null) TestAssert.Skip("No specialist-arrival comp");
-        int max = comp.MaxSpecialists;
-        if (max < 1 || max > 8) TestAssert.Skip("MaxSpecialists out of testable range");
+        TestAssert.NotNull(arrival, "No specialist-arrival comp (injected by InjectComp.xml)");
+        const int max = 3;
+        using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.PinMaxSpecialists(comp, max);
         // Uncapped synthetic role so filling hits the MaxSpecialists ceiling, not a per-role cap.
         SpecialistRoleDef fillRole = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f);
         Pawn extra = SpecDestructiveTestUtil.MakeAssignable(8);
-        if (extra is null) TestAssert.Skip("No pawn");
         try
         {
             for (int i = 0; i < max; i++)
             {
                 Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
-                if (p is null) TestAssert.Skip("No pawn");
                 comp.AssignSpecialist(p, fillRole);
             }
-            if (comp.SpecialistCount != max) TestAssert.Skip("Could not fill specialists to cap");
+            if (comp.SpecialistCount != max) TestAssert.Fail("Could not fill specialists to cap");
 
             arrival.ReceivePawns([extra]);
 

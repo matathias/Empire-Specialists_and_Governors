@@ -7,18 +7,14 @@ public static class SpecCapacityDestructiveTests
     public static void AssignSpecialist_RespectsMaxSpecialists()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
-        int max = comp.MaxSpecialists;
-        if (max <= 0 || max > 12) TestAssert.Skip("MaxSpecialists out of testable range: " + max);
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        const int max = 3;
+        using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.PinMaxSpecialists(comp, max);
 
         List<Pawn> pawns = [];
         for (int i = 0; i < max + 1; i++)
         {
             Pawn pw = SpecDestructiveTestUtil.MakeAssignable(5);
-            if (pw is null) TestAssert.Skip("No pawn");
             pawns.Add(pw);
         }
         try
@@ -48,15 +44,11 @@ public static class SpecCapacityDestructiveTests
     public static void AssignSpecialist_RespectsPerRoleCap()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
-        if (comp.MaxSpecialists < 3) TestAssert.Skip("MaxSpecialists too low for per-role-cap test");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 3);
         Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(5);
         Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(5);
         Pawn p3 = SpecDestructiveTestUtil.MakeAssignable(5);
-        if (p1 is null || p2 is null || p3 is null) TestAssert.Skip("No pawn");
         try
         {
             SpecialistRoleDef role = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f, maxPerSettlement: 2);
@@ -78,15 +70,10 @@ public static class SpecCapacityDestructiveTests
     public static void AssignGovernor_SingleSlot()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
-        if (focus is null) TestAssert.Skip("No GovernorFocusDef loaded");
         Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
         Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
-        if (p is null || p2 is null) TestAssert.Skip("No pawn");
         try
         {
             TestAssert.IsTrue(comp.CanAssignGovernor, "CanAssignGovernor should be true with no governor");
@@ -109,19 +96,14 @@ public static class SpecCapacityDestructiveTests
     public static void Counts_Consistency()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
-        if (comp.MaxSpecialists < 2) TestAssert.Skip("MaxSpecialists too low");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 2);
         SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
         GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
-        if (role is null || focus is null) TestAssert.Skip("Missing role/focus defs");
         Pawn spec1 = SpecDestructiveTestUtil.MakeAssignable(6);
         Pawn spec2 = SpecDestructiveTestUtil.MakeAssignable(6);
         Pawn resident = SpecDestructiveTestUtil.MakeAssignable(6);
         Pawn gov = SpecDestructiveTestUtil.MakeAssignable(6);
-        if (spec1 is null || spec2 is null || resident is null || gov is null) TestAssert.Skip("No pawn");
         try
         {
             comp.AssignSpecialist(spec1, role);

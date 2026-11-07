@@ -23,11 +23,9 @@ public static class TraitEffectTests
     [EmpireTest("SG.Trait")]
     public static void ProfessionalArmy_DoublesCommanderMilitary()
     {
-        SpecialistRoleDef commander = SpecialistRoleDefOf.Commander;
-        FCStatDef mil = FCStatDefOf.militaryBaseLevel;
-        if (commander is null || mil is null) TestAssert.Skip("Commander role / militaryBaseLevel not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        SpecialistRoleDef commander = TestAssert.NotNull(SpecialistRoleDefOf.Commander, "Commander role not loaded");
+        FCStatDef mil = TestAssert.NotNull(FCStatDefOf.militaryBaseLevel, "militaryBaseLevel stat not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p, commander);
@@ -40,10 +38,8 @@ public static class TraitEffectTests
     [EmpireTest("SG.Trait")]
     public static void GarrisonHappiness_ScalesWithCommanderSkill()
     {
-        SpecialistRoleDef commander = SpecialistRoleDefOf.Commander;
-        if (commander is null) TestAssert.Skip("Commander role not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        SpecialistRoleDef commander = TestAssert.NotNull(SpecialistRoleDefOf.Commander, "Commander role not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p, commander);
@@ -66,8 +62,7 @@ public static class TraitEffectTests
     [EmpireTest("SG.Trait")]
     public static void RemovePatricianTrait_ClearsAdoptedSlot()
     {
-        if (FindFC.FactionComp is null) TestAssert.Skip("No active faction (policy state unavailable)");
-        if (SpecPolicyDefOf.FCSpatrician is null) TestAssert.Skip("FCSpatrician def not loaded");
+        TestAssert.NotNull(SpecPolicyDefOf.FCSpatrician, "FCSpatrician def not loaded");
 
         PolicyManager pm = new();
         pm.factionTraits[0] = new FCPolicy(SpecPolicyDefOf.FCSpatrician);

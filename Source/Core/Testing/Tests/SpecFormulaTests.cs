@@ -1,8 +1,8 @@
 namespace FactionColonies.Specialists;
 
 /// <summary>
-/// Production / upkeep / skill-score formulas exercised with a controlled pawn. Skip-if-no-game
-/// (pawn generation needs a loaded world). Each math test runs under
+/// Production / upkeep / skill-score formulas exercised with a controlled pawn (pawn generation
+/// needs a loaded world, which the runner guarantees). Each math test runs under
 /// <see cref="SpecTestHelper.WithStandardTaper"/> so TaperedLevel(10) == 10 and expected values
 /// are exact. The pawn is never spawned or registered, so these stay non-destructive.
 /// </summary>
@@ -13,8 +13,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void SkillScore_SingleWeightedSkill_Matches()
     {
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -26,8 +25,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void SkillScore_WeightScales()
     {
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -39,10 +37,9 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void SpecialistAdditive_MatchingResource()
     {
-        ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
-        if (food is null) TestAssert.Skip("RTD_Food not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        ResourceTypeDef food = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food"), "Empire's RTD_Food is not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -55,11 +52,11 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void SpecialistAdditive_NonMatchingResource_Zero()
     {
-        ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
-        ResourceTypeDef mining = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Mining");
-        if (food is null || mining is null) TestAssert.Skip("RTD_Food/RTD_Mining not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        ResourceTypeDef food = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food"), "Empire's RTD_Food is not loaded");
+        ResourceTypeDef mining = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Mining"), "Empire's RTD_Mining is not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -71,10 +68,9 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void SpecialistAdditive_Baseline()
     {
-        ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
-        if (food is null) TestAssert.Skip("RTD_Food not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        ResourceTypeDef food = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food"), "Empire's RTD_Food is not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -87,10 +83,9 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void GovernorMultiplier_MatchingResource()
     {
-        ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
-        if (food is null) TestAssert.Skip("RTD_Food not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        ResourceTypeDef food = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food"), "Empire's RTD_Food is not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementGovernor g = SpecTestHelper.Governor(p,
@@ -107,7 +102,6 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void DeathLetterTitle_CarriesRoleLabel()
     {
-        if (Current.Game is null) TestAssert.Skip("No game / translation unavailable");
         string governorTitle = "FCS_LetterMemberKilled".Translate("Governor").Resolve();
         string residentTitle = "FCS_LetterMemberKilled".Translate("Resident").Resolve();
         TestAssert.IsTrue(governorTitle.Contains("Governor"),
@@ -123,10 +117,9 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void GovernorMultiplier_ResourceAndBaseline_FoldAdditively()
     {
-        ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
-        if (food is null) TestAssert.Skip("RTD_Food not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        ResourceTypeDef food = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food"), "Empire's RTD_Food is not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             GovernorFocusDef focus = SpecTestHelper.Focus(SkillDefOf.Intellectual, 0.4f, food, 0.01f);
@@ -144,10 +137,9 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void GovernorMultiplier_BaselineOnly_Unchanged()
     {
-        ResourceTypeDef food = DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food");
-        if (food is null) TestAssert.Skip("RTD_Food not loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        ResourceTypeDef food = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.GetNamedSilentFail("RTD_Food"), "Empire's RTD_Food is not loaded");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             GovernorFocusDef focus = SpecTestHelper.Focus(SkillDefOf.Intellectual, 0.4f, null, 0f);
@@ -163,8 +155,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void GovernorScore_SocialWeightBumpedToOne()
     {
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             GovernorFocusDef focus = SpecTestHelper.SocialFocus(0.4f); // < 1 -> treated as 1.0
@@ -175,8 +166,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void GovernorScore_AddsSocialWhenAbsent()
     {
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             GovernorFocusDef focus = SpecTestHelper.Focus(SkillDefOf.Intellectual, 0.4f, null, 0f);
@@ -188,10 +178,9 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void SpecialistStatBonus_ScaledByScore()
     {
-        FCStatDef anyStat = DefDatabase<FCStatDef>.AllDefsListForReading.FirstOrDefault();
-        if (anyStat is null) TestAssert.Skip("No FCStatDef loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        FCStatDef anyStat = TestAssert.NotNull(
+            DefDatabase<FCStatDef>.AllDefsListForReading.FirstOrDefault(), "Empire ships no FCStatDef");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -204,10 +193,9 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void GovernorStatMultiplier_ScaledByScore()
     {
-        FCStatDef anyStat = DefDatabase<FCStatDef>.AllDefsListForReading.FirstOrDefault();
-        if (anyStat is null) TestAssert.Skip("No FCStatDef loaded");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        FCStatDef anyStat = TestAssert.NotNull(
+            DefDatabase<FCStatDef>.AllDefsListForReading.FirstOrDefault(), "Empire ships no FCStatDef");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementGovernor g = SpecTestHelper.Governor(p,
@@ -221,8 +209,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void SpecialistUpkeep_BaseAndScaling()
     {
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -235,8 +222,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void MedicalHealRateBonus_ApothecarySpecialist()
     {
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementSpecialist s = SpecTestHelper.Specialist(p,
@@ -250,8 +236,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void MedicalHealRateBonus_GovernorMedicine()
     {
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementGovernor g = SpecTestHelper.Governor(p, null); // focus not needed for this branch
@@ -265,9 +250,8 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void GovernorUpkeep_BranchesOnMeritocracy()
     {
-        if (FindFC.FactionComp is null) TestAssert.Skip("No active faction (policy state unavailable)");
-        Pawn p = SpecTestHelper.TryMakeControlledPawn(Lvl);
-        if (p is null) TestAssert.Skip("No game / pawn generation unavailable");
+        TestAssert.NotNull(FindFC.FactionComp, "No FactionFC world component in a loaded game");
+        Pawn p = SpecTestHelper.MakeControlledPawn(Lvl);
         SpecTestHelper.WithStandardTaper(() =>
         {
             SettlementGovernor g = SpecTestHelper.Governor(p,
@@ -282,7 +266,7 @@ public static class SpecFormulaTests
     [EmpireTest("SG.Formula")]
     public static void XPPerDay_AppliesPolicyMultipliers()
     {
-        if (FindFC.FactionComp is null) TestAssert.Skip("No active faction (policy state unavailable)");
+        TestAssert.NotNull(FindFC.FactionComp, "No FactionFC world component in a loaded game");
         float expected = FCSSettings.xpPerDay
             * (SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps) ? 2f : 1f)
             * (SpecUtil.HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 1.5f : 1f);

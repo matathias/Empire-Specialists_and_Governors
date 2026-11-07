@@ -41,17 +41,11 @@ public static class SpecLifecycleDestructiveTests
         {
             // A = the settlement under attack (op.targetObject). B = the settlement whose squad was
             // sent to defend it, i.e. the value auto-defender selection writes into homeSettlement.
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            b = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null || b is null) TestAssert.Skip("No valid tile(s)");
-
-            compA = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            compB = b.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (compA is null || compB is null) TestAssert.Skip("No specialists comp");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out compA);
+            b = SpecDestructiveTestUtil.CreateRosterSettlement(out compB);
 
             Pawn pawnA = SpecDestructiveTestUtil.MakeAssignable(8);
             Pawn pawnB = SpecDestructiveTestUtil.MakeAssignable(8);
-            if (pawnA is null || pawnB is null) TestAssert.Skip("No pawn");
 
             // Props is the shared def-level CompProperties, so this forces a certain resident death
             // on defeat for BOTH comps. That is deliberate: if the handler wrongly rolled B, B's
@@ -69,7 +63,7 @@ public static class SpecLifecycleDestructiveTests
             // stays 1.0 and the kill is deterministic.
             compA.AssignSpecialist(pawnA, null);
             compB.AssignSpecialist(pawnB, null);
-            if (compA.ResidentCount != 1 || compB.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
+            if (compA.ResidentCount != 1 || compB.ResidentCount != 1) TestAssert.Fail("Roster setup failed");
 
             // Attacked settlement is A (targetObject); the defending squad's home is overwritten to B.
             MilitaryOperation op = new(-9999, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
@@ -114,14 +108,9 @@ public static class SpecLifecycleDestructiveTests
         WorldObjectComp_SettlementSpecialists compA = null;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-
-            compA = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (compA is null) TestAssert.Skip("No specialists comp");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out compA);
 
             Pawn pawnA = SpecDestructiveTestUtil.MakeAssignable(8);
-            if (pawnA is null) TestAssert.Skip("No pawn");
 
             // Certain resident kill on defeat -- so if the roll wrongly ran, the resident dies.
             props = compA.Props;
@@ -133,7 +122,7 @@ public static class SpecLifecycleDestructiveTests
             props.governorDeathChanceDefeat = 0f;
 
             compA.AssignSpecialist(pawnA, null); // null role -> resident
-            if (compA.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
+            if (compA.ResidentCount != 1) TestAssert.Fail("Roster setup failed");
 
             // Deploy op mirroring CreateDeployOp: targetObject is the player's own settlement,
             // aggressor is the empire, and there is NO defender faction -> IsDefensive == false.
@@ -173,25 +162,20 @@ public static class SpecLifecycleDestructiveTests
         Pawn specPawn = null, resPawn = null, govPawn = null;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-            comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp is null) TestAssert.Skip("No specialists comp");
-            if (comp.MaxSpecialists < 1) TestAssert.Skip("MaxSpecialists too low");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out comp);
+            using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 1);
 
             SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
             GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
-            if (role is null || focus is null) TestAssert.Skip("Missing role/focus defs");
 
             specPawn = SpecDestructiveTestUtil.MakeAssignable(6);
             resPawn = SpecDestructiveTestUtil.MakeAssignable(6);
             govPawn = SpecDestructiveTestUtil.MakeAssignable(6);
-            if (specPawn is null || resPawn is null || govPawn is null) TestAssert.Skip("No pawn");
 
             comp.AssignSpecialist(specPawn, role);
             comp.AssignSpecialist(resPawn, null); // resident
             comp.AssignGovernor(govPawn, focus);
-            if (comp.TotalCount != 3) TestAssert.Skip("Roster setup failed");
+            if (comp.TotalCount != 3) TestAssert.Fail("Roster setup failed");
 
             new SpecialistLifecycleHandler().OnSettlementRemoved(a);
 
@@ -243,15 +227,11 @@ public static class SpecLifecycleDestructiveTests
         WorldObjectComp_SettlementSpecialists comp = null;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-            comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp is null) TestAssert.Skip("No specialists comp");
-            if (comp.MaxSpecialists < 1) TestAssert.Skip("MaxSpecialists too low");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out comp);
+            using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 1);
 
             Pawn specPawn = SpecDestructiveTestUtil.MakeAssignable(8);
             Pawn resPawn = SpecDestructiveTestUtil.MakeAssignable(8);
-            if (specPawn is null || resPawn is null) TestAssert.Skip("No pawn");
 
             // Certain death on defeat for everyone: without the behavior loop the resident dies.
             props = comp.Props;
@@ -275,7 +255,7 @@ public static class SpecLifecycleDestructiveTests
             SpecSpyRoleBehavior.InvokeCount = 0;
             comp.AssignSpecialist(specPawn, spyRole);
             comp.AssignSpecialist(resPawn, null);
-            if (comp.SpecialistCount != 1 || comp.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
+            if (comp.SpecialistCount != 1 || comp.ResidentCount != 1) TestAssert.Fail("Roster setup failed");
 
             MilitaryOperation op = new(-9996, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
             op.defender.faction = FindFC.EmpireFaction;
@@ -316,21 +296,16 @@ public static class SpecLifecycleDestructiveTests
         Pawn govPawn = null;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-            comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp is null) TestAssert.Skip("No specialists comp");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out comp);
             GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
-            if (focus is null) TestAssert.Skip("No GovernorFocusDef loaded");
             govPawn = SpecDestructiveTestUtil.MakeAssignable(8);
-            if (govPawn is null) TestAssert.Skip("No pawn");
 
             props = comp.Props;
             savedGovernor = props.governorDeathChanceDefeat;
             props.governorDeathChanceDefeat = 1f;
 
             comp.AssignGovernor(govPawn, focus);
-            if (!comp.HasGovernor) TestAssert.Skip("Roster setup failed");
+            if (!comp.HasGovernor) TestAssert.Fail("Roster setup failed");
 
             MilitaryOperation op = new(-9995, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
             op.defender.faction = FindFC.EmpireFaction;
@@ -365,12 +340,8 @@ public static class SpecLifecycleDestructiveTests
         WorldObjectComp_SettlementSpecialists comp = null;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-            comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp is null) TestAssert.Skip("No specialists comp");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out comp);
             Pawn resPawn = SpecDestructiveTestUtil.MakeAssignable(8);
-            if (resPawn is null) TestAssert.Skip("No pawn");
 
             props = comp.Props;
             savedResVictory = props.residentDeathChanceVictory;
@@ -379,7 +350,7 @@ public static class SpecLifecycleDestructiveTests
             props.residentDeathChanceDefeat = 0f;
 
             comp.AssignSpecialist(resPawn, null); // resident
-            if (comp.ResidentCount != 1) TestAssert.Skip("Roster setup failed");
+            if (comp.ResidentCount != 1) TestAssert.Fail("Roster setup failed");
 
             MilitaryOperation op = new(-9994, MilitaryJobDefOf.DefendOwnSettlement, a.Tile, a);
             op.defender.faction = FindFC.EmpireFaction;
@@ -418,23 +389,18 @@ public static class SpecLifecycleDestructiveTests
         Pawn pawn = null;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-            comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp is null) TestAssert.Skip("No specialists comp");
-            if (comp.MaxSpecialists < 1) TestAssert.Skip("MaxSpecialists too low");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out comp);
+            using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 1);
             SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
-            if (role is null) TestAssert.Skip("No SpecialistRoleDef loaded");
 
             pawn = SpecDestructiveTestUtil.MakeAssignable(6);
-            if (pawn is null) TestAssert.Skip("No pawn");
 
             comp.AssignSpecialist(pawn, role);
-            if (comp.SpecialistCount != 1) TestAssert.Skip("Roster setup failed");
+            if (comp.SpecialistCount != 1) TestAssert.Fail("Roster setup failed");
             TestAssert.IsTrue(SpecialistRoster.IsAssigned(pawn), "precondition: assigned before death");
 
             pawn.Kill(null);
-            if (!pawn.Dead) TestAssert.Skip("Could not kill test pawn");
+            TestAssert.IsTrue(pawn.Dead, "Kill(null) should leave the test pawn dead");
 
             // The catch-all Kill patch routed the death through NotifyMemberDied.
             TestAssert.AreEqual(0, comp.SpecialistCount, "dead member should leave the comp roster");

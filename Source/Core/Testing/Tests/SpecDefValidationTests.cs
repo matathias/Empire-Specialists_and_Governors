@@ -44,8 +44,8 @@ public static class SpecDefValidationTests
     [EmpireTest("SG.Defs")]
     public static void RoleDef_ValidShape_NoSubmodErrors()
     {
-        ResourceTypeDef anyRes = DefDatabase<ResourceTypeDef>.AllDefsListForReading.FirstOrDefault();
-        if (anyRes is null) TestAssert.Skip("No ResourceTypeDef loaded");
+        ResourceTypeDef anyRes = TestAssert.NotNull(
+            DefDatabase<ResourceTypeDef>.AllDefsListForReading.FirstOrDefault(), "Empire ships no ResourceTypeDef");
 
         SpecialistRoleDef role = SpecTestHelper.Role(SkillDefOf.Plants, 1f, anyRes, 0.05f);
         List<string> errs = Errors(role);
@@ -88,7 +88,7 @@ public static class SpecDefValidationTests
     public static void ShippedRoleDefs_HaveNoConfigErrors()
     {
         List<SpecialistRoleDef> defs = DefDatabase<SpecialistRoleDef>.AllDefsListForReading;
-        if (defs is null || defs.Count == 0) TestAssert.Skip("No SpecialistRoleDef loaded");
+        TestAssert.IsNotEmpty(defs, "No SpecialistRoleDef loaded");
         foreach (SpecialistRoleDef def in defs)
         {
             List<string> errs = def.ConfigErrors().ToList();
@@ -102,7 +102,7 @@ public static class SpecDefValidationTests
     public static void ShippedFocusDefs_HaveNoConfigErrors()
     {
         List<GovernorFocusDef> defs = DefDatabase<GovernorFocusDef>.AllDefsListForReading;
-        if (defs is null || defs.Count == 0) TestAssert.Skip("No GovernorFocusDef loaded");
+        TestAssert.IsNotEmpty(defs, "No GovernorFocusDef loaded");
         foreach (GovernorFocusDef def in defs)
         {
             List<string> errs = def.ConfigErrors().ToList();
@@ -148,7 +148,7 @@ public static class SpecDefValidationTests
     public static void ShippedFocusDefs_NoDeadSettlementStat()
     {
         List<GovernorFocusDef> defs = DefDatabase<GovernorFocusDef>.AllDefsListForReading;
-        if (defs is null || defs.Count == 0) TestAssert.Skip("No GovernorFocusDef loaded");
+        TestAssert.IsNotEmpty(defs, "No GovernorFocusDef loaded");
         foreach (GovernorFocusDef def in defs)
         {
             TestAssert.IsFalse(def.ConfigErrors().Any(e => e.Contains("is not appliesToSettlements")),

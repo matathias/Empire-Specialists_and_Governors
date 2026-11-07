@@ -156,30 +156,21 @@ public static class SpecTestHelper
     // it leaves no persistent residue). The generated pawn's random backstory/traits would
     // otherwise disable some skills (SkillRecord.Level returns 0 for a TotallyDisabled skill),
     // making the formula tests flaky -- so EnsureAllSkillsEnabled strips every disable source
-    // first, leaving the fixture deterministic. Returns null if there is no active game.
-    public static Pawn TryMakeControlledPawn(int level)
+    // first, leaving the fixture deterministic. Needs a loaded game (the runner guarantees one
+    // for Playing tests); a generation failure fails the test.
+    public static Pawn MakeControlledPawn(int level)
     {
-        if (Current.Game is null || Find.World is null) return null;
-        Faction faction = Faction.OfPlayerSilentFail;
-        if (faction is null) return null;
+        Faction faction = TestAssert.NotNull(Faction.OfPlayerSilentFail, "No player faction in a loaded game");
 
-        Pawn p;
-        try
-        {
-            // canGeneratePawnRelations: false keeps the throwaway pawn from wiring social
-            // relations onto existing colonists (which would leak references to it).
-            PawnGenerationRequest req = new(
-                PawnKindDefOf.Colonist, faction,
-                forceGenerateNewPawn: true,
-                canGeneratePawnRelations: false,
-                allowDowned: false);
-            p = PawnGenerator.GeneratePawn(req);
-        }
-        catch
-        {
-            return null;
-        }
-        if (p?.skills is null) return null;
+        // canGeneratePawnRelations: false keeps the throwaway pawn from wiring social
+        // relations onto existing colonists (which would leak references to it).
+        PawnGenerationRequest req = new(
+            PawnKindDefOf.Colonist, faction,
+            forceGenerateNewPawn: true,
+            canGeneratePawnRelations: false,
+            allowDowned: false);
+        Pawn p = TestAssert.NotNull(PawnGenerator.GeneratePawn(req), "Could not generate a controlled colonist");
+        TestAssert.NotNull(p.skills, "Generated colonist has no skills tracker");
 
         EnsureAllSkillsEnabled(p);
 

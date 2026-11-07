@@ -15,18 +15,14 @@ public static class SpecSkillGrowthDestructiveTests
         WorldObjectComp_SettlementSpecialists comp = null;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-            comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp is null) TestAssert.Skip("No specialists comp");
-            if (comp.MaxSpecialists < 1) TestAssert.Skip("MaxSpecialists too low");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out comp);
+            using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 1);
 
             // Role weighted purely on Plants, and a pawn whose skills are force-enabled at level 1.
             SpecialistRoleDef role = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f);
             Pawn pawn = SpecDestructiveTestUtil.MakeAssignable(1);
-            if (pawn is null) TestAssert.Skip("No pawn");
             comp.AssignSpecialist(pawn, role);
-            if (comp.SpecialistCount != 1) TestAssert.Skip("Roster setup failed");
+            if (comp.SpecialistCount != 1) TestAssert.Fail("Roster setup failed");
 
             SettlementSpecialist s = comp.Specialists[0];
             float before = s.SkillScore; // caches at level 1
@@ -62,22 +58,19 @@ public static class SpecSkillGrowthDestructiveTests
         float savedXp = FCSSettings.xpPerDay;
         try
         {
-            a = DestructiveTestUtil.CreateTransientSettlement();
-            if (a is null) TestAssert.Skip("No valid tile");
-            comp = a.GetComponent<WorldObjectComp_SettlementSpecialists>();
-            if (comp is null) TestAssert.Skip("No specialists comp");
+            a = SpecDestructiveTestUtil.CreateRosterSettlement(out comp);
 
             // Focus weighted only on Plants -- no Social weight -- so a Social gain can only come
             // from the "governor always gets Social XP" clause.
             GovernorFocusDef focus = SpecTestHelper.Focus(SkillDefOf.Plants, 1f, null, 0f);
             Pawn govPawn = SpecDestructiveTestUtil.MakeAssignable(6);
-            if (govPawn is null) TestAssert.Skip("No pawn");
 
             comp.AssignGovernor(govPawn, focus);
-            if (!comp.HasGovernor) TestAssert.Skip("Roster setup failed");
+            if (!comp.HasGovernor) TestAssert.Fail("Roster setup failed");
 
             SkillRecord social = govPawn.skills.GetSkill(SkillDefOf.Social);
-            if (social is null || social.TotallyDisabled) TestAssert.Skip("Social skill unavailable on test pawn");
+            TestAssert.IsTrue(social is not null && !social.TotallyDisabled,
+                "The controlled test pawn should have an enabled Social skill");
             int before = social.Level;
 
             FCSSettings.xpPerDay = 1_000_000f; // guarantees a level jump

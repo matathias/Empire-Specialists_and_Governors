@@ -14,16 +14,11 @@ public static class SpecSerializationDestructiveTests
     public static void Roster_SurvivesRebuild()
     {
         FactionFC f = DestructiveTestUtil.RequireFaction();
-        WorldSettlementFC s = DestructiveTestUtil.CreateTransientSettlement();
-        if (s is null) TestAssert.Skip("No valid tile");
-        WorldObjectComp_SettlementSpecialists comp = s.GetComponent<WorldObjectComp_SettlementSpecialists>();
-        if (comp is null) TestAssert.Skip("No specialists comp");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
         SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
         GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
-        if (role is null || focus is null) TestAssert.Skip("Missing role/focus defs");
         Pawn specPawn = SpecDestructiveTestUtil.MakeAssignable(7);
         Pawn govPawn = SpecDestructiveTestUtil.MakeAssignable(7);
-        if (specPawn is null || govPawn is null) TestAssert.Skip("No pawn");
         try
         {
             comp.AssignSpecialist(specPawn, role);
