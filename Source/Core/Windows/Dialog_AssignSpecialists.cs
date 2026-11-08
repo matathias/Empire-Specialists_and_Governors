@@ -294,9 +294,10 @@ public class Dialog_AssignSpecialists : Window
         List<PawnEntry> selected = entries.Where(e => e.selected).ToList();
         List<Pawn> leaving = selected.Select(e => e.pawn).ToList();
 
-        // Animals can't travel on their own: refuse an assignment that would leave only them behind
+        // A caravan only moves with an owner (a free colonist: not an animal, slave or prisoner), so
+        // refuse an assignment that would leave anyone behind without one
         List<Pawn> staying = caravan.PawnsListForReading.Where(p => !leaving.Contains(p)).ToList();
-        if (staying.Count > 0 && !staying.Any(p => p.RaceProps.Humanlike))
+        if (staying.Count > 0 && !staying.Any(p => CaravanUtility.IsOwner(p, caravan.Faction)))
         {
             Messages.Message("FCS_AssignWouldStrandAnimals".Translate(), MessageTypeDefOf.RejectInput, false);
             return;
