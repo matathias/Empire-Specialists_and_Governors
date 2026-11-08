@@ -158,6 +158,7 @@
 
 	<!-- Assignment Dialog -->
 	<FCS_PreviewNoBonus>No production bonus</FCS_PreviewNoBonus>
+	<FCS_AssignWouldStrandAnimals>Keep at least one person in the caravan to look after its animals.</FCS_AssignWouldStrandAnimals>
 	<FCS_PreviewGovMult>×{0} {1}</FCS_PreviewGovMult>
 
 	<!-- Role Picker Dialog -->

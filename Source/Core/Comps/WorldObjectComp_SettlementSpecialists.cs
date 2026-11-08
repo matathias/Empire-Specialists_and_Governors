@@ -175,6 +175,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         Pawn pawn = entry.pawn;
         specialists.Remove(entry);
         residents.Remove(entry);
+        deployedPawns.Remove(pawn);   // battle recovery must not reclaim a pawn handed back to the player
         SpecialistRoster.Recall(pawn);
         DeliverRecalledPawn(pawn);
         LogSG.Message($"Recalled {pawn.LabelShort} from {Settlement.Name}");
@@ -191,7 +192,10 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         SpecialistRoster.Recall(pawn);
         governor = null;
         if (pawn is not null)
+        {
+            deployedPawns.Remove(pawn);   // battle recovery must not reclaim a pawn handed back to the player
             DeliverRecalledPawn(pawn);
+        }
         LogSG.Message($"Recalled governor from {Settlement.Name}");
         ResetSatisfactionIfRosterEmpty();
         InvalidateAll();
@@ -276,7 +280,10 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         specialists.Remove(entry);
         residents.Remove(entry);
         if (entry.pawn is not null)
+        {
+            deployedPawns.Remove(entry.pawn);
             SpecialistRoster.Recall(entry.pawn);
+        }
         ResetSatisfactionIfRosterEmpty();
         InvalidateAll();
     }
@@ -497,6 +504,8 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         foreach (Pawn pawn in deployedPawns)
         {
             if (pawn is null || pawn.Dead) continue;
+            // A member recalled, removed or moved elsewhere mid-battle is no longer ours to reclaim
+            if (SpecUtil.FindOwningComp(pawn) != this) continue;
             if (pawn.Spawned) pawn.DeSpawn();
             pawn.SetFaction(FindFC.EmpireFaction);
             Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);

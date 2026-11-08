@@ -324,6 +324,15 @@ public class Dialog_AssignSpecialists : Window
     private void AssignSelected()
     {
         List<PawnEntry> selected = entries.Where(e => e.selected).ToList();
+        List<Pawn> leaving = selected.Select(e => e.pawn).ToList();
+
+        // Animals can't travel on their own: refuse an assignment that would leave only them behind
+        List<Pawn> staying = caravan.PawnsListForReading.Where(p => !leaving.Contains(p)).ToList();
+        if (staying.Count > 0 && !staying.Any(p => p.RaceProps.Humanlike))
+        {
+            Messages.Message("FCS_AssignWouldStrandAnimals".Translate(), MessageTypeDefOf.RejectInput, false);
+            return;
+        }
 
         foreach (PawnEntry entry in selected)
         {
@@ -332,7 +341,13 @@ public class Dialog_AssignSpecialists : Window
 
             // Remove from the caravan ONLY when placement is guaranteed. On rejection the pawn
             // stays in the caravan (never stranded); the Assign* call still fires its message.
-            if (ok) caravan.RemovePawn(entry.pawn);
+            // Caravan goods live in member inventories, so hand them to a member who is staying
+            // first, as vanilla does when a pawn leaves a caravan.
+            if (ok)
+            {
+                CaravanInventoryUtility.MoveAllInventoryToSomeoneElse(entry.pawn, caravan.PawnsListForReading, leaving);
+                caravan.RemovePawn(entry.pawn);
+            }
 
             if (isGovAssign)
             {
