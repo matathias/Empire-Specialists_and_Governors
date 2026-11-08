@@ -340,6 +340,11 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
         if (toDeliver.Count == 0) return; // everyone was claimed in place (or filtered out)
 
+        // Release the roster's KeepForever hold now that they are player pawns again; otherwise a
+        // pawn that later dies in the caravan would stay pinned as a world pawn forever.
+        foreach (Pawn pawn in toDeliver)
+            Find.WorldPawns.ForcefullyKeptPawns.Remove(pawn);
+
         if (Settlement.Tile.LayerDef.canFormCaravans)
         {
             CaravanMaker.MakeCaravan(toDeliver, Faction.OfPlayer, Settlement.Tile, false);
@@ -541,6 +546,8 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
                 return; // not a member of this settlement (or already removed)
             }
         }
+
+        Find.WorldPawns.ForcefullyKeptPawns.Remove(pawn); // drop the roster's KeepForever hold
 
         string body = cause switch
         {
