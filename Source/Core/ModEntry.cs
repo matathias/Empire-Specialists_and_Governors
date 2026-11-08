@@ -180,12 +180,7 @@ public static class SpecialistsStartup
     static SpecialistsStartup()
     {
         new Harmony("Matathias.Empire.Specialists").PatchAll(Assembly.GetExecutingAssembly());
-        EmpireRegistry.Register(_lifecycleHandler);
-        EmpireCacheUtil.RegisterCacheInvalidator("Specialists", () =>
-        {
-            // Re-register after InvalidateAll clears all registries
-            EmpireRegistry.Register(_lifecycleHandler);
-        });
+        EmpireRegistry.RegisterPersistent(_lifecycleHandler);
     }
 }
 
@@ -198,23 +193,10 @@ public class SpecialistsMod : Mod
         settings = GetSettings<FCSSettings>();
         FCSSettings.CheckForRoutesAndResources();
 
-        string modVersion = content?.ModMetaData?.ModVersion;
-        if (modVersion.NullOrEmpty())
-        {
-            LogSG.MessageForce("Did not load a mod version");
-        }
-        else
-        {
-            LogSG.MessageForce($"v{modVersion}");
-        }
+        ModVersionUtil.LogLoaded(content, LogSG.MessageForce);
     }
 
-    public static string GetModVersion()
-    {
-        var mod = LoadedModManager.GetMod<SpecialistsMod>();
-        string version = mod?.Content?.ModMetaData?.ModVersion;
-        return version.NullOrEmpty() ? "Unknown" : version;
-    }
+    public static string GetModVersion() => ModVersionUtil.Get<SpecialistsMod>();
 
     public override string SettingsCategory() => "FCS_SettingsCategory".Translate();
 
