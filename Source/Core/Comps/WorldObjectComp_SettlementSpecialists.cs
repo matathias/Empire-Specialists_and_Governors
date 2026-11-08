@@ -138,8 +138,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
         SpecialistRoster.Assign(pawn, role);
         pawn.SetFaction(FindFC.EmpireFaction);
-        if (!pawn.IsWorldPawn())
-            Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+        SpecUtil.KeepAsWorldPawn(pawn);
 
         LogSG.Message($"Assigned {pawn.LabelShort} as {role?.LabelCap ?? "Resident"} to {Settlement.Name}");
         InvalidateAll();
@@ -160,8 +159,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         SpecialistRoster.AssignGovernor(pawn);
 
         pawn.SetFaction(FindFC.EmpireFaction);
-        if (!pawn.IsWorldPawn())
-            Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+        SpecUtil.KeepAsWorldPawn(pawn);
 
         if (governor.Behavior is not null)
             governor.Behavior.OnFocusActivated(Settlement);

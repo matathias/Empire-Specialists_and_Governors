@@ -314,6 +314,18 @@ public static class SpecUtil
             caravan.Destroy();
     }
 
+    /* Hold a roster pawn as a forcefully kept world pawn. Caravan and pod pawns are already world
+       pawns, and PassToWorld won't re-add them, so they would stay unprotected and vanilla redress
+       (e.g. prisoner-willing-to-join quests) could take them; add those to the kept set directly. */
+    public static void KeepAsWorldPawn(Pawn pawn)
+    {
+        if (pawn is null || pawn.Dead || pawn.Spawned) return;
+        if (pawn.IsWorldPawn())
+            Find.WorldPawns.ForcefullyKeptPawns.Add(pawn);
+        else
+            Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+    }
+
     /* Top-N skills label, optionally filtered to a role's skillWeights */
     public static string TopRoleSkillsLabel(Pawn pawn, SpecialistRoleDef role, int count = 2)
     {

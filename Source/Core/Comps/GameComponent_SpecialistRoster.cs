@@ -9,10 +9,28 @@ public class GameComponent_SpecialistRoster : GameComponent
     public override void FinalizeInit()
     {
         SpecialistRoster.Rebuild();
+        KeepRosterPawns();
 
         // Patrician was removed as a feature. Strip it from any faction that had adopted it.
         if (RemovePatricianTrait(FindFC.PolicyManager))
             Messages.Message("FCS_PatricianRemoved".Translate(), MessageTypeDefOf.NeutralEvent);
+    }
+
+    /* Older saves assigned caravan and pod pawns without adding them to the forcefully kept set
+       (see SpecUtil.KeepAsWorldPawn). Only touches pawns already in WorldPawns; idempotent, so it
+       simply runs on every load. */
+    private static void KeepRosterPawns()
+    {
+        List<WorldSettlementFC> settlements = FindFC.Settlements;
+        if (settlements is null) return;
+        foreach (WorldSettlementFC settlement in settlements)
+        {
+            WorldObjectComp_SettlementSpecialists comp =
+                settlement?.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) continue;
+            foreach (Pawn pawn in comp.AllPawnsSnapshot())
+                if (pawn.IsWorldPawn()) Find.WorldPawns.ForcefullyKeptPawns.Add(pawn);
+        }
     }
 
     /* Scrubs the retired Patrician trait out of a faction's fixed trait slots, restoring each to
