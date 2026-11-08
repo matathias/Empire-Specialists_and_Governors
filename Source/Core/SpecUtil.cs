@@ -22,8 +22,8 @@ public static class SpecUtil
 
     /* -*-*-*- Pawn arrival via transport pod: eligibility + auto-role/focus selection -*-*-*- */
 
-    /* A pawn that may be assigned to a settlement (matches Dialog_AssignSpecialists.IsEligible,
-       plus IsColonist since pod cargo isn't pre-filtered to caravan colonists). */
+    /* A pawn that may be assigned to a settlement, by caravan or transport pod. Quest lodgers and
+       pawns lent by another faction are excluded: re-factioning them to the Empire breaks their quest. */
     public static bool IsAssignablePawn(Pawn p)
     {
         return p is not null
@@ -33,7 +33,9 @@ public static class SpecUtil
             && !p.Dead
             && p.DevelopmentalStage == DevelopmentalStage.Adult
             && !p.IsPrisoner
-            && !p.IsSlave;
+            && !p.IsSlave
+            && !p.IsQuestLodger()
+            && !p.IsBorrowedByAnyFaction();
     }
 
     /* The specialist role the pawn fits best (highest weighted skill score), skipping the

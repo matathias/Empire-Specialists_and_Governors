@@ -631,7 +631,13 @@ internal class SpecialistsTabRenderer
             float govC, specC, resC, baseGov, baseSpec, baseRes;
             string reductionTip;
             ComputeDeathChances(out govC, out specC, out resC, out baseGov, out baseSpec, out baseRes, out reductionTip);
-            DrawDeathChanceLine(new Rect(x, y, w, 18f), baseSpec, specC, reductionTip);
+            // The battle roll halves a Commander's own chance under Garrison Doctrine; say so here.
+            string garrisonTip = SpecUtil.HasTrait(SpecPolicyDefOf.FCSgarrisonDoctrine)
+                ? (string)"FCS_DeathChanceTipGarrison".Translate(
+                    SpecPolicyDefOf.FCSgarrisonDoctrine.LabelCap,
+                    Math.Round(SpecUtil.EffectiveSpecialistDeathChance(SpecialistRoleDefOf.Commander, specC, true) * 100, 1).ToString("F1"))
+                : null;
+            DrawDeathChanceLine(new Rect(x, y, w, 18f), baseSpec, specC, reductionTip, garrisonTip);
             y += 20f;
         }
 
@@ -1081,7 +1087,7 @@ internal class SpecialistsTabRenderer
         reductionTip = tipSb.ToString();
     }
 
-    private void DrawDeathChanceLine(Rect lineRect, float baseChance, float finalChance, string reductionTip)
+    private void DrawDeathChanceLine(Rect lineRect, float baseChance, float finalChance, string reductionTip, string extraTip = null)
     {
         Text.Font = GameFont.Tiny;
         Text.Anchor = TextAnchor.MiddleLeft;
@@ -1094,6 +1100,8 @@ internal class SpecialistsTabRenderer
             tip += reductionTip;
         if (Math.Abs(finalChance - baseChance) > 0.0001f)
             tip += "FCS_DeathChanceTipFinal".Translate(Math.Round(finalChance * 100, 1).ToString("F1"));
+        if (!extraTip.NullOrEmpty())
+            tip += extraTip;
         TooltipHandler.TipRegion(lineRect, tip);
 
         GUI.color = Color.white;

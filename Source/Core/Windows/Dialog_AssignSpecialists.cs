@@ -38,23 +38,11 @@ public class Dialog_AssignSpecialists : Window
 
         foreach (Pawn pawn in caravan.PawnsListForReading)
         {
-            if (IsEligible(pawn))
+            if (SpecUtil.IsAssignablePawn(pawn))
             {
                 entries.Add(new PawnEntry(pawn));
             }
         }
-    }
-
-    private bool IsEligible(Pawn pawn)
-    {
-        if (pawn is null) return false;
-        if (!pawn.RaceProps.Humanlike) return false;
-        if (pawn.Downed) return false;
-        if (pawn.Dead) return false;
-        if (pawn.DevelopmentalStage != DevelopmentalStage.Adult) return false;
-        if (pawn.IsPrisoner) return false;
-        if (pawn.IsSlave) return false;
-        return true;
     }
 
     public override void DoWindowContents(Rect inRect)

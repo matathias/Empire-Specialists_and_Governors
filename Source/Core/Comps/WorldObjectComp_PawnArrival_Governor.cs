@@ -48,10 +48,10 @@ public class WorldObjectComp_PawnArrival_Governor : WorldObjectComp_SpecialistAr
         for (int i = 0; i < pawns.Count; i++)
         {
             Pawn pawn = pawns[i];
-            if (roster.Governor is null)
-                roster.AssignGovernor(pawn, SpecUtil.BestGovernorFocus(pawn));
-            else
-                roster.AssignSpecialist(pawn, null); // governor slot filled -> resident
+            // Governor slot filled, or the governor assignment failed -> resident, so the pawn (already
+            // out of the pod) is never left unplaced.
+            if (roster.Governor is not null || !roster.AssignGovernor(pawn, SpecUtil.BestGovernorFocus(pawn)))
+                roster.AssignSpecialist(pawn, null);
         }
     }
 }

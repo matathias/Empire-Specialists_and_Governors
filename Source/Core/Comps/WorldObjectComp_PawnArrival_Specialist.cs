@@ -56,10 +56,14 @@ public class WorldObjectComp_PawnArrival_Specialist : WorldObjectComp_Specialist
         for (int i = 0; i < pawns.Count; i++)
         {
             Pawn pawn = pawns[i];
-            if (roster.SpecialistCount < roster.MaxSpecialists)
-                roster.AssignSpecialist(pawn, SpecUtil.BestSpecialistRole(pawn, roster));
-            else
-                roster.AssignSpecialist(pawn, null); // capacity reached -> resident overflow
+            // The pawn is already out of the pod, so it must land somewhere: any slot the roster
+            // can't take (capacity or a per-role cap) falls back to resident.
+            SpecialistRoleDef role = roster.SpecialistCount < roster.MaxSpecialists
+                ? SpecUtil.BestSpecialistRole(pawn, roster)
+                : null;
+            if (roster.RoleAtCap(role)) role = null;
+            if (!roster.AssignSpecialist(pawn, role) && role is not null)
+                roster.AssignSpecialist(pawn, null);
         }
     }
 }

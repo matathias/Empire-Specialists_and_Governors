@@ -467,6 +467,10 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         List<Pawn> allPawns = AllPawnsSnapshot();
         foreach (Pawn pawn in allPawns)
         {
+            // A member that is away (e.g. pulled onto another map as a Hospitality visitor, or held in a
+            // caravan/container) can't defend; leave it where it is so its visit Lord keeps it.
+            if (pawn.Spawned || pawn.holdingOwner is not null) continue;
+
             if (pawn.IsWorldPawn())
                 Find.WorldPawns.RemovePawn(pawn);
 
