@@ -1,0 +1,454 @@
+using System.Text;
+using Verse.AI.Group;
+
+namespace FactionColonies.Specialists;
+
+public static class SpecUtil
+{
+    /* Piecewise per-band scaling of a skill level's contribution to bonuses, so players can
+       tune how much low (1-10), mid (11-20), and above-cap (21+) skill levels matter. Each
+       band factor scales that band's slope: 1.0 = full, 0 = no contribution. Defaults
+       (1, 1, 0.5) leave vanilla 1-20 scaling untouched and halve above 20 — where only
+       skill-cap-removing mods reach, since SkillRecord.Level is engine-clamped to 20. */
+    public static float TaperedLevel(int level)
+    {
+        if (level <= 0) return 0f;
+        float eff = Math.Min(level, 10) * FCSSettings.skillTaperFactorBand1;
+        if (level > 10)
+            eff += Math.Min(level - 10, 10) * FCSSettings.skillTaperFactorBand2;
+        if (level > 20)
+            eff += (level - 20) * FCSSettings.skillTaperFactorBand3;
+        return eff;
+    }
+
+    /* -*-*-*- Pawn arrival via transport pod: eligibility + auto-role/focus selection -*-*-*- */
+
+    /* A pawn that may be assigned to a settlement, by caravan or transport pod. Quest lodgers and
+       pawns lent by another faction are excluded: re-factioning them to the Empire breaks their quest. */
+    public static bool IsAssignablePawn(Pawn p)
+    {
+        return p is not null
+            && p.RaceProps.Humanlike
+            && p.IsColonist
+            && !p.Downed
+            && !p.Dead
+            && p.DevelopmentalStage == DevelopmentalStage.Adult
+            && !p.IsPrisoner
+            && !p.IsSlave
+            && !p.IsQuestLodger()
+            && !p.IsBorrowedByAnyFaction();
+    }
+
+    /* The specialist role the pawn fits best (highest weighted skill score), skipping the
+       Generalist (it's the fallback) and any role already at its per-settlement cap. Falls back
+       to Generalist when the pawn has no relevant skills or every specific role is capped. */
+    public static SpecialistRoleDef BestSpecialistRole(Pawn pawn, WorldObjectComp_SettlementSpecialists roster)
+    {
+        SpecialistRoleDef best = null;
+        float bestScore = 0f;
+        foreach (SpecialistRoleDef role in DefDatabase<SpecialistRoleDef>.AllDefs)
+        {
+            if (role.isGeneralist) continue;
+            if (roster is not null && roster.RoleAtCap(role)) continue;
+            float score = role.ComputeSkillScore(pawn);
+            if (score > bestScore
+                || (score == bestScore && best is not null && string.CompareOrdinal(role.defName, best.defName) < 0))
+            {
+                bestScore = score;
+                best = role;
+            }
+        }
+        return best ?? SpecialistRoleDefOf.Generalist;
+    }
+
+    /* The governor focus the pawn fits best; falls back to Balanced. */
+    public static GovernorFocusDef BestGovernorFocus(Pawn pawn)
+    {
+        GovernorFocusDef best = null;
+        float bestScore = float.NegativeInfinity;
+        foreach (GovernorFocusDef focus in DefDatabase<GovernorFocusDef>.AllDefs)
+        {
+            float score = focus.ComputeSkillScore(pawn);
+            if (score > bestScore
+                || (score == bestScore && best is not null && string.CompareOrdinal(focus.defName, best.defName) < 0))
+            {
+                bestScore = score;
+                best = focus;
+            }
+        }
+        return best ?? GovernorFocusDefOf.Balanced;
+    }
+
+    public static double SpecialistAdditiveForResource(SettlementSpecialist s, ResourceTypeDef resourceDef)
+    {
+        if (s is null || s.role is null || !s.HasUsableSkills) return 0;
+        float score = s.SkillScore;
+        double bonus = 0;
+
+        if (s.role.resourceBonuses is not null)
+        {
+            foreach (ResourceProductionBonus rpb in s.role.resourceBonuses)
+            {
+                if (rpb.resource == resourceDef)
+                    bonus += rpb.baseValue * score;
+            }
+        }
+
+        if (s.role.providesBaselineProduction)
+            bonus += s.role.baselineProductionValue * score;
+
+        return bonus;
+    }
+
+    /* The settlement resource this specialist adds the most to, or null when it adds nothing
+       to any of them (bestBonus is then 0). Ties keep the first resource in settlement order. */
+    public static ResourceTypeDef BestSpecialistResource(SettlementSpecialist s, WorldSettlementFC settlement, out double bestBonus)
+    {
+        bestBonus = 0;
+        ResourceTypeDef best = null;
+        if (settlement is null) return null;
+        foreach (ResourceFC resource in settlement.Resources)
+        {
+            double bonus = SpecialistAdditiveForResource(s, resource.def);
+            if (bonus > bestBonus)
+            {
+                bestBonus = bonus;
+                best = resource.def;
+            }
+        }
+        return best;
+    }
+
+    /* The settlement resource with this governor's highest production multiplier, or null when
+       there is none (bestMult is then 0). Ties keep the first resource in settlement order. */
+    public static ResourceTypeDef BestGovernorResource(SettlementGovernor g, WorldSettlementFC settlement, out double bestMult)
+    {
+        bestMult = 0;
+        ResourceTypeDef best = null;
+        if (settlement is null) return null;
+        foreach (ResourceFC resource in settlement.Resources)
+        {
+            double mult = GovernorMultiplierForResource(g, resource.def);
+            if (mult > bestMult)
+            {
+                bestMult = mult;
+                best = resource.def;
+            }
+        }
+        return best;
+    }
+
+    /* Meritocratic amplifies a governor's focus effectiveness: the bonus portion (the part above
+       1.0) of every governor multiplier is scaled up. */
+    public static double GovernorEffectiveness()
+    {
+        return HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 1.25 : 1.0;
+    }
+
+    public static double GovernorMultiplierForResource(SettlementGovernor g, ResourceTypeDef resourceDef)
+    {
+        if (g is null || g.focus is null || !g.HasUsableSkills) return 1.0;
+        float score = g.SkillScore;
+        double multiplier = 1.0;
+
+        if (g.focus.resourceBonuses is not null)
+        {
+            foreach (ResourceProductionBonus rpb in g.focus.resourceBonuses)
+            {
+                if (rpb.resource == resourceDef)
+                    multiplier += rpb.baseValue * score;
+            }
+        }
+
+        // Baseline folds additively too, so per-resource and baseline contributions compose
+        // consistently (a focus defining both won't scale superlinearly).
+        if (g.focus.providesBaselineProduction)
+            multiplier += g.focus.baselineProductionValue * score;
+
+        return 1.0 + (multiplier - 1.0) * GovernorEffectiveness();
+    }
+
+    public static double SpecialistStatBonus(SettlementSpecialist s, FCStatDef stat)
+    {
+        if (s is null || s.role is null || s.role.statModifiers is null || !s.HasUsableSkills) return 0;
+        float score = s.SkillScore;
+        double bonus = 0;
+        foreach (FCStatModifier mod in s.role.statModifiers)
+        {
+            if (mod.stat == stat)
+                bonus += mod.value * score;
+        }
+
+        // Professional Army: Commander specialists contribute double military level.
+        if (bonus != 0 && stat == FCStatDefOf.militaryBaseLevel
+            && s.role == SpecialistRoleDefOf.Commander
+            && HasTrait(SpecPolicyDefOf.FCSprofessionalArmy))
+            bonus *= 2.0;
+
+        return bonus;
+    }
+
+    /* Garrison Doctrine: settlement happiness gained per Commander specialist, scaled by skill.
+       Tunable; kept worker-count-independent (per-specialist skill scaling only). */
+    public const double GarrisonHappinessPerSkill = 0.05;
+
+    public static double GarrisonHappinessBonus(IEnumerable<SettlementSpecialist> specialists)
+    {
+        if (specialists is null || !HasTrait(SpecPolicyDefOf.FCSgarrisonDoctrine)) return 0;
+        double bonus = 0;
+        foreach (SettlementSpecialist s in specialists)
+        {
+            if (s.role != SpecialistRoleDefOf.Commander || !s.HasUsableSkills) continue;
+            bonus += s.SkillScore * GarrisonHappinessPerSkill;
+        }
+        return bonus;
+    }
+
+    /* Garrison Doctrine: a Commander specialist holds the line and dies half as often in the
+       abstract battle death roll. Kept pure (garrison state passed in) so the per-member chance
+       the roll consumes stays deterministically testable. */
+    public static float EffectiveSpecialistDeathChance(SpecialistRoleDef role, float baseChance, bool garrisonActive)
+    {
+        if (garrisonActive && role == SpecialistRoleDefOf.Commander)
+            return baseChance * 0.5f;
+        return baseChance;
+    }
+
+    public static double GovernorStatMultiplier(SettlementGovernor g, FCStatDef stat)
+    {
+        if (g is null || g.focus is null || g.focus.statModifiers is null || !g.HasUsableSkills) return 1.0;
+        float score = g.SkillScore;
+        double mult = 1.0;
+        foreach (FCStatModifier mod in g.focus.statModifiers)
+        {
+            if (mod.stat == stat)
+                mult += mod.value * score;
+        }
+        return 1.0 + (mult - 1.0) * GovernorEffectiveness();
+    }
+
+    /* Unified upkeep: base silver plus a skill-scaled portion, where the global Scaling factor
+       tunes how strongly skill raises wages. Specialists use their role's values; governors use
+       their focus's values and then apply the governor multiplier on top (see GovernorUpkeep). */
+    private static double ComputeUpkeep(float baseSilver, float skillScore, float skillScaling)
+    {
+        return baseSilver + (skillScore * skillScaling * FCSSettings.scalingFactor);
+    }
+
+    public static double SpecialistUpkeep(SettlementSpecialist s)
+    {
+        if (s is null || s.role is null) return 0;
+        return ComputeUpkeep(s.role.baseUpkeepSilver, s.SkillScore, s.role.skillUpkeepScaling);
+    }
+
+    public static int WorkerBonusFromResidents(int liveResidentCount)
+    {
+        if (FCSSettings.residentsPerWorker <= 0) return 0;
+        return (int)Math.Floor(liveResidentCount / (double)FCSSettings.residentsPerWorker);
+    }
+
+    public static bool HasTrait(FCPolicyDef def)
+    {
+        return def is not null && (FindFC.PolicyManager?.HasTrait(def) ?? false);
+    }
+
+    /* Grants each weighted skill xp * weight, skipping totally disabled skills */
+    public static void LearnWeighted(Pawn pawn, List<SkillWeight> weights, float xp)
+    {
+        if (pawn?.skills is null || weights is null) return;
+        foreach (SkillWeight sw in weights)
+        {
+            if (sw.skill is null) continue;
+            SkillRecord rec = pawn.skills.GetSkill(sw.skill);
+            if (rec is not null && !rec.TotallyDisabled)
+                rec.Learn(xp * sw.weight, true);
+        }
+    }
+
+    public static float XPPerDay()
+    {
+        float xp = FCSSettings.xpPerDay;
+        if (HasTrait(SpecPolicyDefOf.FCSspecialistCorps)) xp *= 2f;
+        if (HasTrait(SpecPolicyDefOf.FCSmeritocratic)) xp *= 1.5f;
+        return xp;
+    }
+
+    public static double MedicalHealRateBonus(List<SettlementSpecialist> specialists, SettlementGovernor governor)
+    {
+        double bonus = 0;
+
+        foreach (SettlementSpecialist s in specialists)
+        {
+            if (s.role is null || !s.HasUsableSkills) continue;
+            RoleBehaviorExt_Apothecary ext = s.role.GetModExtension<RoleBehaviorExt_Apothecary>();
+            if (ext is null) continue;
+            bonus += s.SkillScore * ext.healRatePerSkillPoint;
+        }
+
+        if (governor is not null && governor.HasUsableSkills)
+        {
+            SkillRecord govMed = governor.pawn.skills.GetSkill(SkillDefOf.Medicine);
+            if (govMed is not null && govMed.Level > 0)
+                bonus += TaperedLevel(govMed.Level) * FCSSettings.healRatePerLevelGovernor;
+        }
+
+        return bonus;
+    }
+
+    /* Governor upkeep (wage) is Meritocratic ×3, otherwise ×2. Shared so the tooltip breakdown
+       and the applied value can't drift. */
+    public static double GovernorUpkeepMultiplier => HasTrait(SpecPolicyDefOf.FCSmeritocratic) ? 3.0 : 2.0;
+
+    public static double GovernorUpkeep(SettlementGovernor g)
+    {
+        if (g is null || g.focus is null) return 0; // no focus -> no bonuses and no wage
+        return ComputeUpkeep(g.focus.baseUpkeepSilver, g.SkillScore, g.focus.skillUpkeepScaling) * GovernorUpkeepMultiplier;
+    }
+
+    public static void SendDeathLetter(string roleLabel, string bodyText)
+    {
+        string label = "FCS_LetterMemberKilled".Translate(roleLabel);
+        Find.LetterStack.ReceiveLetter(label, bodyText, LetterDefOf.Death);
+    }
+
+    /* The settlement comp whose roster (specialist/resident/governor) contains this pawn, or null.
+       Only called after SpecialistRoster.IsAssigned has confirmed the pawn is a member, so the
+       per-settlement scan runs rarely. */
+    public static WorldObjectComp_SettlementSpecialists FindOwningComp(Pawn pawn)
+    {
+        if (pawn is null) return null;
+        List<WorldSettlementFC> settlements = FindFC.Settlements;
+        if (settlements is null) return null;
+        foreach (WorldSettlementFC settlement in settlements)
+        {
+            WorldObjectComp_SettlementSpecialists comp =
+                settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
+            if (comp is null) continue;
+            // Match on identity, not IsAlive: a just-killed member is already dead.
+            foreach (RosterEntry m in comp.Members)
+                if (m.pawn == pawn) return comp;
+        }
+        return null;
+    }
+
+    /* -*-*-*- Returning an assigned pawn: safe release from wherever it currently is -*-*-*- */
+
+    /* Roster members are allied-faction world pawns, but an external mod can pull one out of world
+       storage onto a map as a visitor: Hospitality, for instance, sources guests from allied
+       factions' world pawns, so a specialist can turn up spawned and owned by a visit Lord with a
+       claimed guest bed. Cleanly release such a pawn from that Lord/guest state before we recall it.
+       No-op when the pawn isn't spawned or isn't a guest.
+
+       PawnLostCondition.ExitedMap is what vanilla map-exit uses: it removes the pawn from the Lord's
+       ownedPawns and tears down its duty, and the host mod treats it as a clean departure (no
+       "lost entire group" faction-goodwill penalty, unlike the ChangedFaction a plain SetFaction
+       would raise). Because that clean-exit path skips the host mod's own bed release, we unclaim
+       the guest bed here. Guest status itself is cleared by the SetFaction that follows. */
+    public static void ReleaseVisitorState(Pawn pawn)
+    {
+        if (pawn is null || !pawn.Spawned) return;
+        pawn.GetLord()?.Notify_PawnLost(pawn, PawnLostCondition.ExitedMap);
+        pawn.ownership?.UnclaimBed();
+    }
+
+    /* Detach an unspawned pawn from a caravan / inventory / transport-pod container so it is safe to
+       re-faction and place into a fresh caravan or drop pod. Mirrors the assign side, which removes
+       the pawn from its caravan (and destroys a caravan it empties) before handing it over. No-op on
+       a spawned pawn — that path despawns instead. */
+    public static void DetachFromHolder(Pawn pawn)
+    {
+        if (pawn is null || pawn.Spawned) return;
+        Caravan caravan = pawn.GetCaravan();
+        if (pawn.holdingOwner is not null)
+            pawn.holdingOwner.Remove(pawn);
+        if (caravan is not null && !caravan.Destroyed && caravan.PawnsListForReading.Count == 0)
+            caravan.Destroy();
+    }
+
+    /* Hold a roster pawn as a forcefully kept world pawn. Caravan and pod pawns are already world
+       pawns, and PassToWorld won't re-add them, so they would stay unprotected and vanilla redress
+       (e.g. prisoner-willing-to-join quests) could take them; add those to the kept set directly. */
+    public static void KeepAsWorldPawn(Pawn pawn)
+    {
+        if (pawn is null || pawn.Dead || pawn.Spawned) return;
+        if (pawn.IsWorldPawn())
+            Find.WorldPawns.ForcefullyKeptPawns.Add(pawn);
+        else
+            Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+    }
+
+    /* Top-N skills label, optionally filtered to a role's skillWeights */
+    public static string TopRoleSkillsLabel(Pawn pawn, SpecialistRoleDef role, int count = 2)
+    {
+        HashSet<SkillDef> relevant = null;
+        if (role is not null && role.skillWeights is not null && role.skillWeights.Count > 0)
+        {
+            relevant = [];
+            foreach (SkillWeight sw in role.skillWeights)
+            {
+                if (sw.skill is not null) relevant.Add(sw.skill);
+            }
+            if (relevant.Count == 0) relevant = null;
+        }
+        return TopSkillsLabelCore(pawn, relevant, count);
+    }
+
+    /* Top-N skills label filtered to a governor focus's skillWeights; Social is always relevant */
+    public static string TopFocusSkillsLabel(Pawn pawn, GovernorFocusDef focus, int count = 2)
+    {
+        HashSet<SkillDef> relevant = null;
+        if (focus is not null)
+        {
+            relevant = [];
+            if (focus.skillWeights is not null)
+            {
+                foreach (SkillWeight sw in focus.skillWeights)
+                {
+                    if (sw.skill is not null) relevant.Add(sw.skill);
+                }
+            }
+            relevant.Add(SkillDefOf.Social);
+            if (relevant.Count == 0) relevant = null;
+        }
+        return TopSkillsLabelCore(pawn, relevant, count);
+    }
+
+    /* Top-N skills label over all of the pawn's skills */
+    public static string TopSkillsLabel(Pawn pawn, int count)
+    {
+        return TopSkillsLabelCore(pawn, null, count);
+    }
+
+    // Reused by TopSkillsLabelCore so the per-frame UI calls don't allocate a list
+    private static readonly List<SkillRecord> topSkillsBuffer = [];
+
+    /* The pawn's count highest non-disabled skills (optionally only those in relevant), highest
+       first, ties kept in the pawn's skill order, as "Skill 12, Skill 9" */
+    private static string TopSkillsLabelCore(Pawn pawn, HashSet<SkillDef> relevant, int count)
+    {
+        if (pawn?.skills is null || count <= 0) return "";
+
+        List<SkillRecord> top = topSkillsBuffer;
+        top.Clear();
+        foreach (SkillRecord sk in pawn.skills.skills)
+        {
+            if (sk.TotallyDisabled) continue;
+            if (relevant is not null && !relevant.Contains(sk.def)) continue;
+            int pos = top.Count;
+            while (pos > 0 && top[pos - 1].Level < sk.Level) pos--;
+            if (pos >= count) continue;
+            top.Insert(pos, sk);
+            if (top.Count > count) top.RemoveAt(count);
+        }
+
+        if (top.Count == 0) return "";
+        StringBuilder sb = new();
+        for (int i = 0; i < top.Count; i++)
+        {
+            if (i > 0) sb.Append(", ");
+            sb.Append($"{top[i].def.skillLabel.CapitalizeFirst()} {top[i].Level}");
+        }
+        top.Clear();
+        return sb.ToString();
+    }
+}

@@ -1,0 +1,388 @@
+namespace FactionColonies.Specialists;
+
+/* DESTRUCTIVE: roster mutation on a real comp -- assign / recall / promote / change. Each test
+   creates a transient settlement, mutates its specialists comp, asserts invariants, then
+   best-effort tears the roster and settlement down. */
+public static class SpecRosterDestructiveTests
+{
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void AssignSpecialist_AddsToRoster()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignSpecialist(p, role);
+            TestAssert.AreEqual(1, comp.SpecialistCount);
+            TestAssert.IsTrue(comp.Specialists[0].pawn == p, "entry should hold the assigned pawn");
+            TestAssert.IsTrue(comp.Specialists[0].role == role, "entry should hold the assigned role");
+            TestAssert.IsTrue(p.Faction == FindFC.EmpireFaction, "assigned pawn should join the empire");
+            TestAssert.IsTrue(SpecialistRoster.GetRole(p) == role, "global roster should map pawn -> role");
+            TestAssert.IsTrue(SpecialistRoster.IsAssigned(p), "global roster should mark pawn assigned");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "AssignSpecialist_AddsToRoster");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void AssignResident_AddsToResidents()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignSpecialist(p, null); // null role -> resident
+            TestAssert.AreEqual(1, comp.ResidentCount);
+            TestAssert.AreEqual(0, comp.SpecialistCount);
+            TestAssert.IsTrue(comp.Residents[0].IsResident, "entry should be a resident");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "AssignResident_AddsToResidents");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void RecallSpecialist_RemovesAndClearsRoster()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignSpecialist(p, role);
+            SettlementSpecialist entry = comp.Specialists[0];
+            TestAssert.DoesNotThrow(() => comp.RecallSpecialist(entry), "RecallSpecialist threw");
+            TestAssert.AreEqual(0, comp.SpecialistCount);
+            TestAssert.IsFalse(SpecialistRoster.IsAssigned(p), "recalled pawn should leave the roster");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "RecallSpecialist_RemovesAndClearsRoster");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void AssignGovernor_SetsGovernor()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignGovernor(p, focus);
+            TestAssert.IsTrue(comp.HasGovernor, "settlement should have a governor");
+            TestAssert.IsTrue(comp.Governor.pawn == p, "governor pawn should match");
+            TestAssert.IsTrue(comp.Governor.focus == focus, "governor focus should match");
+            TestAssert.IsTrue(SpecialistRoster.IsGovernor(p), "global roster should mark pawn as governor");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "AssignGovernor_SetsGovernor");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void AssignGovernor_Twice_SecondIgnored()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+        Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(8);
+        Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignGovernor(p1, focus);
+            comp.AssignGovernor(p2, focus); // should be rejected
+            TestAssert.IsTrue(comp.Governor.pawn == p1, "the first governor should remain");
+            TestAssert.IsFalse(SpecialistRoster.IsGovernor(p2), "second pawn should not be a governor");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "AssignGovernor_Twice_SecondIgnored");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void RecallGovernor_ClearsSlot()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignGovernor(p, focus);
+            TestAssert.DoesNotThrow(() => comp.RecallGovernor(), "RecallGovernor threw");
+            TestAssert.IsFalse(comp.HasGovernor, "governor slot should be empty after recall");
+            TestAssert.IsNull(comp.Governor, "governor reference should be null after recall");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "RecallGovernor_ClearsSlot");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void PromoteToGovernor_FromSpecialist()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+        GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignSpecialist(p, role);
+            comp.PromoteToGovernor(comp.Specialists[0], focus);
+            TestAssert.IsTrue(comp.HasGovernor && comp.Governor.pawn == p, "pawn should become governor");
+            TestAssert.AreEqual(0, comp.SpecialistCount);
+            DestructiveTestUtil.AssertEmpireInvariants(f, "PromoteToGovernor_FromSpecialist");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void PromoteToGovernor_DemotesExistingGovToResident()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 2);
+        SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+        GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+        Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(8);
+        Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignGovernor(p1, focus);
+            comp.AssignSpecialist(p2, role);
+            comp.PromoteToGovernor(comp.Specialists[0], focus); // promote p2
+            TestAssert.IsTrue(comp.Governor.pawn == p2, "p2 should be the new governor");
+            TestAssert.IsTrue(comp.Residents.Any(r => r.pawn == p1), "old governor p1 should be demoted to resident");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "PromoteToGovernor_DemotesExistingGovToResident");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void ChangeRole_SpecialistToResident_MovesList()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignSpecialist(p, role);
+            comp.ChangeRole(comp.Specialists[0], null); // demote to resident
+            TestAssert.AreEqual(0, comp.SpecialistCount);
+            TestAssert.AreEqual(1, comp.ResidentCount);
+            TestAssert.IsTrue(comp.Residents[0].role is null, "moved entry should have a null role");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "ChangeRole_SpecialistToResident_MovesList");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    /* DESTRUCTIVE: promoting a resident to a specialist role must be rejected when the settlement is
+       already at MaxSpecialists -- the resident stays a resident and the specialist count is
+       unchanged. Guards the ChangeRole capacity check (the only path that can breach MaxSpecialists
+       without going through AssignSpecialist). */
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void ChangeRole_ResidentToSpecialist_AtCap_Rejected()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        const int max = 3;
+        using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.PinMaxSpecialists(comp, max);
+        // Uncapped synthetic role so the MaxSpecialists guard (not a per-role cap) is what rejects.
+        SpecialistRoleDef fillRole = SpecTestHelper.Role(SkillDefOf.Plants, 1f, null, 0f);
+        Pawn resPawn = SpecDestructiveTestUtil.MakeAssignable(8);
+        List<Pawn> fillers = [];
+        try
+        {
+            for (int i = 0; i < max; i++)
+            {
+                Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+                fillers.Add(p);
+                comp.AssignSpecialist(p, fillRole);
+            }
+            if (comp.SpecialistCount != max) TestAssert.Fail("Could not fill specialists to cap");
+
+            comp.AssignSpecialist(resPawn, null); // resident
+            SettlementSpecialist resEntry = comp.Residents.FirstOrDefault(r => r.pawn == resPawn);
+            if (resEntry is null) TestAssert.Fail("Resident setup failed");
+
+            comp.ChangeRole(resEntry, fillRole); // should be rejected: specialists at cap
+
+            TestAssert.AreEqual(max, comp.SpecialistCount, "specialist count should be unchanged");
+            TestAssert.AreEqual(1, comp.ResidentCount, "resident should remain a resident");
+            TestAssert.IsTrue(resEntry.role is null, "rejected entry should keep a null (resident) role");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "ChangeRole_ResidentToSpecialist_AtCap_Rejected");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void ChangeGovernorFocus_RunsLifecycle()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        List<GovernorFocusDef> focuses = SpecDestructiveTestUtil.AllFocuses();
+        TestAssert.IsTrue(focuses.Count >= 2, "The mod should ship at least two GovernorFocusDefs");
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            GovernorFocusDef focusA = focuses[0];
+            GovernorFocusDef focusB = focuses[1];
+            comp.AssignGovernor(p, focusA);
+            TestAssert.DoesNotThrow(() => comp.ChangeGovernorFocus(focusB), "ChangeGovernorFocus threw");
+            TestAssert.IsTrue(comp.Governor.focus == focusB, "governor focus should have changed");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "ChangeGovernorFocus_RunsLifecycle");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    /* DESTRUCTIVE regression guard for M7: supply-chain satisfaction must reset to 1 once the
+       roster empties (the SC bridge stops writing it, so a stale <1 value would otherwise scale
+       every future member's bonuses forever). It must NOT reset while any member remains. */
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void RosterEmptied_ResetsSatisfaction()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        using SpecDestructiveTestUtil.SpecialistCapScope cap = SpecDestructiveTestUtil.EnsureMaxSpecialists(comp, 2);
+        SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+        Pawn p1 = SpecDestructiveTestUtil.MakeAssignable(8);
+        Pawn p2 = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignSpecialist(p1, role);
+            comp.AssignSpecialist(p2, null); // resident
+            comp.FoodSatisfaction = 0.3f;
+            comp.MedicineSatisfaction = 0.4f;
+
+            // Roster still non-empty after removing one -> satisfaction preserved.
+            comp.RecallSpecialist(comp.Specialists[0]);
+            TestAssert.AreEqual(0.3, comp.FoodSatisfaction, message: "satisfaction preserved while a member remains");
+            TestAssert.AreEqual(0.4, comp.MedicineSatisfaction);
+
+            // Removing the last member empties the roster -> both reset to 1.
+            comp.RecallSpecialist(comp.Residents[0]);
+            TestAssert.AreEqual(0, comp.TotalCount);
+            TestAssert.AreEqual(1.0, comp.FoodSatisfaction, message: "food satisfaction resets on empty roster");
+            TestAssert.AreEqual(1.0, comp.MedicineSatisfaction, message: "medicine satisfaction resets on empty roster");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "RosterEmptied_ResetsSatisfaction");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    /* DESTRUCTIVE regression guard for M7: the governor-recall path also resets satisfaction when
+       it empties the roster. */
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void RecallGovernor_LastMember_ResetsSatisfaction()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        GovernorFocusDef focus = SpecDestructiveTestUtil.AnyFocus();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignGovernor(p, focus);
+            comp.FoodSatisfaction = 0.2f;
+            comp.MedicineSatisfaction = 0.6f;
+
+            comp.RecallGovernor();
+            TestAssert.AreEqual(0, comp.TotalCount);
+            TestAssert.AreEqual(1.0, comp.FoodSatisfaction, message: "food satisfaction resets on empty roster");
+            TestAssert.AreEqual(1.0, comp.MedicineSatisfaction, message: "medicine satisfaction resets on empty roster");
+            DestructiveTestUtil.AssertEmpireInvariants(f, "RecallGovernor_LastMember_ResetsSatisfaction");
+        }
+        finally
+        {
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+
+    /* DESTRUCTIVE regression guard for H5: recall now routes through the layer-aware
+       DeliverPawnsToPlayer. On a surface settlement (caravan-capable layer) the refactor must
+       still form a player caravan at the settlement tile -- the orbital drop-pod branch can't be
+       exercised here (transient settlements are surface-only) and is verified manually. */
+    [EmpireDestructiveTest("SG.Destructive.Roster")]
+    public static void RecallSpecialist_SurfaceFormsCaravan()
+    {
+        FactionFC f = DestructiveTestUtil.RequireFaction();
+        WorldSettlementFC s = SpecDestructiveTestUtil.CreateRosterSettlement(out WorldObjectComp_SettlementSpecialists comp);
+        TestAssert.IsTrue(s.Tile.LayerDef.canFormCaravans, "A transient surface settlement should be on a caravan-capable layer");
+        SpecialistRoleDef role = SpecDestructiveTestUtil.AnyRole();
+        Pawn p = SpecDestructiveTestUtil.MakeAssignable(8);
+        try
+        {
+            comp.AssignSpecialist(p, role);
+            SettlementSpecialist entry = comp.Specialists[0];
+            comp.RecallSpecialist(entry);
+
+            TestAssert.AreEqual(0, comp.SpecialistCount);
+            TestAssert.IsFalse(SpecialistRoster.IsAssigned(p), "recalled pawn should leave the roster");
+
+            // The surface delivery path must still form a player caravan carrying the pawn.
+            Caravan caravan = Find.WorldObjects.Caravans.FirstOrDefault(
+                c => c is not null && !c.Destroyed && c.Tile == s.Tile && c.PawnsListForReading.Contains(p));
+            TestAssert.IsTrue(caravan is not null, "recall on a surface settlement should form a caravan carrying the pawn");
+
+            DestructiveTestUtil.AssertEmpireInvariants(f, "RecallSpecialist_SurfaceFormsCaravan");
+        }
+        finally
+        {
+            List<Caravan> caravans = new(Find.WorldObjects.Caravans);
+            foreach (Caravan c in caravans)
+                if (c is not null && !c.Destroyed && c.Tile == s.Tile)
+                    c.Destroy();
+            SpecDestructiveTestUtil.CleanupRoster(comp);
+            DestructiveTestUtil.SafeRemoveSettlement(s);
+        }
+    }
+}

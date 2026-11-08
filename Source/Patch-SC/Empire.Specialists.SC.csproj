@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!-- Shared settings (framework, language version, RimWorld/Harmony refs) live in ../Directory.Build.props -->
+    <PropertyGroup>
+        <OutputPath>..\..\Compat\1.7\SupplyChain\Assemblies</OutputPath>
+        <BaseOutputPath>..\..\Compat\1.7\SupplyChain\Assemblies</BaseOutputPath>
+        <AssemblyName>Empire.Specialists.SC</AssemblyName>
+        <RootNamespace>FactionColonies.Specialists.SC</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Core\Empire.Specialists.csproj">
+            <Private>False</Private>
+        </ProjectReference>
+    </ItemGroup>
+    <ItemGroup>
+        <!-- Empire main mod -->
+        <Reference Include="Empire">
+            <HintPath>..\..\..\Empire\1.7\Assemblies\Empire.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <!-- Empire Supply Chain submod -->
+        <Reference Include="Empire.SupplyChain">
+            <HintPath>..\..\..\Empire-SupplyChain\1.7\Assemblies\Empire.SupplyChain.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+</Project>

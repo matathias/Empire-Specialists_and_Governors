@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>FCSspecialistCorps</defName>
+		<label>Specialist Corps</label>
+		<desc>A formal specialist program that invests in training and capacity. Settlements can host more specialists, they learn faster, and their contributions are more impactful.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>3</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- +2 max specialists per settlement</li>
+			<li>- +20% specialist additive production bonus</li>
+			<li>- Specialists gain XP twice as fast</li>
+		</positiveEffects>
+		<negativeEffects>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>FCSmeritocratic</defName>
+		<label>Meritocratic</label>
+		<desc>A society that rewards competence. Skilled governors are far more effective, but their higher status demands greater compensation.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>3</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- Governor focus bonuses are stronger and scale harder with skill</li>
+			<li>- Specialists gain 50% more XP</li>
+		</positiveEffects>
+		<negativeEffects>
+			<li>- Governor upkeep increased to x3 (from x2)</li>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>FCSprofessionalArmy</defName>
+		<label>Professional Army</label>
+		<desc>Commanders are trained career soldiers. Their military contributions are doubled and they provide greater protection to civilians.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<incompatiblePolicies>
+			<li>pacifist</li>
+		</incompatiblePolicies>
+		<positiveEffects>
+			<li>- Commanders contribute 2x military level</li>
+			<li>- Casualty reduction from each Commander is doubled</li>
+		</positiveEffects>
+	</FactionColonies.FCPolicyDef>
+
+	<!-- Retired: Patrician (dual governor focus) was removed. The def is kept only so old saves
+	     that adopted it still deserialize; its Undefined category hides it from every policy picker,
+	     and GameComponent_SpecialistRoster strips it from any faction that had it. -->
+	<FactionColonies.FCPolicyDef>
+		<defName>FCSpatrician</defName>
+		<label>Patrician</label>
+		<desc>This trait has been removed.</desc>
+		<category>Undefined</category>
+	</FactionColonies.FCPolicyDef>
+
+	<FactionColonies.FCPolicyDef>
+		<defName>FCSgarrisonDoctrine</defName>
+		<label>Garrison Doctrine</label>
+		<desc>A standing garrison doctrine that keeps Commanders safe and boosts settlement morale through visible security.</desc>
+		<category>Trait</category>
+		<factionLevelRequirement>0</factionLevelRequirement>
+		<techLevelRequirement>Undefined</techLevelRequirement>
+		<positiveEffects>
+			<li>- Commanders die half as often when a settlement is attacked</li>
+			<li>- Commanders boost settlement happiness</li>
+		</positiveEffects>
+		<negativeEffects>
+		</negativeEffects>
+	</FactionColonies.FCPolicyDef>
+
+</Defs>
