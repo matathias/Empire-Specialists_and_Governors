@@ -888,18 +888,8 @@ internal class SpecialistsTabRenderer
             && s.role.statModifiers is not null && s.role.statModifiers.Count > 0)
             return DefenseContribColor;
 
-        double bestBonus = 0;
-        Color bestColor = Color.white;
-        foreach (ResourceFC resource in uiSettlement.Resources)
-        {
-            double resBonus = SpecUtil.SpecialistAdditiveForResource(s, resource.def);
-            if (resBonus > bestBonus)
-            {
-                bestBonus = resBonus;
-                bestColor = resource.def.color;
-            }
-        }
-        return bestColor;
+        ResourceTypeDef best = SpecUtil.BestSpecialistResource(s, uiSettlement, out _);
+        return best is not null ? best.color : Color.white;
     }
 
     private string BuildGovResourceTooltip(ResourceFC resource, SettlementGovernor gov)
@@ -930,19 +920,10 @@ internal class SpecialistsTabRenderer
         if (gov is null || !gov.HasUsableSkills || gov.focus is null || uiSettlement is null)
             return null;
 
-        double bestMult = 0;
-        string bestLabel = "";
-        foreach (ResourceFC resource in uiSettlement.Resources)
-        {
-            double mult = SpecUtil.GovernorMultiplierForResource(gov, resource.def);
-            if (mult > bestMult)
-            {
-                bestMult = mult;
-                bestLabel = resource.def.LabelCap;
-            }
-        }
+        ResourceTypeDef best = SpecUtil.BestGovernorResource(gov, uiSettlement, out double bestMult);
         if (bestMult > 1.001)
         {
+            string bestLabel = best.LabelCap;
             return "FCS_GovMultSummary".Translate(bestMult.ToString("F2"), bestLabel);
         }
         return null;

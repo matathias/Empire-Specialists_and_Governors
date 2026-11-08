@@ -141,7 +141,7 @@ public class Dialog_AssignSpecialists : Window
         Widgets.Label(identityRect, TextUtil.ClampWithEllipsis(identityRect, identity, CheckboxSize + 8f));
 
         // Line 3: Skills
-        string skills = GetTopSkills(entry.pawn, 3);
+        string skills = SpecUtil.TopSkillsLabel(entry.pawn, 3);
         Rect skillsRect = new(textX, rowRect.y + 34f, textW, 16f);
         Widgets.Label(skillsRect, TextUtil.ClampWithEllipsis(skillsRect, skills, CheckboxSize + 8f));
         GUI.color = Color.white;
@@ -251,19 +251,10 @@ public class Dialog_AssignSpecialists : Window
             // Create a temporary governor to compute skill score and multiplier
             SettlementGovernor tempGov = new(pawn, focus);
 
-            double bestMult = 0;
-            string bestLabel = "";
-            foreach (ResourceFC resource in settlement.Resources)
-            {
-                double mult = SpecUtil.GovernorMultiplierForResource(tempGov, resource.def);
-                if (mult > bestMult)
-                {
-                    bestMult = mult;
-                    bestLabel = resource.def.LabelCap;
-                }
-            }
+            ResourceTypeDef best = SpecUtil.BestGovernorResource(tempGov, settlement, out double bestMult);
             if (bestMult > 1.001)
             {
+                string bestLabel = best.LabelCap;
                 text = "FCS_PreviewGovMult".Translate(bestMult.ToString("F2"), bestLabel);
                 color = GovColor;
                 return;
@@ -279,23 +270,12 @@ public class Dialog_AssignSpecialists : Window
         {
             SettlementSpecialist tempSpec = new(pawn, entry.role);
 
-            double bestBonus = 0;
-            string bestLabel = "";
-            Color bestColor = Color.white;
-            foreach (ResourceFC resource in settlement.Resources)
-            {
-                double resBonus = SpecUtil.SpecialistAdditiveForResource(tempSpec, resource.def);
-                if (resBonus > bestBonus)
-                {
-                    bestBonus = resBonus;
-                    bestLabel = resource.def.LabelCap;
-                    bestColor = resource.def.color;
-                }
-            }
+            ResourceTypeDef best = SpecUtil.BestSpecialistResource(tempSpec, settlement, out double bestBonus);
             if (bestBonus > 0)
             {
+                string bestLabel = best.LabelCap;
                 text = "FCS_ContribProduction".Translate(bestBonus.ToString("F2"), bestLabel);
-                color = bestColor;
+                color = best.color;
                 return;
             }
         }
@@ -351,19 +331,6 @@ public class Dialog_AssignSpecialists : Window
         {
             caravan.Destroy();
         }
-    }
-
-    private string GetTopSkills(Pawn pawn, int count)
-    {
-        if (pawn.skills is null) return "";
-
-        List<SkillRecord> sorted = pawn.skills.skills
-            .Where(s => !s.TotallyDisabled)
-            .OrderByDescending(s => s.Level)
-            .Take(count)
-            .ToList();
-
-        return string.Join(", ", sorted.Select(s => s.def.skillLabel.CapitalizeFirst() + " " + s.Level));
     }
 
     private class PawnEntry

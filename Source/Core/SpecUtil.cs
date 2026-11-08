@@ -1,3 +1,4 @@
+using System.Text;
 using Verse.AI.Group;
 
 namespace FactionColonies.Specialists;
@@ -97,6 +98,44 @@ public static class SpecUtil
             bonus += s.role.baselineProductionValue * score;
 
         return bonus;
+    }
+
+    /* The settlement resource this specialist adds the most to, or null when it adds nothing
+       to any of them (bestBonus is then 0). Ties keep the first resource in settlement order. */
+    public static ResourceTypeDef BestSpecialistResource(SettlementSpecialist s, WorldSettlementFC settlement, out double bestBonus)
+    {
+        bestBonus = 0;
+        ResourceTypeDef best = null;
+        if (settlement is null) return null;
+        foreach (ResourceFC resource in settlement.Resources)
+        {
+            double bonus = SpecialistAdditiveForResource(s, resource.def);
+            if (bonus > bestBonus)
+            {
+                bestBonus = bonus;
+                best = resource.def;
+            }
+        }
+        return best;
+    }
+
+    /* The settlement resource with this governor's highest production multiplier, or null when
+       there is none (bestMult is then 0). Ties keep the first resource in settlement order. */
+    public static ResourceTypeDef BestGovernorResource(SettlementGovernor g, WorldSettlementFC settlement, out double bestMult)
+    {
+        bestMult = 0;
+        ResourceTypeDef best = null;
+        if (settlement is null) return null;
+        foreach (ResourceFC resource in settlement.Resources)
+        {
+            double mult = GovernorMultiplierForResource(g, resource.def);
+            if (mult > bestMult)
+            {
+                bestMult = mult;
+                best = resource.def;
+            }
+        }
+        return best;
     }
 
     /* Meritocratic amplifies a governor's focus effectiveness: the bonus portion (the part above
@@ -213,6 +252,19 @@ public static class SpecUtil
         return def is not null && (FindFC.PolicyManager?.HasTrait(def) ?? false);
     }
 
+    /* Grants each weighted skill xp * weight, skipping totally disabled skills */
+    public static void LearnWeighted(Pawn pawn, List<SkillWeight> weights, float xp)
+    {
+        if (pawn?.skills is null || weights is null) return;
+        foreach (SkillWeight sw in weights)
+        {
+            if (sw.skill is null) continue;
+            SkillRecord rec = pawn.skills.GetSkill(sw.skill);
+            if (rec is not null && !rec.TotallyDisabled)
+                rec.Learn(xp * sw.weight, true);
+        }
+    }
+
     public static float XPPerDay()
     {
         float xp = FCSSettings.xpPerDay;
@@ -272,12 +324,9 @@ public static class SpecUtil
             WorldObjectComp_SettlementSpecialists comp =
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
             if (comp is null) continue;
-            foreach (SettlementSpecialist s in comp.Specialists)
-                if (s.pawn == pawn) return comp;
-            foreach (SettlementSpecialist r in comp.Residents)
-                if (r.pawn == pawn) return comp;
-            // Match on identity, not HasGovernor: a just-killed governor is already !IsAlive.
-            if (comp.Governor is not null && comp.Governor.pawn == pawn) return comp;
+            // Match on identity, not IsAlive: a just-killed member is already dead.
+            foreach (RosterEntry m in comp.Members)
+                if (m.pawn == pawn) return comp;
         }
         return null;
     }
@@ -364,33 +413,42 @@ public static class SpecUtil
         return TopSkillsLabelCore(pawn, relevant, count);
     }
 
+    /* Top-N skills label over all of the pawn's skills */
+    public static string TopSkillsLabel(Pawn pawn, int count)
+    {
+        return TopSkillsLabelCore(pawn, null, count);
+    }
+
+    // Reused by TopSkillsLabelCore so the per-frame UI calls don't allocate a list
+    private static readonly List<SkillRecord> topSkillsBuffer = [];
+
+    /* The pawn's count highest non-disabled skills (optionally only those in relevant), highest
+       first, ties kept in the pawn's skill order, as "Skill 12, Skill 9" */
     private static string TopSkillsLabelCore(Pawn pawn, HashSet<SkillDef> relevant, int count)
     {
         if (pawn?.skills is null || count <= 0) return "";
 
-        SkillRecord best = null;
-        SkillRecord second = null;
+        List<SkillRecord> top = topSkillsBuffer;
+        top.Clear();
         foreach (SkillRecord sk in pawn.skills.skills)
         {
             if (sk.TotallyDisabled) continue;
             if (relevant is not null && !relevant.Contains(sk.def)) continue;
-            if (best is null || sk.Level > best.Level)
-            {
-                second = best;
-                best = sk;
-            }
-            else if (second is null || sk.Level > second.Level)
-            {
-                second = sk;
-            }
+            int pos = top.Count;
+            while (pos > 0 && top[pos - 1].Level < sk.Level) pos--;
+            if (pos >= count) continue;
+            top.Insert(pos, sk);
+            if (top.Count > count) top.RemoveAt(count);
         }
 
-        if (best is null) return "";
-        string result = best.def.skillLabel.CapitalizeFirst() + " " + best.Level;
-        if (count >= 2 && second is not null)
+        if (top.Count == 0) return "";
+        StringBuilder sb = new();
+        for (int i = 0; i < top.Count; i++)
         {
-            result += ", " + second.def.skillLabel.CapitalizeFirst() + " " + second.Level;
+            if (i > 0) sb.Append(", ");
+            sb.Append($"{top[i].def.skillLabel.CapitalizeFirst()} {top[i].Level}");
         }
-        return result;
+        top.Clear();
+        return sb.ToString();
     }
 }

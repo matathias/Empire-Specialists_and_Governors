@@ -6,40 +6,57 @@ namespace FactionColonies.Specialists;
 
 public class FCSSettings : ModSettings
 {
-    private static bool printDebug = false;
+    /* Defaults, shared by the field initializers, ExposeData and ResetToDefaults */
+    public const bool DefaultPrintDebug = false;
+    public const int DefaultSpecialistBaseMax = 3;
+    public const int DefaultSpecialistPerLevels = 3;
+    public const int DefaultResidentsPerWorker = 5;
+    public const float DefaultScalingFactor = 1f;
+    public const float DefaultHealRatePerLevelGovernor = 0.02f;
+    public const float DefaultXpPerDay = 500f;
+    public const float DefaultSkillTaperFactorBand1 = 1f;
+    public const float DefaultSkillTaperFactorBand2 = 1f;
+    public const float DefaultSkillTaperFactorBand3 = 0.5f;
+    public const float DefaultFoodPerSpecialist = 0.3f;
+    public const float DefaultFoodPerResident = 0.15f;
+    public const float DefaultMedicinePerSpecialist = 0.1f;
+    public const float DefaultFoodPenaltyPerUnit = 0.8f;
+    public const float DefaultMedicinePenaltyPerUnit = 0.3f;
+
+    private static bool printDebug = DefaultPrintDebug;
     public static bool PrintDebug => printDebug;
 
     private static bool isRoutesResourcesActive = false;
     public static bool RoutesResourcesActive => isRoutesResourcesActive;
 
     // Specialist capacity
-    public static int specialistBaseMax = 3;
-    public static int specialistPerLevels = 3;
+    public static int specialistBaseMax = DefaultSpecialistBaseMax;
+    public static int specialistPerLevels = DefaultSpecialistPerLevels;
 
     // Workers
-    public static int residentsPerWorker = 5;
+    public static int residentsPerWorker = DefaultResidentsPerWorker;
 
     // Upkeep: global multiplier on the skill-scaled portion of specialist/governor wages.
-    public static float scalingFactor = 1f;
+    public static float scalingFactor = DefaultScalingFactor;
 
     // Healing
-    public static float healRatePerLevelGovernor = 0.02f;
+    public static float healRatePerLevelGovernor = DefaultHealRatePerLevelGovernor;
 
     // XP
-    public static float xpPerDay = 500f;
+    public static float xpPerDay = DefaultXpPerDay;
 
     // Skill scaling: per-band scaling of each skill level's contribution to bonuses.
     // Defaults leave vanilla 1-20 untouched; band3 (21+) only matters for cap-removing mods.
-    public static float skillTaperFactorBand1 = 1f;   // levels 1-10
-    public static float skillTaperFactorBand2 = 1f;   // levels 11-20
-    public static float skillTaperFactorBand3 = 0.5f; // levels 21+
+    public static float skillTaperFactorBand1 = DefaultSkillTaperFactorBand1;   // levels 1-10
+    public static float skillTaperFactorBand2 = DefaultSkillTaperFactorBand2;   // levels 11-20
+    public static float skillTaperFactorBand3 = DefaultSkillTaperFactorBand3; // levels 21+
 
     // Supply chain integration: per-day resource needs consumed by SupplyChain.
-    public static float foodPerSpecialist = 0.3f;
-    public static float foodPerResident = 0.15f;
-    public static float medicinePerSpecialist = 0.1f;
-    public static float foodPenaltyPerUnit = 0.8f;
-    public static float medicinePenaltyPerUnit = 0.3f;
+    public static float foodPerSpecialist = DefaultFoodPerSpecialist;
+    public static float foodPerResident = DefaultFoodPerResident;
+    public static float medicinePerSpecialist = DefaultMedicinePerSpecialist;
+    public static float foodPenaltyPerUnit = DefaultFoodPenaltyPerUnit;
+    public static float medicinePenaltyPerUnit = DefaultMedicinePenaltyPerUnit;
 
     private static Vector2 scrollPos;
     private static float contentHeight = 0f;
@@ -47,40 +64,40 @@ public class FCSSettings : ModSettings
     public override void ExposeData()
     {
         base.ExposeData();
-        Scribe_Values.Look(ref printDebug, "printDebug", false);
-        Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", 3);
-        Scribe_Values.Look(ref specialistPerLevels, "specialistPerLevels", 3);
-        Scribe_Values.Look(ref residentsPerWorker, "residentsPerWorker", 5);
-        Scribe_Values.Look(ref scalingFactor, "scalingFactor", 1f);
-        Scribe_Values.Look(ref healRatePerLevelGovernor, "healRatePerLevelGovernor", 0.02f);
-        Scribe_Values.Look(ref xpPerDay, "xpPerDay", 500f);
-        Scribe_Values.Look(ref skillTaperFactorBand1, "skillTaperFactorBand1", 1f);
-        Scribe_Values.Look(ref skillTaperFactorBand2, "skillTaperFactorBand2", 1f);
-        Scribe_Values.Look(ref skillTaperFactorBand3, "skillTaperFactorBand3", 0.5f);
-        Scribe_Values.Look(ref foodPerSpecialist, "foodPerSpecialist", 0.3f);
-        Scribe_Values.Look(ref foodPerResident, "foodPerResident", 0.15f);
-        Scribe_Values.Look(ref medicinePerSpecialist, "medicinePerSpecialist", 0.1f);
-        Scribe_Values.Look(ref foodPenaltyPerUnit, "foodPenaltyPerUnit", 0.8f);
-        Scribe_Values.Look(ref medicinePenaltyPerUnit, "medicinePenaltyPerUnit", 0.3f);
+        Scribe_Values.Look(ref printDebug, "printDebug", DefaultPrintDebug);
+        Scribe_Values.Look(ref specialistBaseMax, "specialistBaseMax", DefaultSpecialistBaseMax);
+        Scribe_Values.Look(ref specialistPerLevels, "specialistPerLevels", DefaultSpecialistPerLevels);
+        Scribe_Values.Look(ref residentsPerWorker, "residentsPerWorker", DefaultResidentsPerWorker);
+        Scribe_Values.Look(ref scalingFactor, "scalingFactor", DefaultScalingFactor);
+        Scribe_Values.Look(ref healRatePerLevelGovernor, "healRatePerLevelGovernor", DefaultHealRatePerLevelGovernor);
+        Scribe_Values.Look(ref xpPerDay, "xpPerDay", DefaultXpPerDay);
+        Scribe_Values.Look(ref skillTaperFactorBand1, "skillTaperFactorBand1", DefaultSkillTaperFactorBand1);
+        Scribe_Values.Look(ref skillTaperFactorBand2, "skillTaperFactorBand2", DefaultSkillTaperFactorBand2);
+        Scribe_Values.Look(ref skillTaperFactorBand3, "skillTaperFactorBand3", DefaultSkillTaperFactorBand3);
+        Scribe_Values.Look(ref foodPerSpecialist, "foodPerSpecialist", DefaultFoodPerSpecialist);
+        Scribe_Values.Look(ref foodPerResident, "foodPerResident", DefaultFoodPerResident);
+        Scribe_Values.Look(ref medicinePerSpecialist, "medicinePerSpecialist", DefaultMedicinePerSpecialist);
+        Scribe_Values.Look(ref foodPenaltyPerUnit, "foodPenaltyPerUnit", DefaultFoodPenaltyPerUnit);
+        Scribe_Values.Look(ref medicinePenaltyPerUnit, "medicinePenaltyPerUnit", DefaultMedicinePenaltyPerUnit);
     }
 
     public static void ResetToDefaults()
     {
-        printDebug = false;
-        specialistBaseMax = 3;
-        specialistPerLevels = 3;
-        residentsPerWorker = 5;
-        scalingFactor = 1f;
-        healRatePerLevelGovernor = 0.02f;
-        xpPerDay = 500f;
-        skillTaperFactorBand1 = 1f;
-        skillTaperFactorBand2 = 1f;
-        skillTaperFactorBand3 = 0.5f;
-        foodPerSpecialist = 0.3f;
-        foodPerResident = 0.15f;
-        medicinePerSpecialist = 0.1f;
-        foodPenaltyPerUnit = 0.8f;
-        medicinePenaltyPerUnit = 0.3f;
+        printDebug = DefaultPrintDebug;
+        specialistBaseMax = DefaultSpecialistBaseMax;
+        specialistPerLevels = DefaultSpecialistPerLevels;
+        residentsPerWorker = DefaultResidentsPerWorker;
+        scalingFactor = DefaultScalingFactor;
+        healRatePerLevelGovernor = DefaultHealRatePerLevelGovernor;
+        xpPerDay = DefaultXpPerDay;
+        skillTaperFactorBand1 = DefaultSkillTaperFactorBand1;
+        skillTaperFactorBand2 = DefaultSkillTaperFactorBand2;
+        skillTaperFactorBand3 = DefaultSkillTaperFactorBand3;
+        foodPerSpecialist = DefaultFoodPerSpecialist;
+        foodPerResident = DefaultFoodPerResident;
+        medicinePerSpecialist = DefaultMedicinePerSpecialist;
+        foodPenaltyPerUnit = DefaultFoodPenaltyPerUnit;
+        medicinePenaltyPerUnit = DefaultMedicinePenaltyPerUnit;
     }
 
     public void DoWindowContents(Rect inRect)

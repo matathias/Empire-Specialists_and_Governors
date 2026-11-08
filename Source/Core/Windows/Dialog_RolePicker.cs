@@ -152,26 +152,16 @@ public class Dialog_RolePicker : Window
                 if (!isCurrent)
                 {
                     bool isAlreadySpecialist = !isCurrentlyGovernor && currentRole is not null;
-                    if (!isAlreadySpecialist && comp.SpecialistCount + pendingSpecialists >= comp.MaxSpecialists)
+                    if (!isAlreadySpecialist && comp.SpecialistSlotsFull(pendingSpecialists))
                     {
                         disabledReason = "FCS_RoleCapReached".Translate(roleDef.LabelCap);
                     }
 
-                    if (disabledReason is null && roleDef.maxPerSettlement > 0)
+                    if (disabledReason is null
+                        && comp.RoleAtCap(roleDef, pendingRoleCounts?.GetValueOrDefault(roleDef) ?? 0))
                     {
-                        int existing = 0;
-                        foreach (SettlementSpecialist s in comp.Specialists)
-                            if (s.role == roleDef) existing++;
-                        if (pendingRoleCounts is not null)
-                        {
-                            pendingRoleCounts.TryGetValue(roleDef, out int pendingForRole);
-                            existing += pendingForRole;
-                        }
-                        if (existing >= roleDef.maxPerSettlement)
-                        {
-                            disabledReason = "FCS_PickerPerSettlementCap".Translate(
-                                roleDef.LabelCap, roleDef.maxPerSettlement);
-                        }
+                        disabledReason = "FCS_PickerPerSettlementCap".Translate(
+                            roleDef.LabelCap, roleDef.maxPerSettlement);
                     }
                 }
 

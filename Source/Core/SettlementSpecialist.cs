@@ -1,78 +1,33 @@
 namespace FactionColonies.Specialists;
 
-public class SettlementSpecialist : IExposable
+public class SettlementSpecialist : RosterEntry<SpecialistRoleDef, SpecialistRoleBehavior>
 {
-    public Pawn pawn;
     public SpecialistRoleDef role;
-    public int assignedTick;
-
-    [Unsaved] private float cachedSkillScore = -1f;
-    [Unsaved] private SpecialistRoleBehavior behavior;
-    [Unsaved] private bool behaviorResolved = false;
 
     public SettlementSpecialist() { }
 
-    public SettlementSpecialist(Pawn pawn, SpecialistRoleDef role)
+    public SettlementSpecialist(Pawn pawn, SpecialistRoleDef role) : base(pawn)
     {
-        this.pawn = pawn;
         this.role = role;
-        this.assignedTick = Find.TickManager.TicksGame;
     }
 
-    public bool IsAlive => pawn is not null && !pawn.Dead;
-    public bool HasUsableSkills => pawn?.skills is not null && !pawn.Dead;
     public bool IsResident => role is null;
 
-    public SpecialistRoleBehavior Behavior
+    protected override SpecialistRoleDef AssignedDef => role;
+
+    public override void DirtySkillScore()
     {
-        get
-        {
-            if (!behaviorResolved)
-            {
-                behaviorResolved = true;
-                SpecialistRoleBehaviorExtension ext =
-                    role?.GetModExtension<SpecialistRoleBehaviorExtension>();
-                behavior = ext?.CreateBehavior();
-            }
-            return behavior;
-        }
+        base.DirtySkillScore();
+        ResetBehavior();
     }
 
-    public float SkillScore
+    protected override float ComputeSkillScore()
     {
-        get
-        {
-            if (cachedSkillScore >= 0f) return cachedSkillScore;
-            cachedSkillScore = ComputeSkillScore();
-            return cachedSkillScore;
-        }
+        return HasUsableSkills ? role?.ComputeSkillScore(pawn) ?? 0f : 0f;
     }
 
-    public void DirtySkillScore()
+    protected override void ExposeDef()
     {
-        cachedSkillScore = -1f;
-        behaviorResolved = false;
-        behavior = null;
-    }
-
-    private float ComputeSkillScore()
-    {
-        if (role is null || !HasUsableSkills || role.skillWeights is null) return 0f;
-        float score = 0f;
-        foreach (SkillWeight sw in role.skillWeights)
-        {
-            if (sw.skill is null) continue;
-            SkillRecord rec = pawn.skills.GetSkill(sw.skill);
-            if (rec is not null)
-                score += SpecUtil.TaperedLevel(rec.Level) * sw.weight;
-        }
-        return score;
-    }
-
-    public void ExposeData()
-    {
-        Scribe_References.Look(ref pawn, "pawn");
         Scribe_Defs.Look(ref role, "role");
-        Scribe_Values.Look(ref assignedTick, "assignedTick");
     }
 }

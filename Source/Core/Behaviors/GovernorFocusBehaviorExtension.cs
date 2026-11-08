@@ -1,33 +1,8 @@
 namespace FactionColonies.Specialists;
 
-public class GovernorFocusBehaviorExtension : DefModExtension
+public class GovernorFocusBehaviorExtension : BehaviorExtension<GovernorFocusBehavior>
 {
-    public Type behaviorClass;
-
-    public override IEnumerable<string> ConfigErrors()
-    {
-        foreach (string err in base.ConfigErrors())
-            yield return err;
-        if (behaviorClass is null)
-            yield return "GovernorFocusBehaviorExtension: behaviorClass is null";
-        else if (!typeof(GovernorFocusBehavior).IsAssignableFrom(behaviorClass))
-            yield return "GovernorFocusBehaviorExtension: behaviorClass must extend GovernorFocusBehavior";
-    }
-
-    public GovernorFocusBehavior CreateBehavior()
-    {
-        try
-        {
-            GovernorFocusBehavior b = (GovernorFocusBehavior)Activator.CreateInstance(behaviorClass);
-            b.extension = this;
-            return b;
-        }
-        catch (Exception e)
-        {
-            LogSG.Error($"Failed to create GovernorFocusBehavior of type {behaviorClass}: {e}");
-            return null;
-        }
-    }
+    protected override void AttachTo(GovernorFocusBehavior behavior) => behavior.extension = this;
 }
 
 public abstract class GovernorFocusBehavior

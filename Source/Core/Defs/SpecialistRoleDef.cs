@@ -12,9 +12,8 @@ public class SpecialistRoleDef : Def
     public float baseUpkeepSilver = 0f;
     public float skillUpkeepScaling = 0f;
 
-    /* Weighted, tapered skill score for a pawn in this role — how good a fit the pawn is.
-       Mirrors SettlementSpecialist.ComputeSkillScore (and the analogous GovernorFocusDef method)
-       so auto-assignment and the live skill-score cache agree. */
+    /* Weighted, tapered skill score for a pawn in this role: how good a fit the pawn is. Also
+       backs SettlementSpecialist's cached skill score, so auto-assignment and the live score agree. */
     public float ComputeSkillScore(Pawn pawn)
     {
         if (pawn?.skills is null || skillWeights is null) return 0f;

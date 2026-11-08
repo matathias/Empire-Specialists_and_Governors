@@ -54,19 +54,13 @@ public static class SpecialistRoster
                 settlement.GetComponent<WorldObjectComp_SettlementSpecialists>();
             if (comp is null) continue;
 
-            foreach (SettlementSpecialist s in comp.Specialists)
+            foreach (RosterEntry m in comp.Members)
             {
-                if (s.IsAlive)
+                if (!m.IsAlive) continue;
+                if (m is SettlementSpecialist s)
                     assignments[s.pawn.thingIDNumber] = s.role;
-            }
-            foreach (SettlementSpecialist r in comp.Residents)
-            {
-                if (r.IsAlive)
-                    assignments[r.pawn.thingIDNumber] = null;
-            }
-            if (comp.HasGovernor)
-            {
-                governors.Add(comp.Governor.pawn.thingIDNumber);
+                else
+                    governors.Add(m.pawn.thingIDNumber);
             }
         }
     }

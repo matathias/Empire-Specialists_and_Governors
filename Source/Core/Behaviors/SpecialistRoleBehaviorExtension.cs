@@ -1,33 +1,8 @@
 namespace FactionColonies.Specialists;
 
-public class SpecialistRoleBehaviorExtension : DefModExtension
+public class SpecialistRoleBehaviorExtension : BehaviorExtension<SpecialistRoleBehavior>
 {
-    public Type behaviorClass;
-
-    public override IEnumerable<string> ConfigErrors()
-    {
-        foreach (string err in base.ConfigErrors())
-            yield return err;
-        if (behaviorClass is null)
-            yield return "SpecialistRoleBehaviorExtension: behaviorClass is null";
-        else if (!typeof(SpecialistRoleBehavior).IsAssignableFrom(behaviorClass))
-            yield return "SpecialistRoleBehaviorExtension: behaviorClass must extend SpecialistRoleBehavior";
-    }
-
-    public SpecialistRoleBehavior CreateBehavior()
-    {
-        try
-        {
-            SpecialistRoleBehavior b = (SpecialistRoleBehavior)Activator.CreateInstance(behaviorClass);
-            b.extension = this;
-            return b;
-        }
-        catch (Exception e)
-        {
-            LogSG.Error($"Failed to create SpecialistRoleBehavior of type {behaviorClass}: {e}");
-            return null;
-        }
-    }
+    protected override void AttachTo(SpecialistRoleBehavior behavior) => behavior.extension = this;
 }
 
 public abstract class SpecialistRoleBehavior

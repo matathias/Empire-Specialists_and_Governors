@@ -31,6 +31,9 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         set { medicineSatisfaction = Mathf.Clamp01(value); }
     }
 
+    /// <summary>Combined supply satisfaction (food times medicine) that scales every member bonus.</summary>
+    public float Satisfaction => foodSatisfaction * medicineSatisfaction;
+
     // ── Battle state ──
     private bool pawnsDeployedToBattle = false;
     public bool PawnsDeployedToBattle => pawnsDeployedToBattle;
@@ -47,6 +50,23 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     public IReadOnlyList<SettlementSpecialist> Specialists => specialists;
     public IReadOnlyList<SettlementSpecialist> Residents => residents;
     public SettlementGovernor Governor => governor;
+
+    /// <summary>
+    /// Every roster member, dead ones included: specialists, then residents, then the governor.
+    /// </summary>
+    public IEnumerable<RosterEntry> Members
+    {
+        get
+        {
+            foreach (SettlementSpecialist s in specialists)
+                yield return s;
+            foreach (SettlementSpecialist r in residents)
+                yield return r;
+            if (governor is not null)
+                yield return governor;
+        }
+    }
+
     public bool HasGovernor => governor is not null && governor.IsAlive;
     public int SpecialistCount => specialists.Count;
     public int ResidentCount => residents.Count;
@@ -82,14 +102,26 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     /// assigned to a capped role is rejected without being placed, so callers that must not drop the
     /// pawn should fall back to a Resident (null role) when this returns true.
     /// </summary>
-    public bool RoleAtCap(SpecialistRoleDef role)
+    public bool RoleAtCap(SpecialistRoleDef role) => RoleAtCap(role, 0);
+
+    /// <summary>
+    /// <see cref="RoleAtCap(SpecialistRoleDef)"/>, counting pendingForRole not-yet-assigned pawns
+    /// (e.g. queued in a dialog) as already holding the role.
+    /// </summary>
+    public bool RoleAtCap(SpecialistRoleDef role, int pendingForRole)
     {
         if (role is null || role.maxPerSettlement <= 0) return false;
-        int existing = 0;
+        int existing = pendingForRole;
         foreach (SettlementSpecialist s in specialists)
             if (s.role == role) existing++;
         return existing >= role.maxPerSettlement;
     }
+
+    /// <summary>
+    /// True if every specialist slot is taken, counting pending not-yet-assigned specialists
+    /// (e.g. queued in a dialog) as already assigned.
+    /// </summary>
+    public bool SpecialistSlotsFull(int pending = 0) => SpecialistCount + pending >= MaxSpecialists;
 
     /// <summary>
     /// True if a specialist assignment for this role would be accepted right now. Residents
@@ -99,7 +131,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     public bool CanAssignSpecialist(SpecialistRoleDef role)
     {
         if (role is null) return true;
-        return SpecialistCount < MaxSpecialists && !RoleAtCap(role);
+        return !SpecialistSlotsFull() && !RoleAtCap(role);
     }
 
     /// <summary>
@@ -291,12 +323,8 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     public List<Pawn> AllPawnsSnapshot()
     {
         List<Pawn> result = [];
-        foreach (SettlementSpecialist s in specialists)
-            if (s.IsAlive) result.Add(s.pawn);
-        foreach (SettlementSpecialist r in residents)
-            if (r.IsAlive) result.Add(r.pawn);
-        if (governor is not null && governor.IsAlive)
-            result.Add(governor.pawn);
+        foreach (RosterEntry m in Members)
+            if (m.IsAlive) result.Add(m.pawn);
         return result;
     }
 
@@ -392,27 +420,13 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         // Recall EVERY member (dead included) from the static roster so no stale thingIDNumber
         // survives, and collect the living for delivery.
         List<Pawn> survivors = [];
-        foreach (SettlementSpecialist s in specialists)
+        foreach (RosterEntry m in Members)
         {
-            if (s.pawn is null) continue;
-            SpecialistRoster.Recall(s.pawn);
-            if (s.IsAlive) survivors.Add(s.pawn);
-        }
-        foreach (SettlementSpecialist r in residents)
-        {
-            if (r.pawn is null) continue;
-            SpecialistRoster.Recall(r.pawn);
-            if (r.IsAlive) survivors.Add(r.pawn);
-        }
-        if (governor is not null)
-        {
-            if (governor.Behavior is not null)
-                governor.Behavior.OnFocusDeactivated(Settlement);
-            if (governor.pawn is not null)
-            {
-                SpecialistRoster.Recall(governor.pawn);
-                if (governor.IsAlive) survivors.Add(governor.pawn);
-            }
+            if (m is SettlementGovernor gov)
+                gov.Behavior?.OnFocusDeactivated(Settlement);
+            if (m.pawn is null) continue;
+            SpecialistRoster.Recall(m.pawn);
+            if (m.IsAlive) survivors.Add(m.pawn);
         }
 
         specialists.Clear();
@@ -437,9 +451,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
     private void InvalidateAll()
     {
-        foreach (SettlementSpecialist s in specialists) s.DirtySkillScore();
-        foreach (SettlementSpecialist r in residents) r.DirtySkillScore();
-        if (governor is not null) governor.DirtySkillScore();
+        foreach (RosterEntry m in Members) m.DirtySkillScore();
         Settlement.InvalidateStatCache();
     }
 
@@ -529,35 +541,35 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
     {
         if (pawn is null) return;
 
-        string roleLabel;
-
-        SettlementSpecialist spec = specialists.Find(s => s.pawn == pawn);
-        if (spec is not null)
+        RosterEntry member = null;
+        foreach (RosterEntry m in Members)
         {
-            roleLabel = spec.role?.LabelCap ?? "Specialist";
-            RemoveSpecialist(spec);
-        }
-        else
-        {
-            SettlementSpecialist res = residents.Find(r => r.pawn == pawn);
-            if (res is not null)
+            if (m.pawn == pawn)
             {
-                roleLabel = "FCS_RoleResident".Translate();
-                RemoveSpecialist(res);
+                member = m;
+                break;
             }
-            else if (governor is not null && governor.pawn == pawn)
-            {
+        }
+
+        string roleLabel;
+        switch (member)
+        {
+            case SettlementGovernor:
                 roleLabel = "FCS_RoleGovernor".Translate();
                 governor.Behavior?.OnFocusDeactivated(Settlement);
                 SpecialistRoster.Recall(pawn);
                 governor = null;
                 ResetSatisfactionIfRosterEmpty();
                 InvalidateAll();
-            }
-            else
-            {
+                break;
+            case SettlementSpecialist entry:
+                roleLabel = specialists.Contains(entry)
+                    ? entry.role?.LabelCap ?? "Specialist"
+                    : "FCS_RoleResident".Translate();
+                RemoveSpecialist(entry);
+                break;
+            default:
                 return; // not a member of this settlement (or already removed)
-            }
         }
 
         Find.WorldPawns.ForcefullyKeptPawns.Remove(pawn); // drop the roster's KeepForever hold
@@ -623,25 +635,13 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
         foreach (SettlementSpecialist s in specialists)
         {
-            if (!s.HasUsableSkills || s.role is null || s.role.skillWeights is null) continue;
-            foreach (SkillWeight sw in s.role.skillWeights)
-            {
-                if (sw.skill is null) continue;
-                SkillRecord rec = s.pawn.skills.GetSkill(sw.skill);
-                if (rec is not null && !rec.TotallyDisabled)
-                    rec.Learn(xp * sw.weight, true);
-            }
+            if (!s.HasUsableSkills || s.role is null) continue;
+            SpecUtil.LearnWeighted(s.pawn, s.role.skillWeights, xp);
         }
 
         if (governor is not null && governor.HasUsableSkills && governor.focus?.skillWeights is not null)
         {
-            foreach (SkillWeight sw in governor.focus.skillWeights)
-            {
-                if (sw.skill is null) continue;
-                SkillRecord rec = governor.pawn.skills.GetSkill(sw.skill);
-                if (rec is not null && !rec.TotallyDisabled)
-                    rec.Learn(xp * sw.weight, true);
-            }
+            SpecUtil.LearnWeighted(governor.pawn, governor.focus.skillWeights, xp);
             // Governor always gets Social XP
             SkillRecord social = governor.pawn.skills.GetSkill(SkillDefOf.Social);
             if (social is not null && !social.TotallyDisabled)
@@ -701,14 +701,14 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         if (total > 0 && SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps))
             total *= 1.2;
 
-        float satisfaction = foodSatisfaction * medicineSatisfaction;
+        float satisfaction = Satisfaction;
         return total * satisfaction;
     }
 
     public double GetResourceMultiplierModifier(ResourceFC resource)
     {
         if (governor is null || !governor.HasUsableSkills) return 1.0;
-        float satisfaction = foodSatisfaction * medicineSatisfaction;
+        float satisfaction = Satisfaction;
         double rawMult = SpecUtil.GovernorMultiplierForResource(governor, resource.def);
         return 1.0 + (rawMult - 1.0) * satisfaction;
     }
@@ -733,7 +733,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         // breakdown reconciles with the value shown.
         if (total > 0 && SpecUtil.HasTrait(SpecPolicyDefOf.FCSspecialistCorps))
             sb.AppendLine(TextUtil.MultiplierBonusLine(1.2, SpecPolicyDefOf.FCSspecialistCorps.LabelCap));
-        float satisfaction = foodSatisfaction * medicineSatisfaction;
+        float satisfaction = Satisfaction;
         if (satisfaction < 0.999f)
             sb.AppendLine(TextUtil.MultiplierBonusLine(satisfaction, "FCS_SatisfactionLabel".Translate()));
 
@@ -747,7 +747,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
         if (Math.Abs(rawMult - 1.0) < 0.001) return null;
         // Show the effective multiplier GetResourceMultiplierModifier actually applies (raw damped
         // by satisfaction) so the breakdown reconciles with the value.
-        float satisfaction = foodSatisfaction * medicineSatisfaction;
+        float satisfaction = Satisfaction;
         double effectiveMult = 1.0 + (rawMult - 1.0) * satisfaction;
         return TextUtil.MultiplierBonusLine(effectiveMult,
             governor.pawn.LabelShort + " (" + governor.focus.LabelCap + ")");
@@ -764,7 +764,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
             value += SpecUtil.WorkerBonusFromResidents(LiveResidentCount);
 
         // Specialist stat bonuses (additive, skill-scaled)
-        float satisfaction = foodSatisfaction * medicineSatisfaction;
+        float satisfaction = Satisfaction;
         foreach (SettlementSpecialist s in specialists)
         {
             value += SpecUtil.SpecialistStatBonus(s, stat) * satisfaction;
@@ -854,7 +854,7 @@ public class WorldObjectComp_SettlementSpecialists : WorldObjectComp,
 
         // Supply satisfaction scales every contribution above (except the worker bonus); show it so
         // the breakdown reconciles with the applied value.
-        float satisfaction = foodSatisfaction * medicineSatisfaction;
+        float satisfaction = Satisfaction;
         if (anyScaled && satisfaction < 0.999f)
         {
             if (sb.Length > 0) sb.Append("\n");
